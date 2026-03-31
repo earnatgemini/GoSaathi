@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gosaathi - Share Together Save Together</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  
+    <style>
+        :root { --primary: #007bff; --secondary: #28a745; --dark: #1e3c72; }
+        body { margin:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f4f7f6; color: #333; }
+        .header { background: linear-gradient(135deg, var(--dark), #2a5298); color:white; padding:20px; text-align:center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .nav { display:flex; justify-content:space-around; background:white; padding:12px; position:sticky; top:0; z-index:100; border-bottom:1px solid #ddd; }
+        .nav button { background:none; border:none; font-weight:bold; color: var(--dark); cursor:pointer; }
+        .container { padding:15px; max-width: 500px; margin: auto; }
+        .card { background:white; padding:15px; border-radius:15px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+        .wallet-card { background: var(--dark); color: white; text-align: center; }
+        input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; }
+        button { background: var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; transition: 0.3s; }
+        button:active { transform: scale(0.98); }
+        .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-radius: 5px; }
+        .invitation-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 10px; text-align: center; font-size: 0.9em; }
+        #qr-box img { width: 200px; margin: 10px auto; display: block; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <img src="logo.png" alt="Gosaathi Logo" style="height:50px;">
+    <h1>Gosaathi</h1>
+    <p>Share Together • Save Together</p>
+</div>
+
+<div class="nav">
+    <button onclick="showPage('home')">Home</button>
+    <button onclick="showPage('ride')">Rides</button>
+    <button onclick="showPage('wallet')">Wallet</button>
+    <button onclick="showPage('profile')">Invite</button>
+</div>
+
+<div class="container">
+    <div id="wallet" class="hidden">
+        <div class="card wallet-card">
+            <h3>My Balance</h3>
+            <h2 id="coinBalance">0</h2>
+            <p>Coins (10 Coins = ₹1)</p>
+        </div>
+        <div class="card">
+            <h3>Add Coins</h3>
+            <p>Scan & Pay to add money</p>
+            <div id="qr-box"><img src="qr.png"></div>
+            <input type="number" id="payAmount" placeholder="Amount paid (₹)">
+            <button onclick="requestCoins()" style="background:var(--secondary)">I have Paid - Request Coins</button>
+        </div>
+    </div>
+
+    <div id="home">
+        <div class="invitation-box" id="inviteStatus">
+            Invitations Left: <span id="inviteCount">5</span> | Expiring in: <span id="timer">30d</span>
+        </div>
+        <h3>Available Rides</h3>
+        <div id="ridesContainer">Loading rides...</div>
+    </div>
+
+    <div id="ride" class="hidden">
+        <div class="card">
+            <h3>Post a Ride</h3>
+            <input id="from" placeholder="From Location">
+            <input id="to" placeholder="To Location">
+            <input id="route" placeholder="Via (Journey Route)Location">
+            <select id="rideType">
+                <option value="Free">Free Ride</option>
+                <option value="Paid">Paid (Coins)</option>
+            </select>
+            <input type="number" id="seats" placeholder="Available Seats">
+            <button onclick="postRide()">Start Journey</button>
+        </div>
+    </div>
+
+    <div id="profile" class="hidden">
+        <div class="card">
+            <h3>Invite Friends</h3>
+            <p>Share Gosaathi with friends for free join!</p>
+            <button onclick="shareLink()">Share Invite Link</button>
+        </div>
+        <button onclick="googleLogin()" id="loginBtn">Login with Google</button>
+    </div>
+</div>
+
+<script>
+// --- CONFIG ---
+const firebaseConfig = { apiKey: "AIzaSyCLQbR69NBKmyFK_DzIk8Dz_eFc6UWCQdg", authDomain: "togosaaythi-n.firebaseapp.com", projectId: "togosaaythi-n" };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser = null;
+
+// --- AUTH ---
+function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).then(res => {
+        currentUser = res.user;
+        checkUserInDB(res.user);
+    });
+}
+
+function checkUserInDB(user) {
+    const userRef = db.collection("Users").doc(user.uid);
+    userRef.get().then(doc => {
+        if (!doc.exists) {
+            userRef.set({
+                name: user.displayName,
+                email: user.email,
+                coins: 50, // New user bonus
+                invites: 5,
+                joinDate: Date.now()
+            });
+        }
+        updateUI();
+    });
+}
+
+// --- NAVIGATION ---
+function showPage(pageId) {
+    document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+    document.getElementById(pageId).classList.remove('hidden');
+    if(pageId === 'home') loadRides();
+}
+
+// --- LOGIC ---
+function postRide() {
+    db.collection("Rides").add({
+        driverId: auth.currentUser.uid,
+        driverName: auth.currentUser.displayName,
+        from: document.getElementById('from').value,
+        to: document.getElementById('to').value,
+        route: document.getElementById('route').value,
+        type: document.getElementById('rideType').value,
+        seats: document.getElementById('seats').value,
+        status: "Available",
+        time: Date.now()
+    }).then(() => { alert("Ride Posted!"); showPage('home'); });
+}
+
+function loadRides() {
+    db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
+        const container = document.getElementById('ridesContainer');
+        container.innerHTML = "";
+        snap.forEach(doc => {
+            const r = doc.data();
+            container.innerHTML += `
+                <div class="card ride-item">
+                    <b>${r.from} → ${r.to}</b><br>
+                    <small>By: ${r.driverName} | ${r.type}</small><br>
+                    <button onclick="requestRide('${doc.id}')" style="width:auto; padding:5px 10px; margin-top:5px;">Join</button>
+                </div>`;
+        });
+    });
+}
+
+function requestCoins() {
+    const amt = document.getElementById('payAmount').value;
+    db.collection("Payments").add({
+        userId: auth.currentUser.uid,
+        userName: auth.currentUser.displayName,
+        amount: amt,
+        status: "Pending",
+        time: Date.now()
+    });
+    alert("Request sent to Admin!");
+}
+
+function updateUI() {
+    db.collection("Users").doc(auth.currentUser.uid).onSnapshot(doc => {
+        const data = doc.data();
+        document.getElementById('coinBalance').innerText = data.coins;
+        document.getElementById('inviteCount').innerText = data.invites;
+    });
+}
+
+auth.onAuthStateChanged(user => { if(user) { currentUser = user; updateUI(); } });
+</script>
+</body>
+</html>
