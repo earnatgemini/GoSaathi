@@ -1,4 +1,4 @@
-# GoSaathi - (tTavel Together Save Together)
+# GoSaathi - (Share Together Save Together)
 travel sharing app for people to save petrol cost as save fuel save India. 
 
 1. Cashback + Group Saving
