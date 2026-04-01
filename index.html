@@ -186,47 +186,127 @@ function showPage(pageId) {
     if(pageId === 'home') loadRides();
 }
 
-// 1. రైడ్ పోస్ట్ చేసేటప్పుడు Free/Paid ఆప్షన్
+// 1. Post Ride with Route & Expiry Logic
 function postRide() {
     const from = document.getElementById('from').value;
     const to = document.getElementById('to').value;
-    const type = document.getElementById('rideType').value; // Paid or Free
-    const price = (type === "Paid") ? prompt("ఎన్ని కాయిన్స్? (ఉదా: 100)", "100") : 0;
+    const route = document.getElementById('route').value;
+    const seats = document.getElementById('seats').value;
+    const type = document.getElementById('rideType').value;
+    
+    if(!from || !to || !route || !seats) return alert("Anni vivaraalu nimpandi (Route tho saha)!");
 
-    if(!from || !to) return alert("వివరాలు నింపండి");
+    let price = 0;
+    if (type === "Paid") {
+        price = prompt("Okko Co-Saathi share (Coins) entha?", "100");
+        if (!price) return;
+    }
 
     db.collection("Rides").add({
-        driverId: auth.currentUser.uid,
-        driverName: auth.currentUser.displayName,
-        driverPhone: "9491745811", // ఇది యూజర్ ప్రొఫైల్ నుండి తీసుకోవచ్చు
-        from, to,
-        type, 
+        saathiId: auth.currentUser.uid,
+        saathiName: auth.currentUser.displayName,
+        from: from,
+        to: to,
+        route: route,
+        type: type, 
         price: Number(price),
-        seats: document.getElementById('seats').value,
-        status: "Available",
-        time: Date.now()
+        seats: Number(seats),
+        initialSeats: Number(seats),
+        status: "Available", // Status: Available -> Full -> Completed
+        createdAt: Date.now(),
+        expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours tharvatha auto-hide
     }).then(() => { 
-        alert("రైడ్ పోస్ట్ అయ్యింది!"); 
+        alert("Ride Posted Successfully!"); 
         showPage('home'); 
     });
 }
+
+// 2. Load Rides with Performance Filter (Only Active & Available)
 function loadRides() {
-    db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
-        const container = document.getElementById('ridesContainer');
+    const container = document.getElementById('ridesContainer');
+    container.innerHTML = "Loading rides...";
+
+    // Only show rides that are Available and not expired
+    db.collection("Rides")
+      .where("status", "==", "Available")
+      .orderBy("createdAt", "desc")
+      .limit(50) // Performance kosam top 50 mathrame
+      .onSnapshot(snap => {
         container.innerHTML = "";
-        if(snap.empty) container.innerHTML = "No rides available right now.";
+        if(snap.empty) {
+            container.innerHTML = "<p style='text-align:center;'>Ippudevaru journey cheyadam ledu. Meeru modhalupettandi!</p>";
+            return;
+        }
+
         snap.forEach(doc => {
             const r = doc.data();
-            container.innerHTML += `<div class="card ride-item">
-                <b style="font-size:1.1em;">${r.from} ➔ ${r.to}</b><br>
-                <small>Route: ${r.route} | Seats: ${r.seats}</small><br>
-                <button style="width:auto; padding:5px 15px; margin-top:8px;">Join Ride</button>
-            </div>`;
+            // 24 hours daatithe display cheyadhu
+            if (Date.now() > r.expiresAt) return;
+
+            const costBadge = r.type === "Free" ? "<span style='color:green;'>FREE</span>" : `💰 ${r.price} Coins`;
+            
+            container.innerHTML += `
+                <div class="card ride-item">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b style="font-size:1.1em;">${r.from} ➔ ${r.to}</b>
+                        <b>${costBadge}</b>
+                    </div>
+                    <p style="margin:8px 0; font-size:0.9em; color:#444;">
+                        <b>Via:</b> ${r.route} <br>
+                        <b>Host:</b> ${r.saathiName} | <b>Seats Left:</b> ${r.seats}
+                    </p>
+                    <button class="btn-join" onclick="processJoin('${doc.id}')" 
+                        style="background:#28a745; color:white; border:none; padding:10px; width:100%; border-radius:8px; cursor:pointer; font-weight:bold;">
+                        Join as Co-Saathi
+                    </button>
+                </div>`;
         });
     });
 }
 
-    // 2. రైడ్ లో జాయిన్ అయ్యేటప్పుడు కాయిన్స్ చెక్ చేయడం
+// 3. Perfect Join Logic with Auto-Full Status
+async function processJoin(rideId) {
+    if (!auth.currentUser) return alert("Login avvandi!");
+
+    const rideRef = db.collection("Rides").doc(rideId);
+    const rideDoc = await rideRef.get();
+    const r = rideDoc.data();
+
+    if (r.saathiId === auth.currentUser.uid) return alert("Meeru mee ride lone join avvaleru!");
+    if (r.seats <= 0) return alert("Seats full ayipoyayi!");
+
+    const confirmMsg = r.type === "Paid" ? 
+        `${r.saathiName} ki ${r.price} coins pampinchi join avthara?` : 
+        `${r.saathiName} tho free ga journey chesthara?`;
+
+    if (confirm(confirmMsg)) {
+        try {
+            const batch = db.batch();
+            const userRef = db.collection("Users").doc(auth.currentUser.uid);
+            
+            // Paid ride ayithe coins transfer
+            if (r.type === "Paid") {
+                const uDoc = await userRef.get();
+                if (uDoc.data().coins < r.price) return alert("Coins thakkuvaga unnayi!");
+                
+                batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-r.price) });
+                batch.update(db.collection("Users").doc(r.saathiId), { coins: firebase.firestore.FieldValue.increment(r.price) });
+            }
+
+            // Seats update
+            const newSeats = r.seats - 1;
+            batch.update(rideRef, { 
+                seats: newSeats,
+                status: newSeats === 0 ? "Full" : "Available" // Seat zero ayithe list nundi pothundi
+            });
+
+            await batch.commit();
+            alert("Ride Confirmed! Saathi Contact: 9491745811");
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
+}    // 2. రైడ్ లో జాయిన్ అయ్యేటప్పుడు కాయిన్స్ చెక్ చేయడం
 async function requestRide(rideId) {
     const rideRef = db.collection("Rides").doc(rideId);
     const rideDoc = await rideRef.get();
