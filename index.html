@@ -88,16 +88,19 @@
         </div>
     </div>
 
-    <div id="ride" style="display:none;">
-        <div class="card">
-            <h3>Post a New Ride</h3>
-            <input id="from" placeholder="From City">
-            <input id="to" placeholder="To City">
-            <input id="route" placeholder="Via (Route)">
-            <input type="number" id="seats" placeholder="Available Seats">
-            <button onclick="postRide()">రైడ్ పోస్ట్ చేయండి</button>
-        </div>
+   <div id="ride" style="display:none;">
+    <div class="card">
+        <h3>Post a New Ride</h3>
+        <input id="from" placeholder="From City">
+        <input id="to" placeholder="To City">
+        <select id="rideType">
+            <option value="Free">Free Ride (ఉచితం)</option>
+            <option value="Paid">Paid Ride (కాయిన్స్)</option>
+        </select>
+        <input type="number" id="seats" placeholder="ఎన్ని సీట్లు ఖాళీ ఉన్నాయి?">
+        <button onclick="postRide()">Post Ride</button>
     </div>
+</div>
 
     <div id="profile" style="display:none;">
         <div class="card">
