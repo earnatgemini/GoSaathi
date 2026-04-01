@@ -2,126 +2,84 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gosaathi Admin</title>
+    <title>Gosaathi Admin Panel</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
     <style>
-        body { font-family: Arial, sans-serif; background: #111; color: white; padding: 20px; }
-        .card { background: #222; padding: 15px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #444; }
-        .btn-approve { background: #28a745; color: white; padding: 10px; border: none; cursor: pointer; margin-top: 10px; border-radius: 5px; }
-        .btn-login { background: #007bff; color: white; padding: 15px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        #loginOverlay { text-align: center; margin-top: 100px; }
-        #adminContent { display: none; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        .card { background: #2a2a2a; padding: 15px; border-radius: 10px; border: 1px solid #444; margin-bottom: 10px; }
+        button { cursor: pointer; padding: 10px; border-radius: 5px; border: none; font-weight: bold; }
+        .btn-approve { background: #28a745; color: white; }
+        .btn-reject { background: #dc3545; color: white; margin-left: 10px; }
     </style>
 </head>
 <body>
-
-    <div id="loginOverlay">
-        <h1>🚀 Gosaathi Admin</h1>
-        <button class="btn-login" onclick="adminLogin()">Login with Google</button>
+    <h1>🚀 Gosaathi Admin Control</h1>
+    <div id="login-section">
+        <button onclick="adminLogin()" style="background:#007bff; color:white; padding:15px;">Login as Admin</button>
+    </div>
+    
+    <div id="admin-content" style="display:none;">
+        <h3>Pending Payments</h3>
+        <div id="pendingList">Loading...</div>
     </div>
 
-    <div id="adminContent">
-        <h1>🚀 Gosaathi Admin Panel</h1>
-        
-        <h3>Coin Purchase Requests</h3>
-        <div id="pendingPayments">Loading...</div>
+<script>
+const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", authDomain: "gemini-spinning-wheel-game.firebaseapp.com", projectId: "gemini-spinning-wheel-game" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
-        <h3>Active Rides</h3>
-        <div id="allRides">Loading...</div>
-    </div>
+function adminLogin() {
+    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+}
 
-    <script>
-        // 1. Initialize Firebase First
-        const firebaseConfig = { 
-            apiKey: "AIzaSyCLQbR69NBKmyFK_DzIk8Dz_eFc6UWCQdg", 
-            authDomain: "togosaaythi-n.firebaseapp.com", 
-            projectId: "togosaaythi-n" 
-        };
-        
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        const provider = new firebase.auth.GoogleAuthProvider();
+auth.onAuthStateChanged(user => {
+    if (user && user.uid === 'TmQjs5Q6rWUv8BssKm199tVE2Di2') {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('admin-content').style.display = 'block';
+        loadAdminData();
+    } else if (user) {
+        alert("Access Denied! You are not an admin.");
+        auth.signOut();
+    }
+});
 
-        // 2. Authentication Logic
-        function adminLogin() {
-            auth.signInWithPopup(provider)
-            .then((result) => {
-                console.log("Logged in:", result.user.email);
-            }).catch((error) => {
-                alert("Login failed: " + error.message);
-            });
-        }
-
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('adminContent').style.display = 'block';
-                initAdmin(); 
-            } else {
-                document.getElementById('loginOverlay').style.display = 'block';
-                document.getElementById('adminContent').style.display = 'none';
-            }
+function loadAdminData() {
+    db.collection("Payments").where("status", "==", "Pending").onSnapshot(snap => {
+        const div = document.getElementById('pendingList');
+        div.innerHTML = "";
+        snap.forEach(doc => {
+            const p = doc.data();
+            div.innerHTML += `
+                <div class="card">
+                    <b>User:</b> ${p.userName} | <b>Amount:</b> ₹${p.amount} <br>
+                    <b>UTR:</b> <span style="color:yellow">${p.utr}</span><br>
+                    <button class="btn-approve" onclick="approve('${doc.id}', '${p.userId}', ${p.amount})">Approve & Activate</button>
+                    <button class="btn-reject" onclick="reject('${doc.id}')">Reject</button>
+                </div>`;
         });
+    });
+}
 
-        // 3. Data Loading Functions
-        function initAdmin() {
-            loadPayments();
-            loadRides();
-        }
+function approve(payId, userId, amount) {
+    // Logic: ₹1200 gives 1,00,000 coins. Others get ₹1 = 100 coins.
+    const coins = (amount === 1200) ? 100000 : (amount * 100);
+    const batch = db.batch();
+    batch.update(db.collection("Users").doc(userId), {
+        membership: "Active",
+        coins: firebase.firestore.FieldValue.increment(coins)
+    });
+    batch.update(db.collection("Payments").doc(payId), { status: "Approved" });
+    batch.commit().then(() => alert("User Activated with " + coins + " coins!"));
+}
 
-        function loadPayments() {
-            db.collection("Payments").where("status", "==", "Pending").onSnapshot(snap => {
-                const div = document.getElementById('pendingPayments');
-                div.innerHTML = "";
-                if (snap.empty) div.innerHTML = "<p>No pending requests.</p>";
-                
-                snap.forEach(doc => {
-                    const p = doc.data();
-                    div.innerHTML += `
-                        <div class="card">
-                            <b>User:</b> ${p.userName || 'Unknown'} <br>
-                            <b>Amount:</b> ₹${p.amount} <br>
-                            <button class="btn-approve" onclick="approvePayment('${doc.id}', '${p.userId}', ${p.amount})">
-                                Approve ${p.amount * 10} Coins
-                            </button>
-                        </div>`;
-                });
-            });
-        }
-
-        function loadRides() {
-            db.collection("Rides").onSnapshot(snap => {
-                const div = document.getElementById('allRides');
-                div.innerHTML = "";
-                if (snap.empty) div.innerHTML = "<p>No active rides.</p>";
-                
-                snap.forEach(doc => {
-                    const r = doc.data();
-                    div.innerHTML += `<div class="card">${r.from} ➔ ${r.to} | Status: <b>${r.status}</b></div>`;
-                });
-            });
-        }
-
-        // 4. Action Logic
-        function approvePayment(payId, userId, amount) {
-            const coinsToAdd = amount * 10;
-            
-            // Increment user coins
-            db.collection("Users").doc(userId).update({
-                coins: firebase.firestore.FieldValue.increment(coinsToAdd)
-            }).then(() => {
-                // Mark payment as approved
-                return db.collection("Payments").doc(payId).update({ status: "Approved" });
-            }).then(() => {
-                alert("Payment Approved!");
-            }).catch(err => {
-                alert("Error: " + err.message);
-            });
-        }
-    </script>
+function reject(payId) {
+    if(confirm("Reject this payment?")) {
+        db.collection("Payments").doc(payId).update({ status: "Rejected" });
+    }
+}
+</script>
 </body>
 </html>
