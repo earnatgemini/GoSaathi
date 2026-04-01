@@ -183,22 +183,30 @@ function showPage(pageId) {
     if(pageId === 'home') loadRides();
 }
 
+// 1. రైడ్ పోస్ట్ చేసేటప్పుడు Free/Paid ఆప్షన్
 function postRide() {
     const from = document.getElementById('from').value;
     const to = document.getElementById('to').value;
-    if(!from || !to) return alert("వివరాలు పూర్తిగా నింపండి");
+    const type = document.getElementById('rideType').value; // Paid or Free
+    const price = (type === "Paid") ? prompt("ఎన్ని కాయిన్స్? (ఉదా: 100)", "100") : 0;
+
+    if(!from || !to) return alert("వివరాలు నింపండి");
 
     db.collection("Rides").add({
         driverId: auth.currentUser.uid,
         driverName: auth.currentUser.displayName,
+        driverPhone: "9491745811", // ఇది యూజర్ ప్రొఫైల్ నుండి తీసుకోవచ్చు
         from, to,
-        route: document.getElementById('route').value,
+        type, 
+        price: Number(price),
         seats: document.getElementById('seats').value,
         status: "Available",
         time: Date.now()
-    }).then(() => { alert("రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!"); showPage('home'); });
+    }).then(() => { 
+        alert("రైడ్ పోస్ట్ అయ్యింది!"); 
+        showPage('home'); 
+    });
 }
-
 function loadRides() {
     db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
         const container = document.getElementById('ridesContainer');
@@ -215,7 +223,44 @@ function loadRides() {
     });
 }
 
-function requestCoins() {
+    // 2. రైడ్ లో జాయిన్ అయ్యేటప్పుడు కాయిన్స్ చెక్ చేయడం
+async function requestRide(rideId) {
+    const rideRef = db.collection("Rides").doc(rideId);
+    const rideDoc = await rideRef.get();
+    const ride = rideDoc.data();
+    const userRef = db.collection("Users").doc(auth.currentUser.uid);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+
+    if (ride.driverId === auth.currentUser.uid) return alert("మీరు మీ స్వంత రైడ్ లో జాయిన్ అవ్వలేరు!");
+
+    // Paid Ride అయితే కాయిన్స్ ఉన్నాయో లేదో చూడాలి
+    if (ride.type === "Paid" && userData.coins < ride.price) {
+        alert(`సరిపడా కాయిన్స్ లేవు! ఈ రైడ్ కి ${ride.price} కాయిన్స్ కావాలి.`);
+        showPage('wallet');
+        return;
+    }
+
+    if (confirm(`${ride.type} Ride లో జాయిన్ అవ్వాలనుకుంటున్నారా?`)) {
+        const batch = db.batch();
+
+        // సీటు తగ్గించడం
+        batch.update(rideRef, {
+            seats: firebase.firestore.FieldValue.increment(-1)
+        });
+
+        // Paid అయితే కాయిన్స్ కట్ చేయడం
+        if (ride.type === "Paid") {
+            batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-ride.price) });
+            batch.update(db.collection("Users").doc(ride.driverId), { coins: firebase.firestore.FieldValue.increment(ride.price) });
+        }
+
+        await batch.commit();
+        alert(`Success! రైడ్ బుక్ అయ్యింది. \nడ్రైవర్ ఫోన్: ${ride.driverPhone}`);
+    }
+}
+
+    function requestCoins() {
     const amount = document.getElementById('payAmount').value;
     const utr = document.getElementById('utrId').value;
     if(!amount || !utr) return alert("UTR నంబర్ మరియు అమౌంట్ ఎంటర్ చేయండి");
