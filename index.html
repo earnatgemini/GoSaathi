@@ -20,7 +20,6 @@
         button { background: var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; }
         .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
         #activation-screen { text-align:center; padding:10px; }
-        .bonus-badge { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 5px; font-weight: bold; font-size: 0.8em; }
     </style>
 </head>
 <body>
@@ -50,24 +49,18 @@
     <div id="activation-screen" style="display:none;">
         <div class="card">
             <h2 style="color:var(--primary);">Account Activation</h2>
-            <p>మీ అకౌంట్ ఇంకా యాక్టివేట్ కాలేదు. కొనసాగించడానికి ఒక మార్గాన్ని ఎంచుకోండి:</p>
+            <p>మీ అకౌంట్ ఇంకా యాక్టివేట్ కాలేదు.</p>
             <div style="background:#e9ecef; padding:15px; border-radius:10px; margin-bottom:20px;">
-                <h3>Option 1: Free Joining worth ₹1200 🎁</h3>
-                <p>మీ ఫ్రెండ్ పంపిన Invite Code ని ఇక్కడ ఎంటర్ చేయండి.</p>
-                <input type="text" id="manualInviteCode" placeholder="Enter Invite Code (UID)">
-                <button onclick="activateByCode()" style="background:var(--secondary);">ఫ్రీగా యాక్టివేట్ చేయండి</button>
+                <h3>Option 1: Free Joining 🎁</h3>
+                <input type="text" id="manualInviteCode" placeholder="Enter Invite Code">
+                <button onclick="activateByCode()" style="background:var(--secondary);">యాక్టివేట్ చేయండి</button>
             </div>
-            <div style="background:#fdf2f2; padding:15px; border-radius:10px;">
-                <h3>Option 2: Instant Unlock ⚡</h3>
-                <p>₹1200 పే చేసి 1,00,000 కాయిన్స్. </p>
-                <button onclick="showPage('wallet')">ఇప్పుడే పే చేయండి</button>
-            </div>
-            <p style="margin-top:15px; font-size:0.9em;">సహాయం కోసం: 9491745811</p>
+            <button onclick="showPage('wallet')">Option 2: Pay ₹1200 for 1 Lakh Coins ⚡</button>
         </div>
     </div>
 
     <div id="home" style="display:none;">
-        <h3>Available Rides (All India)</h3>
+        <h3>Available Rides (Live)</h3>
         <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
     </div>
 
@@ -75,54 +68,50 @@
         <div class="card wallet-card">
             <h3>My Balance</h3>
             <h2 id="coinBalance">0</h2>
-            <p>Coins ( Coins for ₹1)</p>
+            <p>Coins (₹1 = 100 Coins)</p>
         </div>
         <div class="card">
-            <h3>Add Coins / Activation</h3>
-            <p>QR స్కాన్ చేసి పేమెంట్ చేసిన తర్వాత UTR నంబర్ ఎంటర్ చేయండి.</p>
-            <img src="qr.png" style="width:200px; display:block; margin:auto; border: 5px solid #eee;">
-            <p style="text-align:center; font-weight:bold;">UPI ID: mratnamnalli@ybl</p>
+            <p>Scan QR to Pay. Enter UTR below.</p>
+            <img src="qr.png" style="width:180px; display:block; margin:auto;">
             <input type="number" id="payAmount" placeholder="Amount (e.g. 1200)">
-            <input type="text" id="utrId" placeholder="UTR / Transaction ID">
+            <input type="text" id="utrId" placeholder="UTR Number">
             <button onclick="requestCoins()" style="background:var(--secondary);">Submit Payment</button>
         </div>
     </div>
 
-   <div id="ride" style="display:none;">
-    <div class="card">
-        <h3>Post a New Ride</h3>
-        <input id="from" placeholder="From City">
-        <input id="to" placeholder="To City">
-        <select id="rideType">
-            <option value="Free">Free Ride (ఉచితం)</option>
-            <option value="Paid">Paid Ride (కాయిన్స్)</option>
-        </select>
-        <input type="number" id="seats" placeholder="ఎన్ని సీట్లు ఖాళీ ఉన్నాయి?">
-        <button onclick="postRide()">Post Ride</button>
+    <div id="ride" style="display:none;">
+        <div class="card">
+            <h3>Post a New Ride</h3>
+            <input id="from" placeholder="From City">
+            <input id="to" placeholder="To City">
+            <input id="route" placeholder="Via / Route (e.g. Highway 65)">
+            <select id="rideType">
+                <option value="Free">Free Ride (Sharing)</option>
+                <option value="Paid">Paid Ride (Coins)</option>
+            </select>
+            <input type="number" id="seats" placeholder="Seats Available">
+            <button onclick="postRide()">Post Ride</button>
+        </div>
     </div>
-</div>
 
     <div id="profile" style="display:none;">
         <div class="card">
-            <h3>Share & Earn 🎁</h3>
-            <p>మీ లింక్ తో జాయిన్ అయితే మీ ఫ్రెండ్ కి ఫ్రీ సబ్‌స్క్రిప్షన్ వస్తుంది!</p>
-            <p>మీ ఇన్వైట్ కోడ్:</p>
+            <h3>Your Invite Code</h3>
             <code id="myUidDisplay" style="display:block; background:#eee; padding:10px; margin-bottom:10px;"></code>
-            <button onclick="shareInvite()" style="background:#25D366;">WhatsApp ద్వారా ఇన్వైట్ చేయండి</button>
+            <button onclick="shareInvite()" style="background:#25D366;">WhatsApp Invite</button>
             <button onclick="auth.signOut()" style="background:#666; margin-top:20px;">Logout</button>
         </div>
     </div>
 </div>
 
 <script>
+// Firebase Initialization
 const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", authDomain: "gemini-spinning-wheel-game.firebaseapp.com", projectId: "gemini-spinning-wheel-game" };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-function googleLogin() {
-    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-}
+function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
 auth.onAuthStateChanged(user => {
     if (user) {
@@ -143,223 +132,121 @@ function checkUserStatus(user) {
                 document.getElementById('main-ui').style.display = 'block';
                 showPage('home');
                 document.getElementById('coinBalance').innerText = data.coins || 0;
-            } else {
-                showPage('activation-screen');
-            }
-        } else {
-            handleNewUser(user);
-        }
+            } else { showPage('activation-screen'); }
+        } else { handleNewUser(user); }
     });
 }
 
 function handleNewUser(user) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteCode = urlParams.get('invite');
-    
+    const inviteCode = new URLSearchParams(window.location.search).get('invite');
     db.collection("Users").doc(user.uid).set({
-        name: user.displayName,
-        email: user.email,
-        coins: inviteCode ? 500 : 0, // Bonus for invited users
+        name: user.displayName, email: user.email,
+        coins: inviteCode ? 500 : 0,
         membership: inviteCode ? "Active" : "Pending",
-        invitedBy: inviteCode || "Direct",
-        joinDate: Date.now()
+        invitedBy: inviteCode || "Direct", joinDate: Date.now()
     });
 }
 
-function activateByCode() {
-    const code = document.getElementById('manualInviteCode').value.trim();
-    if(!code) return alert("దయచేసి కోడ్ ఎంటర్ చేయండి");
-    
-    db.collection("Users").doc(auth.currentUser.uid).update({
-        membership: "Active",
-        coins: 500,
-        invitedBy: code
-    }).then(() => alert("అభినందనలు! ఇన్వైట్ కోడ్ తో మీ అకౌంట్ యాక్టివేట్ అయ్యింది."));
-}
-
 function showPage(pageId) {
-    const pages = ['home', 'wallet', 'ride', 'profile', 'activation-screen', 'login-screen'];
-    pages.forEach(id => {
+    ['home', 'wallet', 'ride', 'profile', 'activation-screen', 'login-screen'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = (id === pageId) ? 'block' : 'none';
     });
     if(pageId === 'home') loadRides();
 }
 
-// 1. Post Ride with Route & Expiry Logic
 function postRide() {
     const from = document.getElementById('from').value;
     const to = document.getElementById('to').value;
     const route = document.getElementById('route').value;
     const seats = document.getElementById('seats').value;
     const type = document.getElementById('rideType').value;
-    
-    if(!from || !to || !route || !seats) return alert("Anni vivaraalu nimpandi (Route tho saha)!");
+
+    if(!from || !to || !route || !seats) return alert("అన్ని వివరాలు నింపండి!");
 
     let price = 0;
     if (type === "Paid") {
-        price = prompt("Okko Co-Saathi share (Coins) entha?", "100");
+        price = prompt("ఒక్కో షేర్ ఎన్ని కాయిన్స్? (e.g. 100)", "100");
         if (!price) return;
     }
 
     db.collection("Rides").add({
         saathiId: auth.currentUser.uid,
         saathiName: auth.currentUser.displayName,
-        from: from,
-        to: to,
-        route: route,
-        type: type, 
+        from, to, route, type,
         price: Number(price),
         seats: Number(seats),
-        initialSeats: Number(seats),
-        status: "Available", // Status: Available -> Full -> Completed
+        status: "Available",
         createdAt: Date.now(),
-        expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 hours tharvatha auto-hide
-    }).then(() => { 
-        alert("Ride Posted Successfully!"); 
-        showPage('home'); 
-    });
+        expiresAt: Date.now() + (24 * 60 * 60 * 1000) 
+    }).then(() => { alert("Ride Posted!"); showPage('home'); });
 }
 
-// 2. Load Rides with Performance Filter (Only Active & Available)
 function loadRides() {
     const container = document.getElementById('ridesContainer');
-    container.innerHTML = "Loading rides...";
-
-    // Only show rides that are Available and not expired
-    db.collection("Rides")
-      .where("status", "==", "Available")
-      .orderBy("createdAt", "desc")
-      .limit(50) // Performance kosam top 50 mathrame
-      .onSnapshot(snap => {
+    db.collection("Rides").where("status", "==", "Available").orderBy("createdAt", "desc").onSnapshot(snap => {
         container.innerHTML = "";
-        if(snap.empty) {
-            container.innerHTML = "<p style='text-align:center;'>Ippudevaru journey cheyadam ledu. Meeru modhalupettandi!</p>";
-            return;
-        }
-
+        if(snap.empty) { container.innerHTML = "No active rides."; return; }
         snap.forEach(doc => {
             const r = doc.data();
-            // 24 hours daatithe display cheyadhu
             if (Date.now() > r.expiresAt) return;
-
-            const costBadge = r.type === "Free" ? "<span style='color:green;'>FREE</span>" : `💰 ${r.price} Coins`;
-            
-            container.innerHTML += `
-                <div class="card ride-item">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b style="font-size:1.1em;">${r.from} ➔ ${r.to}</b>
-                        <b>${costBadge}</b>
-                    </div>
-                    <p style="margin:8px 0; font-size:0.9em; color:#444;">
-                        <b>Via:</b> ${r.route} <br>
-                        <b>Host:</b> ${r.saathiName} | <b>Seats Left:</b> ${r.seats}
-                    </p>
-                    <button class="btn-join" onclick="processJoin('${doc.id}')" 
-                        style="background:#28a745; color:white; border:none; padding:10px; width:100%; border-radius:8px; cursor:pointer; font-weight:bold;">
-                        Join as Co-Saathi
-                    </button>
-                </div>`;
+            const cost = r.type === "Free" ? "FREE" : `💰 ${r.price} Coins`;
+            container.innerHTML += `<div class="card ride-item">
+                <b>${r.from} ➔ ${r.to}</b> (${cost})<br>
+                <small>Via: ${r.route} | Host: ${r.saathiName}</small><br>
+                <button onclick="processJoin('${doc.id}')" style="margin-top:10px; background:var(--secondary);">Join Ride (Seats: ${r.seats})</button>
+            </div>`;
         });
     });
 }
 
-// 3. Perfect Join Logic with Auto-Full Status
 async function processJoin(rideId) {
-    if (!auth.currentUser) return alert("Login avvandi!");
-
     const rideRef = db.collection("Rides").doc(rideId);
     const rideDoc = await rideRef.get();
     const r = rideDoc.data();
 
-    if (r.saathiId === auth.currentUser.uid) return alert("Meeru mee ride lone join avvaleru!");
-    if (r.seats <= 0) return alert("Seats full ayipoyayi!");
+    if (r.saathiId === auth.currentUser.uid) return alert("మీ రైడ్ లో మీరే జాయిన్ అవ్వలేరు!");
+    
+    if (confirm("ఈ రైడ్ లో జాయిన్ అవ్వాలనుకుంటున్నారా?")) {
+        const userRef = db.collection("Users").doc(auth.currentUser.uid);
+        const userDoc = await userRef.get();
+        
+        if (r.type === "Paid" && userDoc.data().coins < r.price) return alert("కాయిన్స్ సరిపోవు!");
 
-    const confirmMsg = r.type === "Paid" ? 
-        `${r.saathiName} ki ${r.price} coins pampinchi join avthara?` : 
-        `${r.saathiName} tho free ga journey chesthara?`;
-
-    if (confirm(confirmMsg)) {
-        try {
-            const batch = db.batch();
-            const userRef = db.collection("Users").doc(auth.currentUser.uid);
-            
-            // Paid ride ayithe coins transfer
-            if (r.type === "Paid") {
-                const uDoc = await userRef.get();
-                if (uDoc.data().coins < r.price) return alert("Coins thakkuvaga unnayi!");
-                
-                batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-r.price) });
-                batch.update(db.collection("Users").doc(r.saathiId), { coins: firebase.firestore.FieldValue.increment(r.price) });
-            }
-
-            // Seats update
-            const newSeats = r.seats - 1;
-            batch.update(rideRef, { 
-                seats: newSeats,
-                status: newSeats === 0 ? "Full" : "Available" // Seat zero ayithe list nundi pothundi
-            });
-
-            await batch.commit();
-            alert("Ride Confirmed! Saathi Contact: 9491745811");
-        } catch (e) {
-            alert("Error: " + e.message);
-        }
-    }
-}    // 2. రైడ్ లో జాయిన్ అయ్యేటప్పుడు కాయిన్స్ చెక్ చేయడం
-async function requestRide(rideId) {
-    const rideRef = db.collection("Rides").doc(rideId);
-    const rideDoc = await rideRef.get();
-    const ride = rideDoc.data();
-    const userRef = db.collection("Users").doc(auth.currentUser.uid);
-    const userDoc = await userRef.get();
-    const userData = userDoc.data();
-
-    if (ride.driverId === auth.currentUser.uid) return alert("మీరు మీ స్వంత రైడ్ లో జాయిన్ అవ్వలేరు!");
-
-    // Paid Ride అయితే కాయిన్స్ ఉన్నాయో లేదో చూడాలి
-    if (ride.type === "Paid" && userData.coins < ride.price) {
-        alert(`సరిపడా కాయిన్స్ లేవు! ఈ రైడ్ కి ${ride.price} కాయిన్స్ కావాలి.`);
-        showPage('wallet');
-        return;
-    }
-
-    if (confirm(`${ride.type} Ride లో జాయిన్ అవ్వాలనుకుంటున్నారా?`)) {
         const batch = db.batch();
-
-        // సీటు తగ్గించడం
-        batch.update(rideRef, {
-            seats: firebase.firestore.FieldValue.increment(-1)
-        });
-
-        // Paid అయితే కాయిన్స్ కట్ చేయడం
-        if (ride.type === "Paid") {
-            batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-ride.price) });
-            batch.update(db.collection("Users").doc(ride.driverId), { coins: firebase.firestore.FieldValue.increment(ride.price) });
+        if (r.type === "Paid") {
+            batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-r.price) });
+            batch.update(db.collection("Users").doc(r.saathiId), { coins: firebase.firestore.FieldValue.increment(r.price) });
         }
-
+        
+        const newSeats = r.seats - 1;
+        batch.update(rideRef, { seats: newSeats, status: newSeats === 0 ? "Full" : "Available" });
+        
         await batch.commit();
-        alert(`Success! రైడ్ బుక్ అయ్యింది. \nడ్రైవర్ ఫోన్: ${ride.driverPhone}`);
+        alert("Ride Confirmed! Contact: 9491745811");
     }
 }
 
-    function requestCoins() {
+function requestCoins() {
     const amount = document.getElementById('payAmount').value;
     const utr = document.getElementById('utrId').value;
-    if(!amount || !utr) return alert("UTR నంబర్ మరియు అమౌంట్ ఎంటర్ చేయండి");
-
+    if(!amount || !utr) return alert("UTR details missing!");
     db.collection("Payments").add({
-        userId: auth.currentUser.uid,
-        userName: auth.currentUser.displayName,
-        amount: Number(amount),
-        utr, status: "Pending", time: Date.now()
-    }).then(() => alert("పేమెంట్ వెరిఫికేషన్ కోసం పంపబడింది. అడ్మిన్ త్వరలో అప్రూవ్ చేస్తారు."));
+        userId: auth.currentUser.uid, userName: auth.currentUser.displayName,
+        amount: Number(amount), utr, status: "Pending", time: Date.now()
+    }).then(() => alert("Payment submitted for approval."));
 }
 
 function shareInvite() {
-    const link = "https://gosaathi.github.io/Saveandsafe/?invite=" + auth.currentUser.uid;
-    const msg = encodeURIComponent("నమస్కారం! Gosaathi యాప్ లో నా లింకు ద్వారా జాయిన్ అవ్వండి. ₹1200 సబ్‌స్క్రిప్షన్ ఫ్రీగా పొందండి! లింక్: " + link);
-    window.open("https://api.whatsapp.com/send?text=" + msg, '_blank');
+    const link = window.location.origin + window.location.pathname + "?invite=" + auth.currentUser.uid;
+    window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent("Join GoSaathi: " + link));
+}
+
+function activateByCode() {
+    const code = document.getElementById('manualInviteCode').value.trim();
+    if(!code) return alert("Enter Code!");
+    db.collection("Users").doc(auth.currentUser.uid).update({ membership: "Active", coins: 500, invitedBy: code })
+    .then(() => alert("Activated!"));
 }
 </script>
 </body>
