@@ -1,70 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="te">
 <head>
     <meta charset="UTF-8">
-    <title>Gosaathi Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gosaathi - Super Admin Panel</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
-        .card { background: #2a2a2a; padding: 15px; border-radius: 10px; border: 1px solid #444; margin-bottom: 10px; }
-        button { cursor: pointer; padding: 10px; border-radius: 5px; border: none; font-weight: bold; }
-        .btn-approve { background: #28a745; color: white; }
-        .btn-reject { background: #dc3545; color: white; margin-left: 10px; }
+        :root { --admin-red: #d32f2f; --dark-bg: #121212; --card-bg: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark-bg); color: white; margin: 0; padding: 20px; }
+        .header { text-align: center; padding: 20px; border-bottom: 2px solid var(--admin-red); margin-bottom: 20px; }
+        .card { background: var(--card-bg); padding: 15px; border-radius: 10px; border: 1px solid #333; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #252525; font-size: 14px; }
+        th, td { padding: 12px; border: 1px solid #444; text-align: left; }
+        th { background: var(--admin-red); color: white; }
+        input, select, button { padding: 8px; border-radius: 5px; border: 1px solid #444; margin: 5px 0; }
+        button { cursor: pointer; font-weight: bold; }
+        .btn-approve { background: #2e7d32; color: white; border: none; }
+        .btn-reject { background: #c62828; color: white; border: none; }
+        .btn-action { background: #0277bd; color: white; border: none; margin-right: 5px; }
+        .scroll-box { overflow-x: auto; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, min-minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: #333; padding: 15px; text-align: center; border-radius: 10px; border-top: 4px solid var(--admin-red); }
     </style>
 </head>
 <body>
-    <h1>🚀 Gosaathi Admin Control</h1>
-    <div id="login-section">
-        <button onclick="adminLogin()" style="background:#007bff; color:white; padding:15px;">Login as Admin</button>
-    </div>
+
+<div class="header">
+    <h1>🚀 Gosaathi Super Admin</h1>
+    <p id="adminName">Checking Access...</p>
+    <button onclick="auth.signOut()" style="background:#444; color:white;">Logout</button>
+</div>
+
+<div id="login-section" style="text-align:center; margin-top:100px;">
+    <button onclick="adminLogin()" style="background:var(--admin-red); color:white; padding:15px; font-size:18px;">Login as Admin</button>
+</div>
+
+<div id="admin-content" style="display:none;">
     
-    <div id="admin-content" style="display:none;">
-        <h3>Pending Payments</h3>
-        <div id="pendingList">Loading...</div>
+    <div class="stat-grid">
+        <div class="stat-card"><h3>Admin Balance</h3><h2 id="adminCoins">0</h2></div>
+        <div class="stat-card"><h3>Total Users</h3><h2 id="totalUsers">0</h2></div>
+        <div class="stat-card"><h3>Active Rides</h3><h2 id="totalRides">0</h2></div>
     </div>
 
+    <div class="card">
+        <h3 style="color:#ffcc00;">⏳ Pending Payment Requests</h3>
+        <div id="pendingList">Loading requests...</div>
+    </div>
+
+    <div class="card">
+        <h3>👥 Users Database</h3>
+        <div class="scroll-box">
+            <table id="userTable">
+                <thead>
+                    <tr>
+                        <th>Name (Gender)</th>
+                        <th>Location / Phone</th>
+                        <th>Coins</th>
+                        <th>Invite Count</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🚗 Live Rides Management</h3>
+        <div id="adminRidesContainer">Loading rides...</div>
+    </div>
+
+</div>
+
 <script>
-const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", authDomain: "gemini-spinning-wheel-game.firebaseapp.com", projectId: "gemini-spinning-wheel-game" };
+const firebaseConfig = { 
+    apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", 
+    authDomain: "gemini-spinning-wheel-game.firebaseapp.com", 
+    projectId: "gemini-spinning-wheel-game" 
+};
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+
+const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1";
 
 function adminLogin() {
     auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
 }
 
 auth.onAuthStateChanged(user => {
-    if (user && user.uid === 'JiHQO3M0UUdftGqDPUKBwxPqv9q1') {
+    if (user && user.uid === ADMIN_UID) {
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('admin-content').style.display = 'block';
+        document.getElementById('adminName').innerText = "Welcome, Admin: " + user.displayName;
         loadAdminData();
     } else if (user) {
-        alert("Access Denied! You are not an admin.");
+        alert("Access Denied! Go back to user app.");
         auth.signOut();
     }
 });
 
 function loadAdminData() {
+    // 1. Load Admin Balance & Stats
+    db.collection("Users").doc(ADMIN_UID).onSnapshot(doc => {
+        if(doc.exists) document.getElementById('adminCoins').innerText = doc.data().coins || 0;
+    });
+
+    // 2. Pending Payments
     db.collection("Payments").where("status", "==", "Pending").onSnapshot(snap => {
         const div = document.getElementById('pendingList');
-        div.innerHTML = "";
+        div.innerHTML = snap.empty ? "No pending payments." : "";
         snap.forEach(doc => {
             const p = doc.data();
             div.innerHTML += `
-                <div class="card">
-                    <b>User:</b> ${p.userName} | <b>Amount:</b> ₹${p.amount} <br>
-                    <b>UTR:</b> <span style="color:yellow">${p.utr}</span><br>
-                    <button class="btn-approve" onclick="approve('${doc.id}', '${p.userId}', ${p.amount})">Approve & Activate</button>
-                    <button class="btn-reject" onclick="reject('${doc.id}')">Reject</button>
+                <div style="background:#252525; padding:10px; margin-top:5px; border-radius:5px;">
+                    <b>${p.userName}</b> - ₹${p.amount} | UTR: <span style="color:yellow">${p.utr}</span><br>
+                    <button class="btn-approve" onclick="approvePayment('${doc.id}', '${p.userId}', ${p.amount})">Approve</button>
+                    <button class="btn-reject" onclick="rejectPayment('${doc.id}')">Reject</button>
+                </div>`;
+        });
+    });
+
+    // 3. User Table
+    db.collection("Users").onSnapshot(snap => {
+        const tbody = document.getElementById('userTableBody');
+        document.getElementById('totalUsers').innerText = snap.size;
+        tbody.innerHTML = "";
+        snap.forEach(doc => {
+            const u = doc.data();
+            if(doc.id === ADMIN_UID) return;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${u.name} (${u.gender || 'N/A'})</td>
+                    <td>${u.phone || 'No Phone'}<br><small>${u.email}</small></td>
+                    <td><b>${u.coins || 0}</b></td>
+                    <td>${u.invites || 0}</td>
+                    <td>
+                        <button class="btn-action" onclick="manageCoins('${doc.id}', 'add')">Add</button>
+                        <button class="btn-action" style="background:#e65100" onclick="manageCoins('${doc.id}', 'sub')">Sub</button>
+                    </td>
+                </tr>`;
+        });
+    });
+
+    // 4. Rides List
+    db.collection("Rides").onSnapshot(snap => {
+        const container = document.getElementById('adminRidesContainer');
+        document.getElementById('totalRides').innerText = snap.size;
+        container.innerHTML = snap.empty ? "No active rides." : "";
+        snap.forEach(doc => {
+            const r = doc.data();
+            container.innerHTML += `
+                <div style="background:#252525; padding:10px; margin-top:5px; border-radius:5px; border-left:4px solid #007bff;">
+                    <b>${r.from} ➔ ${r.to}</b> | Host: ${r.saathiName} | Status: ${r.status}<br>
+                    <button class="btn-reject" style="padding:5px; font-size:12px;" onclick="deleteRide('${doc.id}')">Delete Ride</button>
                 </div>`;
         });
     });
 }
 
-function approve(payId, userId, amount) {
-    // Logic: ₹1200 gives 1,00,000 coins. Others get ₹1 = 100 coins.
+// --- Admin Actions ---
+
+async function approvePayment(payId, userId, amount) {
     const coins = (amount === 1200) ? 100000 : (amount * 100);
     const batch = db.batch();
     batch.update(db.collection("Users").doc(userId), {
@@ -72,12 +172,29 @@ function approve(payId, userId, amount) {
         coins: firebase.firestore.FieldValue.increment(coins)
     });
     batch.update(db.collection("Payments").doc(payId), { status: "Approved" });
-    batch.commit().then(() => alert("User Activated with " + coins + " coins!"));
+    await batch.commit();
+    alert("Payment Approved! Coins added to user.");
 }
 
-function reject(payId) {
+function rejectPayment(payId) {
     if(confirm("Reject this payment?")) {
         db.collection("Payments").doc(payId).update({ status: "Rejected" });
+    }
+}
+
+function manageCoins(uid, type) {
+    const amt = prompt("Enter number of coins:");
+    if(!amt || isNaN(amt)) return;
+    const finalAmt = (type === 'add') ? Number(amt) : -Number(amt);
+    
+    db.collection("Users").doc(uid).update({
+        coins: firebase.firestore.FieldValue.increment(finalAmt)
+    }).then(() => alert("User coins updated!"));
+}
+
+function deleteRide(rideId) {
+    if(confirm("Are you sure you want to delete this ride?")) {
+        db.collection("Rides").doc(rideId).delete();
     }
 }
 </script>
