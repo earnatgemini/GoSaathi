@@ -19,7 +19,8 @@
         input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; font-size: 16px; }
         button { background: var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; }
         .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
-        #activation-screen { text-align:center; padding:10px; }
+        table { width:100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     </style>
 </head>
 <body>
@@ -42,7 +43,6 @@
     <div id="login-screen" style="text-align:center; margin-top:100px;">
         <img src="logo.png" style="height:80px; margin-bottom:20px;"><br>
         <h2>Welcome to Gosaathi</h2>
-        <p>ప్రయాణాన్ని పంచుకోండి • డబ్బును ఆదా చేయండి</p>
         <button onclick="googleLogin()" style="background:#db4437; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
     </div>
 
@@ -50,6 +50,7 @@
         <div class="card">
             <h3>Basic Information</h3>
             <input type="text" id="userPhone" placeholder="Mobile Number">
+            <input type="text" id="userVillage" placeholder="Village / City">
             <select id="userGender">
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
@@ -64,12 +65,10 @@
         <div class="card">
             <h2 style="color:var(--primary);">Account Activation</h2>
             <p>మీ అకౌంట్ ఇంకా యాక్టివేట్ కాలేదు.</p>
-            <div style="background:#e9ecef; padding:15px; border-radius:10px; margin-bottom:20px;">
-                <h3>Option 1: Free Joining 🎁</h3>
-                <input type="text" id="manualInviteCode" placeholder="Enter Invite Code">
-                <button onclick="activateByCode()" style="background:var(--secondary);">యాక్టివేట్ చేయండి</button>
-            </div>
-            <button onclick="showPage('wallet')">Option 2: Pay ₹1200 for 1 Lakh Coins ⚡</button>
+            <input type="text" id="manualInviteCode" placeholder="Enter Invite Code">
+            <button onclick="activateByCode()" style="background:var(--secondary);">యాక్టివేట్ చేయండి</button>
+            <hr>
+            <button onclick="showPage('wallet')">Option 2: Pay ₹1200 for 1 Lakh Coins</button>
         </div>
     </div>
 
@@ -82,7 +81,7 @@
         <div class="card wallet-card">
             <h3>My Balance</h3>
             <h2 id="coinBalance">0</h2>
-            <p>Coins (₹1 = 100 Coins)</p>
+            <p>Coins</p>
         </div>
         <div class="card">
             <h3>Transfer Coins to Saathi</h3>
@@ -91,9 +90,9 @@
             <button onclick="transferCoins()" style="background:var(--dark);">Send Coins</button>
         </div>
         <div class="card">
-            <h3>Add Coins</h3>
-            <img src="qr.png" style="width:180px; display:block; margin:auto;">
-            <input type="number" id="payAmount" placeholder="Amount (e.g. 1200)">
+            <h3>Add Coins (Scan & Pay)</h3>
+            <img src="qr.png" style="width:150px; display:block; margin:auto;">
+            <input type="number" id="payAmount" placeholder="Amount (₹)">
             <input type="text" id="utrId" placeholder="UTR Number">
             <button onclick="requestCoins()" style="background:var(--secondary);">Submit Payment</button>
         </div>
@@ -107,13 +106,13 @@
             <input id="route" placeholder="Via / Route">
             <input type="number" id="distanceKm" placeholder="Distance in KM">
             <select id="ridePref">
-                <option value="Any">Preference: Anyone</option>
+                <option value="Any">Anyone</option>
                 <option value="Male">Men Only</option>
                 <option value="Female">Women Only</option>
             </select>
             <select id="rideType">
-                <option value="Free">Free Ride</option>
-                <option value="Paid">Paid Ride</option>
+                <option value="Free">Free Ride (Cost: 10 Coins)</option>
+                <option value="Paid">Paid Ride (Cost: 100 Coins)</option>
             </select>
             <input type="number" id="seats" placeholder="Seats Available">
             <button onclick="postRide()">Post Ride</button>
@@ -124,10 +123,18 @@
         <div class="card">
             <h3>Profile & Invite</h3>
             <p>Invitations Left: <b id="inviteCount">0</b></p>
-            <p>Your UID (Invite Code):</p>
-            <code id="myUidDisplay" style="display:block; background:#eee; padding:10px; margin-bottom:10px;"></code>
+            <p>Your UID:</p>
+            <code id="myUidDisplay" style="display:block; background:#eee; padding:10px;"></code>
             <button onclick="shareInvite()" style="background:#25D366;">WhatsApp Invite</button>
             <button onclick="auth.signOut()" style="background:#666; margin-top:20px;">Logout</button>
+        </div>
+        
+        <div id="admin-panel" style="display:none; border:2px solid red; padding:10px; border-radius:10px; margin-top:10px;">
+            <h2 style="color:red; text-align:center;">🛡️ Admin Panel</h2>
+            <h4>Users List</h4>
+            <div style="overflow-x:auto;"><table id="userTable"></table></div>
+            <h4>Manage Active Rides</h4>
+            <div id="adminRidesContainer"></div>
         </div>
     </div>
 </div>
@@ -138,6 +145,8 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1"; // నీ UID
+
 function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
 auth.onAuthStateChanged(user => {
@@ -145,6 +154,10 @@ auth.onAuthStateChanged(user => {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('myUidDisplay').innerText = user.uid;
         checkUserStatus(user);
+        if(user.uid === ADMIN_UID) {
+            document.getElementById('admin-panel').style.display = 'block';
+            loadAdminData();
+        }
     } else {
         document.getElementById('main-ui').style.display = 'none';
         showPage('login-screen');
@@ -155,48 +168,146 @@ function checkUserStatus(user) {
     db.collection("Users").doc(user.uid).onSnapshot(doc => {
         if (doc.exists) {
             const data = doc.data();
-            if (!data.phone) { showPage('basic-info-screen'); }
+            if (!data.phone) showPage('basic-info-screen');
             else if (data.membership === "Active") {
                 document.getElementById('main-ui').style.display = 'block';
                 document.getElementById('coinBalance').innerText = data.coins || 0;
                 document.getElementById('inviteCount').innerText = data.invites || 0;
                 showPage('home');
-            } else { showPage('activation-screen'); }
-        } else { handleNewUser(user); }
+            } else showPage('activation-screen');
+        } else handleNewUser(user);
     });
 }
 
 async function handleNewUser(user) {
     const inviteCode = new URLSearchParams(window.location.search).get('invite');
     let isInvited = false;
-    
     if(inviteCode) {
         const inviterDoc = await db.collection("Users").doc(inviteCode).get();
         if(inviterDoc.exists && inviterDoc.data().invites > 0) {
             isInvited = true;
-            await db.collection("Users").doc(inviteCode).update({
-                invites: firebase.firestore.FieldValue.increment(-1)
-            });
+            await db.collection("Users").doc(inviteCode).update({ invites: firebase.firestore.FieldValue.increment(-1) });
         }
     }
-
     db.collection("Users").doc(user.uid).set({
-        name: user.displayName, email: user.email,
-        coins: isInvited ? 500 : 0,
-        membership: isInvited ? "Active" : "Pending",
-        invites: 5, // 7. Initially 5 invites
-        inviteExpiry: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days expiry
-        joinDate: Date.now()
+        name: user.displayName, email: user.email, coins: isInvited ? 500 : 0,
+        membership: isInvited ? "Active" : "Pending", invites: 5, joinDate: Date.now()
     });
 }
 
 function submitBasicInfo() {
     const phone = document.getElementById('userPhone').value;
+    const village = document.getElementById('userVillage').value;
     const gender = document.getElementById('userGender').value;
     const tc = document.getElementById('tcCheck').checked;
-    if(!phone || !gender || !tc) return alert("Fill all info and accept T&C!");
-    db.collection("Users").doc(auth.currentUser.uid).update({ phone, gender })
-    .then(() => { alert("Info saved!"); clearForm(['userPhone', 'userGender', 'tcCheck']); });
+    if(!phone || !gender || !tc) return alert("Fill all details!");
+    db.collection("Users").doc(auth.currentUser.uid).update({ phone, village, gender })
+    .then(() => clearForm(['userPhone', 'userVillage', 'userGender', 'tcCheck']));
+}
+
+async function postRide() {
+    const from = document.getElementById('from').value;
+    const to = document.getElementById('to').value;
+    const type = document.getElementById('rideType').value;
+    const distance = Number(document.getElementById('distanceKm').value);
+    const comm = (type === "Paid") ? 100 : 10;
+
+    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    if(userDoc.data().coins < comm) return alert("Insufficient coins for commission!");
+
+    const batch = db.batch();
+    batch.update(db.collection("Users").doc(auth.currentUser.uid), { coins: firebase.firestore.FieldValue.increment(-comm) });
+    batch.update(db.collection("Users").doc(ADMIN_UID), { coins: firebase.firestore.FieldValue.increment(comm) });
+    
+    const rideRef = db.collection("Rides").doc();
+    batch.set(rideRef, {
+        saathiId: auth.currentUser.uid, saathiName: auth.currentUser.displayName,
+        from, to, type, distance, status: "Available", createdAt: Date.now(),
+        route: document.getElementById('route').value, seats: Number(document.getElementById('seats').value),
+        preference: document.getElementById('ridePref').value
+    });
+
+    await batch.commit();
+    alert(`Ride Posted! ${comm} coins commission deducted.`);
+    clearForm(['from', 'to', 'route', 'distanceKm', 'seats']);
+    showPage('home');
+}
+
+function loadRides() {
+    const container = document.getElementById('ridesContainer');
+    const now = Date.now();
+    db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
+        container.innerHTML = "";
+        snap.forEach(doc => {
+            const r = doc.data();
+            const age = (now - r.createdAt) / (1000 * 60 * 60);
+            if (r.distance < 100 && age > 6) { db.collection("Rides").doc(doc.id).delete(); return; }
+            
+            container.innerHTML += `<div class="card ride-item">
+                <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
+                <button onclick="initiateJoin('${doc.id}', '${r.type}')" style="margin-top:10px; background:var(--secondary);">Join Ride</button>
+            </div>`;
+        });
+    });
+}
+
+async function initiateJoin(rideId, rideType) {
+    const comm = (rideType === "Paid") ? 40 : 500;
+    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    if(userDoc.data().coins < comm) return alert("Not enough coins for commission!");
+
+    if(confirm(`Join as Co-Saathi? Commission: ${comm} coins.`)) {
+        const batch = db.batch();
+        batch.update(db.collection("Users").doc(auth.currentUser.uid), { coins: firebase.firestore.FieldValue.increment(-comm) });
+        batch.update(db.collection("Users").doc(ADMIN_UID), { coins: firebase.firestore.FieldValue.increment(comm) });
+        batch.update(db.collection("Rides").doc(rideId), { status: "GoSaathi" });
+        await batch.commit();
+        alert("Ride Joined!");
+    }
+}
+
+async function transferCoins() {
+    const target = document.getElementById('transferTargetUid').value;
+    const amount = Number(document.getElementById('transferAmount').value);
+    const userRef = db.collection("Users").doc(auth.currentUser.uid);
+    const userDoc = await userRef.get();
+    if(userDoc.data().coins < amount) return alert("Insufficient balance!");
+
+    const batch = db.batch();
+    batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
+    batch.update(db.collection("Users").doc(target), { coins: firebase.firestore.FieldValue.increment(amount) });
+    await batch.commit();
+    alert("Transferred!");
+    clearForm(['transferTargetUid', 'transferAmount']);
+}
+
+async function requestCoins() {
+    const utr = document.getElementById('utrId').value;
+    const check = await db.collection("Payments").where("utr", "==", utr).get();
+    if(!check.empty) return alert("Duplicate UTR!");
+
+    db.collection("Payments").add({
+        userId: auth.currentUser.uid, userName: auth.currentUser.displayName,
+        amount: Number(document.getElementById('payAmount').value), utr, status: "Pending", time: Date.now()
+    }).then(() => { alert("Submitted!"); clearForm(['payAmount', 'utrId']); });
+}
+
+function loadAdminData() {
+    db.collection("Users").onSnapshot(snap => {
+        const table = document.getElementById('userTable');
+        table.innerHTML = `<tr><th>Name</th><th>Coins</th><th>Action</th></tr>`;
+        snap.forEach(doc => {
+            const u = doc.data();
+            table.innerHTML += `<tr><td>${u.name}</td><td>${u.coins}</td>
+                <td><button onclick="adminManageCoins('${doc.id}', 'add')">+</button>
+                <button onclick="adminManageCoins('${doc.id}', 'sub')">-</button></td></tr>`;
+        });
+    });
+}
+
+function adminManageCoins(uid, type) {
+    const amt = Number(prompt("Amount?"));
+    db.collection("Users").doc(uid).update({ coins: firebase.firestore.FieldValue.increment(type==='add'?amt:-amt) });
 }
 
 function showPage(pageId) {
@@ -207,125 +318,10 @@ function showPage(pageId) {
     if(pageId === 'home') loadRides();
 }
 
-function clearForm(ids) {
-    ids.forEach(id => {
-        const el = document.getElementById(id);
-        if(el.type === "checkbox") el.checked = false;
-        else el.value = "";
-    });
-}
-
-function postRide() {
-    const from = document.getElementById('from').value;
-    const to = document.getElementById('to').value;
-    const route = document.getElementById('route').value;
-    const distance = Number(document.getElementById('distanceKm').value);
-    const seats = document.getElementById('seats').value;
-    const type = document.getElementById('rideType').value;
-    const pref = document.getElementById('ridePref').value;
-
-    if(!from || !to || !route || !distance) return alert("All fields are mandatory!");
-
-    let price = 0;
-    if (type === "Paid") {
-        price = prompt("Offer Coins per seat?", "1000");
-        if (!price) return;
-    }
-
-    db.collection("Rides").add({
-        saathiId: auth.currentUser.uid,
-        saathiName: auth.currentUser.displayName,
-        from, to, route, type, preference: pref,
-        price: Number(price), seats: Number(seats), distance,
-        status: "Available", createdAt: Date.now()
-    }).then(() => { 
-        alert("Ride Posted!"); 
-        clearForm(['from', 'to', 'route', 'distanceKm', 'seats']);
-        showPage('home'); 
-    });
-}
-
-async function loadRides() {
-    const container = document.getElementById('ridesContainer');
-    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
-    const myGender = userDoc.data().gender;
-
-    // 2 & 3. Auto Delete Logic & Status Filter
-    const now = Date.now();
-    db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
-        container.innerHTML = "";
-        snap.forEach(doc => {
-            const r = doc.data();
-            const rideAgeHrs = (now - r.createdAt) / (1000 * 60 * 60);
-
-            // 2. Logic for < 100km rides
-            if (r.distance < 100 && rideAgeHrs > 6) {
-                db.collection("Rides").doc(doc.id).delete(); // Permanent Delete
-                return;
-            }
-
-            // Gender Preference Filter
-            if(r.preference !== "Any" && r.preference !== myGender) return;
-
-            container.innerHTML += `<div class="card ride-item">
-                <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
-                <small>Via: ${r.route} | Preference: ${r.preference}</small><br>
-                <button onclick="initiateRequest('${doc.id}')" style="margin-top:10px; background:var(--secondary);">Join Ride</button>
-            </div>`;
-        });
-    });
-}
-
-async function transferCoins() {
-    const targetUid = document.getElementById('transferTargetUid').value;
-    const amount = Number(document.getElementById('transferAmount').value);
-    if(!targetUid || amount <= 0) return alert("Invalid details!");
-
-    const userRef = db.collection("Users").doc(auth.currentUser.uid);
-    const targetRef = db.collection("Users").doc(targetUid);
-    
-    const userDoc = await userRef.get();
-    if(userDoc.data().coins < amount) return alert("Insufficient Balance!");
-
-    const batch = db.batch();
-    batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
-    batch.update(targetRef, { coins: firebase.firestore.FieldValue.increment(amount) });
-    
-    await batch.commit();
-    alert("Coins Transferred Successfully!");
-    clearForm(['transferTargetUid', 'transferAmount']);
-}
-
-async function requestCoins() {
-    const amount = document.getElementById('payAmount').value;
-    const utr = document.getElementById('utrId').value;
-    if(!amount || !utr) return alert("Details missing!");
-
-    // 5. Duplicate UTR check
-    const check = await db.collection("Payments").where("utr", "==", utr).get();
-    if(!check.empty) return alert("This UTR is already used!");
-
-    db.collection("Payments").add({
-        userId: auth.currentUser.uid, amount: Number(amount), utr, status: "Pending", time: Date.now()
-    }).then(() => { 
-        alert("Submitted!"); 
-        clearForm(['payAmount', 'utrId']);
-    });
-}
-
-// Additional Workflow functions (Stubs to be expanded based on your previous workflow requirement)
-async function initiateRequest(rideId) {
-    const waitPoint = prompt("Your Waiting Point?");
-    if(!waitPoint) return;
-    // Follow the workflow from previous instructions to save to 'Requests' collection
-    alert("Request Sent! (Logic integrated with Firestore)");
-}
-
-function activateByCode() {
-    const code = document.getElementById('manualInviteCode').value.trim();
-    db.collection("Users").doc(auth.currentUser.uid).update({ membership: "Active", coins: 500 })
-    .then(() => { alert("Activated!"); clearForm(['manualInviteCode']); });
-}
+function clearForm(ids) { ids.forEach(id => { 
+    let el = document.getElementById(id); 
+    if(el.type === "checkbox") el.checked = false; else el.value = ""; 
+}); }
 
 function shareInvite() {
     const link = window.location.origin + window.location.pathname + "?invite=" + auth.currentUser.uid;
