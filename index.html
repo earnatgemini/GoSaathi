@@ -76,7 +76,10 @@
         <h3>Available Rides (Live)</h3>
         <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
     </div>
-
+<div id="requests-section" class="card" style="display:none; border-top: 5px solid var(--gold);">
+    <h3>📩 ప్రయాణ రిక్వెస్ట్‌లు (Requests)</h3>
+    <div id="incomingRequests">రిక్వెస్ట్‌లు ఏమీ లేవు...</div>
+</div>
     <div id="wallet" style="display:none;">
         <div class="card wallet-card">
             <h3>My Balance</h3>
@@ -145,7 +148,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1"; // నీ UID
+const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1"; 
 
 function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
@@ -213,7 +216,7 @@ async function postRide() {
     const comm = (type === "Paid") ? 100 : 10;
 
     const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
-    if(userDoc.data().coins < comm) return alert("Insufficient coins for commission!");
+    if((userDoc.data().coins || 0) < comm) return alert("Insufficient coins for commission!");
 
     const batch = db.batch();
     batch.update(db.collection("Users").doc(auth.currentUser.uid), { coins: firebase.firestore.FieldValue.increment(-comm) });
@@ -245,24 +248,105 @@ function loadRides() {
             
             container.innerHTML += `<div class="card ride-item">
                 <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
+                <small>Host: ${r.saathiName} | Route: ${r.route}</small>
                 <button onclick="initiateJoin('${doc.id}', '${r.type}')" style="margin-top:10px; background:var(--secondary);">Join Ride</button>
             </div>`;
         });
     });
 }
 
+// రిక్వెస్ట్ పంపే లాజిక్ (Co-Saathi Side)
 async function initiateJoin(rideId, rideType) {
-    const comm = (rideType === "Paid") ? 40 : 500;
     const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
-    if(userDoc.data().coins < comm) return alert("Not enough coins for commission!");
+    const comm = (rideType === "Paid") ? 40 : 500;
 
-    if(confirm(`Join as Co-Saathi? Commission: ${comm} coins.`)) {
-        const batch = db.batch();
-        batch.update(db.collection("Users").doc(auth.currentUser.uid), { coins: firebase.firestore.FieldValue.increment(-comm) });
-        batch.update(db.collection("Users").doc(ADMIN_UID), { coins: firebase.firestore.FieldValue.increment(comm) });
-        batch.update(db.collection("Rides").doc(rideId), { status: "GoSaathi" });
-        await batch.commit();
-        alert("Ride Joined!");
+    if ((userDoc.data().coins || 0) < comm) {
+        return alert("కమీషన్ కోసం సరిపడా కాయిన్స్ లేవు! కనీసం " + comm + " కాయిన్స్ ఉండాలి.");
+    }
+
+    let offer = 0;
+    if (rideType === "Paid") {
+        offer = prompt("హోస్ట్‌కి మీరు ఎంత ఆఫర్ చేయాలనుకుంటున్నారు? (Coins per seat)", "100");
+        if (!offer || isNaN(offer)) return;
+    }
+
+    const rideDoc = await db.collection("Rides").doc(rideId).get();
+    const rData = rideDoc.data();
+
+    db.collection("Requests").add({
+        rideId: rideId,
+        hostId: rData.saathiId, 
+        coSaathiId: auth.currentUser.uid,
+        coSaathiName: auth.currentUser.displayName,
+        from: rData.from,
+        to: rData.to,
+        rideType: rideType,
+        offerPrice: Number(offer),
+        commToPay: comm,
+        status: "Pending",
+        createdAt: Date.now()
+    }).then(() => {
+        alert("రిక్వెస్ట్ పంపబడింది! హోస్ట్ యాక్సెప్ట్ చేసే వరకు వేచి ఉండండి.");
+    });
+}
+
+// హోస్ట్ కోసం రిక్వెస్ట్ లు లోడ్ చేయడం
+function loadIncomingRequests() {
+    const container = document.getElementById('incomingRequests');
+    const section = document.getElementById('requests-section');
+
+    db.collection("Requests")
+        .where("hostId", "==", auth.currentUser.uid)
+        .where("status", "==", "Pending")
+        .onSnapshot(snap => {
+            if (snap.empty) {
+                section.style.display = "none";
+                return;
+            }
+            section.style.display = "block";
+            container.innerHTML = "";
+            snap.forEach(doc => {
+                const req = doc.data();
+                container.innerHTML += `
+                    <div class="card" style="border:1px solid #ddd; padding:10px; margin-bottom:10px;">
+                        <p><b>${req.coSaathiName}</b> ${req.from} నుండి ${req.to} కి రావాలనుకుంటున్నారు.</p>
+                        <p>ఆఫర్ చేసిన ధర: <b style="color:green;">${req.offerPrice} Coins</b></p>
+                        <div style="display:flex; justify-content:space-between;">
+                            <button onclick="acceptRequest('${doc.id}')" style="background:var(--secondary); width:48%;">Accept</button>
+                            <button onclick="rejectRequest('${doc.id}')" style="background:red; width:48%;">Reject</button>
+                        </div>
+                    </div>`;
+            });
+        });
+}
+
+async function acceptRequest(reqId) {
+    const reqDoc = await db.collection("Requests").doc(reqId).get();
+    const reqData = reqDoc.data();
+    const comm = reqData.commToPay;
+
+    const coDoc = await db.collection("Users").doc(reqData.coSaathiId).get();
+    if (coDoc.data().coins < comm) return alert("కో-సాథీ దగ్గర కమీషన్ కాయిన్స్ లేవు!");
+
+    const batch = db.batch();
+    
+    // కమీషన్ కట్ చేసి అడ్మిన్ కి పంపడం
+    batch.update(db.collection("Users").doc(reqData.coSaathiId), { coins: firebase.firestore.FieldValue.increment(-comm) });
+    batch.update(db.collection("Users").doc(ADMIN_UID), { coins: firebase.firestore.FieldValue.increment(comm) });
+
+    // రైడ్ స్టేటస్ మార్చడం
+    batch.update(db.collection("Rides").doc(reqData.rideId), { status: "GoSaathi" });
+    
+    // రిక్వెస్ట్ అప్‌డేట్
+    batch.update(db.collection("Requests").doc(reqId), { status: "Accepted" });
+
+    await batch.commit();
+    alert("రైడ్ కన్ఫర్మ్ అయింది!");
+}
+
+function rejectRequest(reqId) {
+    if(confirm("ఈ రిక్వెస్ట్ ని రిజెక్ట్ చేయాలా?")) {
+        db.collection("Requests").doc(reqId).update({ status: "Rejected" });
     }
 }
 
@@ -315,7 +399,10 @@ function showPage(pageId) {
         const el = document.getElementById(id);
         if (el) el.style.display = (id === pageId) ? 'block' : 'none';
     });
-    if(pageId === 'home') loadRides();
+    if(pageId === 'home') {
+        loadRides();
+        loadIncomingRequests(); // హోమ్ పేజీ లో రిక్వెస్ట్ లు చెక్ చేస్తుంది
+    }
 }
 
 function clearForm(ids) { ids.forEach(id => { 
