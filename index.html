@@ -118,6 +118,12 @@
                 <option value="Paid">Paid Ride (Cost: 100 Coins)</option>
             </select>
             <input type="number" id="seats" placeholder="Seats Available">
+            <div id="paidExtraFields" style="display:none;">
+    <input type="number" id="demandPrice" placeholder="అడిగే కాయిన్స్ (Price in Coins)">
+</div>
+
+<p style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):</p>
+<input type="datetime-local" id="rideTime">
             <button onclick="postRide()">Post Ride</button>
         </div>
     </div>
@@ -212,27 +218,49 @@ async function postRide() {
     const from = document.getElementById('from').value;
     const to = document.getElementById('to').value;
     const type = document.getElementById('rideType').value;
-    const distance = Number(document.getElementById('distanceKm').value);
-    const comm = (type === "Paid") ? 100 : 10;
+    const time = document.getElementById('rideTime').value;
+    const demand = (type === "Paid") ? Number(document.getElementById('demandPrice').value) : 0;
 
-    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
-    if((userDoc.data().coins || 0) < comm) return alert("Insufficient coins for commission!");
+    if(!from || !to || !time) return alert("దయచేసి ఊరి పేరు మరియు సమయం ఎంటర్ చేయండి!");
+    if(type === "Paid" && !demand) return alert("దయచేసి మీరు కోరుకునే కాయిన్స్ ఎంటర్ చేయండి!");
+
+    const hostUid = auth.currentUser.uid;
+    const hostDoc = await db.collection("Users").doc(hostUid).get();
+
+    if ((hostDoc.data().coins || 0) < 50)
+        return alert("రైడ్ పోస్ట్ చేయడానికి కనీసం 50 కాయిన్స్ ఉండాలి!");
 
     const batch = db.batch();
-    batch.update(db.collection("Users").doc(auth.currentUser.uid), { coins: firebase.firestore.FieldValue.increment(-comm) });
-    batch.update(db.collection("Users").doc(ADMIN_UID), { coins: firebase.firestore.FieldValue.increment(comm) });
-    
+
+    // ✅ 50 coins to admin
+    batch.update(db.collection("Users").doc(hostUid), {
+        coins: firebase.firestore.FieldValue.increment(-50)
+    });
+    batch.update(db.collection("Users").doc(ADMIN_UID), {
+        coins: firebase.firestore.FieldValue.increment(50)
+    });
+
     const rideRef = db.collection("Rides").doc();
+
     batch.set(rideRef, {
-        saathiId: auth.currentUser.uid, saathiName: auth.currentUser.displayName,
-        from, to, type, distance, status: "Available", createdAt: Date.now(),
-        route: document.getElementById('route').value, seats: Number(document.getElementById('seats').value),
+        saathiId: hostUid,
+        saathiName: auth.currentUser.displayName,
+        from, to, type,
+        time,
+        demand,
+        distance: Number(document.getElementById('distanceKm').value),
+        status: "Available",
+        createdAt: Date.now(),
+        route: document.getElementById('route').value,
+        seats: Number(document.getElementById('seats').value),
         preference: document.getElementById('ridePref').value
     });
 
     await batch.commit();
-    alert(`Ride Posted! ${comm} coins commission deducted.`);
-    clearForm(['from', 'to', 'route', 'distanceKm', 'seats']);
+
+    alert(" రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!(మీ సౌలబ్యం కొరకు 50 కాయిన్స్ కట్ అయ్యాయి.)");
+
+    clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
     showPage('home');
 }
 
@@ -247,10 +275,13 @@ function loadRides() {
             if (r.distance < 100 && age > 6) { db.collection("Rides").doc(doc.id).delete(); return; }
             
             container.innerHTML += `<div class="card ride-item">
-                <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
-                <small>Host: ${r.saathiName} | Route: ${r.route}</small>
-                <button onclick="initiateJoin('${doc.id}', '${r.type}')" style="margin-top:10px; background:var(--secondary);">Join Ride</button>
-            </div>`;
+    <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
+    📅 సమయం: ${r.time ? new Date(r.time).toLocaleString() : 'N/A'}<br>
+    💰 హోస్ట్ డిమాండ్: ${r.type === 'Paid' ? r.demand + ' Coins' : 'FREE'}<br>
+    <small>Host: ${r.saathiName} | Route: ${r.route}</small>
+    <button onclick="initiateJoin('${doc.id}', '${r.type}')" 
+    style="margin-top:10px; background:var(--secondary);">Join Ride</button>
+</div>`;
         });
     });
 }
@@ -322,26 +353,56 @@ function loadIncomingRequests() {
 
 async function acceptRequest(reqId) {
     const reqDoc = await db.collection("Requests").doc(reqId).get();
-    const reqData = reqDoc.data();
-    const comm = reqData.commToPay;
+    const req = reqDoc.data();
 
-    const coDoc = await db.collection("Users").doc(reqData.coSaathiId).get();
-    if (coDoc.data().coins < comm) return alert("కో-సాథీ దగ్గర కమీషన్ కాయిన్స్ లేవు!");
+    const hostUid = req.hostId;
+    const coUid = req.coSaathiId;
+
+    const hostDoc = await db.collection("Users").doc(hostUid).get();
+    const coDoc = await db.collection("Users").doc(coUid).get();
 
     const batch = db.batch();
-    
-    // కమీషన్ కట్ చేసి అడ్మిన్ కి పంపడం
-    batch.update(db.collection("Users").doc(reqData.coSaathiId), { coins: firebase.firestore.FieldValue.increment(-comm) });
-    batch.update(db.collection("Users").doc(ADMIN_UID), { coins: firebase.firestore.FieldValue.increment(comm) });
 
-    // రైడ్ స్టేటస్ మార్చడం
-    batch.update(db.collection("Rides").doc(reqData.rideId), { status: "GoSaathi" });
-    
-    // రిక్వెస్ట్ అప్‌డేట్
+    if (req.rideType === "Free") {
+        // ✅ 499 from Co-Saathi
+        if ((coDoc.data().coins || 0) < 499)
+            return alert("Co-Saathi దగ్గర సరిపడా coins లేవు!");
+
+        batch.update(db.collection("Users").doc(coUid), {
+            coins: firebase.firestore.FieldValue.increment(-499)
+        });
+
+        batch.update(db.collection("Users").doc(ADMIN_UID), {
+            coins: firebase.firestore.FieldValue.increment(499)
+        });
+
+    } else {
+        // ✅ Paid Ride → 99 host + 49 co
+        if ((hostDoc.data().coins || 0) < 99)
+            return alert("Host దగ్గర 99 coins లేవు!");
+
+        if ((coDoc.data().coins || 0) < 49)
+            return alert("Co-Saathi దగ్గర 49 coins లేవు!");
+
+        batch.update(db.collection("Users").doc(hostUid), {
+            coins: firebase.firestore.FieldValue.increment(-99)
+        });
+
+        batch.update(db.collection("Users").doc(coUid), {
+            coins: firebase.firestore.FieldValue.increment(-49)
+        });
+
+        batch.update(db.collection("Users").doc(ADMIN_UID), {
+            coins: firebase.firestore.FieldValue.increment(148)
+        });
+    }
+
+    batch.update(db.collection("Rides").doc(req.rideId), { status: "GoSaathi" });
     batch.update(db.collection("Requests").doc(reqId), { status: "Accepted" });
 
     await batch.commit();
-    alert("రైడ్ కన్ఫర్మ్ అయింది!");
+
+    alert("డీల్ కన్ఫర్మ్ అయింది! కాయిన్స్ ట్రాన్స్‌ఫర్ అయ్యాయి.");
 }
 
 function rejectRequest(reqId) {
@@ -414,6 +475,11 @@ function shareInvite() {
     const link = window.location.origin + window.location.pathname + "?invite=" + auth.currentUser.uid;
     window.open("https://api.whatsapp.com/send?text=Join GoSaathi: " + encodeURIComponent(link));
 }
+    // rideType change → show/hide demand field
+document.getElementById('rideType').addEventListener('change', function() {
+    document.getElementById('paidExtraFields').style.display =
+        (this.value === 'Paid') ? 'block' : 'none';
+});
 </script>
 </body>
 </html>
