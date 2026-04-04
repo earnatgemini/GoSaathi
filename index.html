@@ -265,25 +265,40 @@ async function postRide() {
 }
 
 function loadRides() {
+    db.collection("Rides")
+.where("status", "in", ["Available", "GoSaathi"])
+.onSnapshot(snap => {
+
     const container = document.getElementById('ridesContainer');
-       db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
-        container.innerHTML = "";
-        snap.forEach(doc => {
-            const now = Date.now();
-            const r = doc.data();
-            const age = (now - r.createdAt) / (1000 * 60 * 60);
-            if (r.distance < 100 && age > 6) { db.collection("Rides").doc(doc.id).delete(); return; }
-            
-            container.innerHTML += `<div class="card ride-item">
-    <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
-    📅 సమయం: ${r.time ? new Date(r.time).toLocaleString() : 'N/A'}<br>
-    💰 హోస్ట్ డిమాండ్: ${r.type === 'Paid' ? r.demand + ' Coins' : 'FREE'}<br>
-    <small>Host: ${r.saathiName} | Route: ${r.route}</small>
-    <button onclick="initiateJoin('${doc.id}', '${r.type}')" 
-    style="margin-top:10px; background:var(--secondary);">Join Ride</button>
-</div>`;
-        });
+    container.innerHTML = "";
+
+    snap.forEach(doc => {
+
+        const r = doc.data();
+        const now = Date.now();
+        const rideTime = new Date(r.time).getTime();
+
+        // ⛔ Expire only once
+        if (r.status !== "Expired" && now > rideTime + 3600000) {
+            db.collection("Rides").doc(doc.id).update({ status: "Expired" });
+            return;
+        }
+
+        // ❌ Hide expired rides from users
+        if (r.status === "Expired") return;
+
+        // ✅ Show ride
+        container.innerHTML += `
+        <div class="card ride-item">
+            <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
+            📅 ${new Date(r.time).toLocaleString()}<br>
+            💰 ${r.type === 'Paid' ? r.demand + ' Coins' : 'FREE'}<br>
+            <button onclick="initiateJoin('${doc.id}', '${r.type}')"
+            style="margin-top:10px; background:var(--secondary);">
+            Join Ride</button>
+        </div>`;
     });
+});
 }
 
 // రిక్వెస్ట్ పంపే లాజిక్ (Co-Saathi Side)
