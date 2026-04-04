@@ -266,10 +266,10 @@ async function postRide() {
 
 function loadRides() {
     const container = document.getElementById('ridesContainer');
-    const now = Date.now();
-    db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
+       db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
         container.innerHTML = "";
         snap.forEach(doc => {
+            const now = Date.now();
             const r = doc.data();
             const age = (now - r.createdAt) / (1000 * 60 * 60);
             if (r.distance < 100 && age > 6) { db.collection("Rides").doc(doc.id).delete(); return; }
