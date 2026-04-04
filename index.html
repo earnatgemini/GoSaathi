@@ -190,6 +190,7 @@ function checkUserStatus(user) {
 
 async function handleNewUser(user) {
     const inviteCode = new URLSearchParams(window.location.search).get('invite');
+    console.log("Invite Code detected:", inviteCode); // ఇది చెక్ చేయి
     let isInvited = false;
     if(inviteCode) {
         const inviterDoc = await db.collection("Users").doc(inviteCode).get();
