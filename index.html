@@ -189,19 +189,36 @@ function checkUserStatus(user) {
 }
 
 async function handleNewUser(user) {
+    const userRef = db.collection("Users").doc(user.uid);
+    
+    // 1. మొదట యూజర్ డేటా ఉందో లేదో ఖచ్చితంగా చెక్ చేయాలి
+    const doc = await userRef.get();
+    if (doc.exists) {
+        console.log("User already exists, skipping creation.");
+        return; // యూజర్ ఆల్రెడీ ఉంటే ఇక్కడే ఆగిపోతుంది
+    }
+
     const inviteCode = new URLSearchParams(window.location.search).get('invite');
-    console.log("Invite Code detected:", inviteCode); // ఇది చెక్ చేయి
     let isInvited = false;
+    
     if(inviteCode) {
         const inviterDoc = await db.collection("Users").doc(inviteCode).get();
         if(inviterDoc.exists && inviterDoc.data().invites > 0) {
             isInvited = true;
-            await db.collection("Users").doc(inviteCode).update({ invites: firebase.firestore.FieldValue.increment(-1) });
+            await db.collection("Users").doc(inviteCode).update({ 
+                invites: firebase.firestore.FieldValue.increment(-1) 
+            });
         }
     }
-    db.collection("Users").doc(user.uid).set({
-        name: user.displayName, email: user.email, coins: isInvited ? 500 : 0,
-        membership: isInvited ? "Active" : "Pending", invites: 5, joinDate: Date.now()
+
+    // 2. కొత్త యూజర్ అయితేనే 'set' చేయాలి
+    return userRef.set({
+        name: user.displayName, 
+        email: user.email, 
+        coins: isInvited ? 500 : 0,
+        membership: isInvited ? "Active" : "Pending", 
+        invites: 5, 
+        joinDate: Date.now()
     });
 }
 
