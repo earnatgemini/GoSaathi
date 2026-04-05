@@ -344,22 +344,48 @@ function loadRides() {
 
 // రిక్వెస్ట్ పంపే లాజిక్ (Co-Saathi Side)
 async function initiateJoin(rideId, rideType) {
+    const rideDoc = await db.collection("Rides").doc(rideId).get();
+    const rData = rideDoc.data();
     const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    
+    // కమీషన్ చెక్
     const comm = (rideType === "Paid") ? 40 : 500;
-
     if ((userDoc.data().coins || 0) < comm) {
         return alert("కమీషన్ కోసం సరిపడా కాయిన్స్ లేవు! కనీసం " + comm + " కాయిన్స్ ఉండాలి.");
     }
 
-    let offer = 0;
     if (rideType === "Paid") {
-        offer = prompt("హోస్ట్‌కి మీరు ఎంత ఆఫర్ చేయాలనుకుంటున్నారు? (Coins per seat)", "100");
-        if (!offer || isNaN(offer)) return;
+        // హోస్ట్ అడిగే అమౌంట్ చూపించడం
+        const msg = `హోస్ట్ ఈ రైడ్ కోసం ${rData.demand} కాయిన్స్ అడుగుతున్నారు.\n\n` +
+                    `'OK' - అడిగినంత ఇవ్వడానికి\n` +
+                    `'Cancel' - వద్దు అనుకుంటే\n` +
+                    `మరేదైనా ఆఫర్ చేయాలంటే 'Bargain' (Cancel నొక్కి తర్వాత Bargain చేయండి)`;
+        
+        // సింపుల్ లాజిక్ కోసం మనం ఇక్కడ Custom Alert వాడొచ్చు లేదా Confirm వాడొచ్చు. 
+        // ప్రస్తుతానికి నీకు సులభంగా ఉండటానికి Prompt లోనే ఆప్షన్ ఇస్తున్నాను:
+        
+        let choice = prompt(`హోస్ట్ డిమాండ్: ${rData.demand} Coins.\n1. OK (అదే అమౌంట్)\n2. Bargain (తక్కువ అడగండి)\n3. Cancel`, "1");
+
+        let finalOffer = 0;
+
+        if (choice === "1") {
+            finalOffer = rData.demand; // హోస్ట్ అడిగిందే ఓకే
+        } else if (choice === "2") {
+            finalOffer = prompt("మీరు ఎంత ఆఫర్ చేయాలనుకుంటున్నారు?", "");
+            if (!finalOffer || isNaN(finalOffer)) return;
+        } else {
+            return; // Cancelled
+        }
+
+        sendJoinRequest(rideId, rData, rideType, finalOffer, comm);
+    } else {
+        // ఫ్రీ రైడ్ అయితే నేరుగా రిక్వెస్ట్
+        sendJoinRequest(rideId, rData, rideType, 0, comm);
     }
+}
 
-    const rideDoc = await db.collection("Rides").doc(rideId).get();
-    const rData = rideDoc.data();
-
+// రిక్వెస్ట్ పంపే కామన్ ఫంక్షన్
+function sendJoinRequest(rideId, rData, rideType, offer, comm) {
     db.collection("Requests").add({
         rideId: rideId,
         hostId: rData.saathiId, 
@@ -373,7 +399,7 @@ async function initiateJoin(rideId, rideType) {
         status: "Pending",
         createdAt: Date.now()
     }).then(() => {
-        alert("రిక్వెస్ట్ పంపబడింది! హోస్ట్ యాక్సెప్ట్ చేసే వరకు వేచి ఉండండి.");
+        alert("రిక్వెస్ట్ పంపబడింది!");
     });
 }
 
