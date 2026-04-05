@@ -460,14 +460,32 @@ async function transferCoins() {
 }
 
 async function requestCoins() {
-    const utr = document.getElementById('utrId').value;
-    const check = await db.collection("Payments").where("utr", "==", utr).get();
-    if(!check.empty) return alert("Duplicate UTR!");
+    const utr = document.getElementById('utrId').value.trim();
+    const payAmountInput = document.getElementById('payAmount').value;
+
+    if (!utr || !payAmountInput) {
+        return alert("అమౌంట్ మరియు UTR నంబర్ ఖచ్చితంగా ఎంటర్ చేయాలి!");
+    }
+
+    const amount = Number(payAmountInput);
+
+    // నోట్: డూప్లికేట్ UTR చెక్ ని క్లయింట్ సైడ్ కాకుండా అడ్మిన్ ప్యానెల్ లో చేయడం సులభం.
+    // ఎందుకంటే అందరి పేమెంట్స్ చదివే పర్మిషన్ యూజర్ కి ఇవ్వడం సేఫ్ కాదు.
 
     db.collection("Payments").add({
-        userId: auth.currentUser.uid, userName: auth.currentUser.displayName,
-        amount: Number(document.getElementById('payAmount').value), utr, status: "Pending", time: Date.now()
-    }).then(() => { alert("Submitted!"); clearForm(['payAmount', 'utrId']); });
+        userId: auth.currentUser.uid,
+        userName: auth.currentUser.displayName,
+        amount: amount,
+        utr: utr,
+        status: "Pending",
+        time: Date.now() // ఇక్కడ '5' తీసేయబడింది
+    }).then(() => {
+        alert("పేమెంట్ సబ్మిట్ చేయబడింది! అడ్మిన్ వెరిఫై చేసిన తర్వాత కాయిన్స్ యాడ్ అవుతాయి.");
+        clearForm(['payAmount', 'utrId']);
+    }).catch(err => {
+        console.error("Firestore Error:", err);
+        alert("సబ్మిట్ చేయడంలో సమస్య వచ్చింది: " + err.message);
+    });
 }
 
 function loadAdminData() {
