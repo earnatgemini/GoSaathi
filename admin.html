@@ -165,17 +165,27 @@ function loadAdminData() {
 // --- Admin Actions ---
 
 async function approvePayment(payId, userId, amount) {
-    const coins = (amount === 1200) ? 100000 : (amount * 100);
+    // అమౌంట్ ని నంబర్ గా మార్చడం వల్ల 1200 కండిషన్ కరెక్ట్ గా వర్క్ అవుతుంది
+    const numAmount = Number(amount);
+    const coins = (numAmount === 1200) ? 100000 : (numAmount * 100);
+    
     const batch = db.batch();
-    batch.update(db.collection("Users").doc(userId), {
-        membership: "Active",
-        coins: firebase.firestore.FieldValue.increment(coins)
-    });
-    batch.update(db.collection("Payments").doc(payId), { status: "Approved" });
-    await batch.commit();
-    alert("Payment Approved! Coins added to user.");
+    
+    try {
+        batch.update(db.collection("Users").doc(userId), {
+            membership: "Active",
+            coins: firebase.firestore.FieldValue.increment(coins)
+        });
+        
+        batch.update(db.collection("Payments").doc(payId), { status: "Approved" });
+        
+        await batch.commit();
+        alert("Payment Approved! " + coins + " Coins added to user.");
+    } catch (error) {
+        console.error("Approval Error:", error);
+        alert("Error: " + error.message);
+    }
 }
-
 function rejectPayment(payId) {
     if(confirm("Reject this payment?")) {
         db.collection("Payments").doc(payId).update({ status: "Rejected" });
