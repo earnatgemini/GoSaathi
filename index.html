@@ -284,39 +284,62 @@ async function postRide() {
 
 function loadRides() {
     db.collection("Rides")
-.where("status", "in", ["Available", "GoSaathi"])
-.onSnapshot(snap => {
+    .where("status", "in", ["Available", "GoSaathi"])
+    .onSnapshot(snap => {
+        const container = document.getElementById('ridesContainer');
+        if (!container) return;
+        container.innerHTML = "";
 
-    const container = document.getElementById('ridesContainer');
-    container.innerHTML = "";
-
-    snap.forEach(doc => {
-
-        const r = doc.data();
-        const now = Date.now();
-        const rideTime = new Date(r.time).getTime();
-
-        // ⛔ Expire only once
-        if (r.status !== "Expired" && now > rideTime + 3600000) {
-            db.collection("Rides").doc(doc.id).update({ status: "Expired" });
+        if (snap.empty) {
+            container.innerHTML = "<p style='text-align:center;'>ప్రస్తుతానికి రైడ్స్ ఏవీ లేవు!</p>";
             return;
         }
 
-        // ❌ Hide expired rides from users
-        if (r.status === "Expired") return;
+        snap.forEach(doc => {
+            const r = doc.data();
+            const now = Date.now();
+            
+            // రైడ్ టైమ్ ని మిల్లీ సెకన్లలోకి మార్చడం
+            const rideDate = new Date(r.time);
+            const rideTimeMillis = rideDate.getTime();
 
-        // ✅ Show ride
-        container.innerHTML += `
-        <div class="card ride-item">
-            <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
-            📅 ${new Date(r.time).toLocaleString()}<br>
-            💰 ${r.type === 'Paid' ? r.demand + ' Coins' : 'FREE'}<br>
-            <button onclick="initiateJoin('${doc.id}', '${r.type}')"
-            style="margin-top:10px; background:var(--secondary);">
-            Join Ride</button>
-        </div>`;
+            // 1. సమయం చెక్: ఒకవేళ సమయం చెల్లనిది అయితే (Invalid Date)
+            if (isNaN(rideTimeMillis)) {
+                console.error("Invalid ride time for doc:", doc.id);
+                return;
+            }
+
+            // 2. ఎక్స్‌పైరీ లాజిక్: సమయం ముగిసి 1 గంట దాటితేనే Expired చేయాలి
+            if (now > (rideTimeMillis + 3600000)) {
+                db.collection("Rides").doc(doc.id).update({ status: "Expired" });
+                return;
+            }
+
+            // 3. రైడ్ పోస్ట్ చేసిన వాడికి తన రైడ్ కనిపించాల్సిన అవసరం లేదు (ఐచ్ఛికం)
+            if (r.saathiId === auth.currentUser.uid) return;
+
+            // ✅ రైడ్ ని చూపించడం
+            container.innerHTML += `
+            <div class="card ride-item">
+                <div style="display:flex; justify-content:space-between;">
+                    <b>${r.from} ➔ ${r.to}</b>
+                    <span style="font-size:12px; color:gray;">${r.type}</span>
+                </div>
+                <div style="font-size:14px; margin-top:5px;">
+                    📅 సమయం: ${rideDate.toLocaleString()}<br>
+                    💰 ధర: ${r.type === 'Paid' ? '<b>' + r.demand + ' Coins</b>' : '<b style="color:green;">FREE</b>'}
+                </div>
+                <button onclick="initiateJoin('${doc.id}', '${r.type}')"
+                style="margin-top:10px; background:var(--secondary);">
+                Join Ride</button>
+            </div>`;
+        });
+    }, error => {
+        console.error("Rides Load Error: ", error);
+        if(error.message.includes("permission-denied")) {
+            alert("సెక్యూరిటీ రూల్స్ వల్ల రైడ్స్ లోడ్ అవ్వడం లేదు!");
+        }
     });
-});
 }
 
 // రిక్వెస్ట్ పంపే లాజిక్ (Co-Saathi Side)
