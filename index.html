@@ -181,25 +181,75 @@ function showPage(pageId) {
     if(pageId === 'my-rides') loadMyRides('host');
 }
 
+// --- Post Ride Function (Fixing Coins Demand, Via & Gender) ---
 async function postRide() {
     const from = document.getElementById('from').value;
     const to = document.getElementById('to').value;
-    const via = document.getElementById('viaRoute').value;
-    const pref = document.getElementById('genderPreference').value;
+    const via = document.getElementById('viaRoute').value; // Via Route
+    const pref = document.getElementById('genderPreference').value; // Gender Preference
     const type = document.getElementById('rideType').value;
     const time = document.getElementById('rideTime').value;
     const demand = (type === "Paid") ? Number(document.getElementById('demandPrice').value) : 0;
 
-    if(!from || !to || !time) return alert("Details fill cheyandi!");
+    if(!from || !to || !time) return alert("దయచేసి ఊరు మరియు సమయం వివరాలు నింపండి!");
 
-    await db.collection("Rides").add({
-        saathiId: auth.currentUser.uid, saathiName: auth.currentUser.displayName,
-        from, to, via, preference: pref, type, time, demand, status: "Available", createdAt: Date.now()
+    // హోస్ట్ దగ్గర 50 కాయిన్స్ ఉన్నాయో లేదో చెక్ చేయడం
+    const hostDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    if ((hostDoc.data().coins || 0) < 50) return alert("రైడ్ పోస్ట్ చేయడానికి 50 కాయిన్స్ ఉండాలి!");
+
+    const batch = db.batch();
+    const rideRef = db.collection("Rides").doc();
+
+    // కాయిన్స్ కట్ చేయడం (System Fee)
+    batch.update(db.collection("Users").doc(auth.currentUser.uid), {
+        coins: firebase.firestore.FieldValue.increment(-50)
     });
-    alert("Ride Posted!");
+
+    // రైడ్ డేటా సేవ్ చేయడం
+    batch.set(rideRef, {
+        saathiId: auth.currentUser.uid,
+        saathiName: auth.currentUser.displayName,
+        from, to, via, 
+        preference: pref, 
+        type, time, demand,
+        status: "Available",
+        createdAt: Date.now()
+    });
+
+    await batch.commit();
+    alert("రైడ్ పోస్ట్ అయ్యింది! (50 కాయిన్స్ కట్ అయ్యాయి)");
     showPage('home');
 }
 
+// --- HTML Section లో ఇవి ఉన్నాయని ఖచ్చితంగా చూసుకో ---
+/*
+<div id="ride" style="display:none;">
+    <div class="card">
+        <h3>Post a New Ride</h3>
+        <input id="from" placeholder="From City">
+        <input id="to" placeholder="To City">
+        <input id="viaRoute" placeholder="Via (Route)">
+        
+        <select id="genderPreference">
+            <option value="All">Anyone (All)</option>
+            <option value="Male Only">Men Only</option>
+            <option value="Female Only">Women Only</option>
+        </select>
+
+        <select id="rideType" onchange="document.getElementById('paidExtraFields').style.display=(this.value==='Paid'?'block':'none')">
+            <option value="Free">Free Ride</option>
+            <option value="Paid">Paid Ride</option>
+        </select>
+
+        <div id="paidExtraFields" style="display:none;">
+            <input type="number" id="demandPrice" placeholder="మీరు అడిగే కాయిన్స్ (Demand)">
+        </div>
+
+        <input type="datetime-local" id="rideTime">
+        <button onclick="postRide()">Post Ride</button>
+    </div>
+</div>
+*/
 async function loadRides() {
     const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
     const myGender = userDoc.data().gender;
