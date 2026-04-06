@@ -19,8 +19,6 @@
         input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; font-size: 16px; }
         button { background: var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; }
         .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
-        table { width:100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     </style>
 </head>
 <body>
@@ -34,7 +32,7 @@
     <div class="nav">
         <button onclick="showPage('home')">🏠 Home</button>
         <button onclick="showPage('ride')">🚗 Post</button>
-        <button onclick="showPage('my-rides')">📅 My Rides</button>
+        <button onclick="showPage('my-rides')">🚗 My Rides</button>
         <button onclick="showPage('wallet')">💰 Wallet</button>
         <button onclick="showPage('profile')">👥 Profile</button>
     </div>
@@ -53,7 +51,7 @@
             <input type="text" id="userPhone" placeholder="Mobile Number">
             <input type="text" id="userVillage" placeholder="Village / City">
             <select id="userGender">
-                <option value="">Select Gender</option>
+                <option value="">Select Your Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
             </select>
@@ -62,35 +60,22 @@
         </div>
     </div>
 
-    <div id="activation-screen" style="display:none;">
-        <div class="card">
-            <h2 style="color:var(--primary);">Account Activation</h2>
-            <p>మీ అకౌంట్ ఇంకా యాక్టివేట్ కాలేదు.</p>
-            <input type="text" id="manualInviteCode" placeholder="Enter Invite Code">
-            <button onclick="activateByCode()" style="background:var(--secondary);">యాక్టివేట్ చేయండి</button>
-            <hr>
-            <button onclick="showPage('wallet')">Option 2: Pay ₹1200 for 1 Lakh Coins</button>
-        </div>
-    </div>
-
     <div id="home" style="display:none;">
         <h3>Available Rides (Live)</h3>
         <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
     </div>
-
-    <div id="wallet" style="display:none;">
-        <div class="card wallet-card">
-            <h3>My Balance</h3>
-            <h2 id="coinBalance">0</h2>
-            <p>Coins</p>
-        </div>
-        </div>
 
     <div id="ride" style="display:none;">
         <div class="card">
             <h3>Post a New Ride</h3>
             <input id="from" placeholder="From City">
             <input id="to" placeholder="To City">
+            <input id="viaRoute" placeholder="Via (Route) - ఏ ఊర్ల మీదుగా?">
+            <select id="genderPreference">
+                <option value="All">ఎవరైనా జాయిన్ అవ్వచ్చు (All)</option>
+                <option value="Male Only">కేవలం అబ్బాయిలు (Male Only)</option>
+                <option value="Female Only">కేవలం అమ్మాయిలు (Female Only)</option>
+            </select>
             <select id="rideType">
                 <option value="Free">Free Ride</option>
                 <option value="Paid">Paid Ride</option>
@@ -111,6 +96,13 @@
         <div id="myRidesList"></div>
     </div>
 
+    <div id="wallet" style="display:none;">
+        <div class="card wallet-card">
+            <h2 id="coinBalance">0</h2>
+            <p>Coins Balance</p>
+        </div>
+    </div>
+
     <div id="profile" style="display:none;">
         <div class="card">
             <p>Your UID: <code id="myUidDisplay"></code></p>
@@ -122,46 +114,28 @@
 <div id="joinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
     <div class="card" style="width:90%; max-width:400px; padding:20px; border-radius:15px;">
         <h3 id="modalTitle">Ride Request</h3>
-        <p id="modalBody" style="margin-bottom:15px;"></p>
-        
-        <div id="pickupArea" style="display:none; margin-bottom:15px; text-align:left;">
-            <label>📍 మీ పికప్ పాయింట్ (Pickup Point):</label>
-            <input type="text" id="pickupPoint" placeholder="ఉదా: కేపీహెచ్‌బీ మెయిన్ రోడ్">
+        <p id="modalBody"></p>
+        <div id="pickupArea" style="display:none;">
+            <input type="text" id="pickupPoint" placeholder="📍 మీ పికప్ పాయింట్">
         </div>
-
-        <div id="bargainArea" style="display:none; margin-bottom:15px; text-align:left;">
-            <label>💰 మీ ఆఫర్ (Your Offer):</label>
-            <input type="number" id="customOffer" placeholder="Coins లో ఎంటర్ చేయండి">
+        <div id="bargainArea" style="display:none;">
+            <input type="number" id="customOffer" placeholder="💰 మీ ఆఫర్ (Coins)">
         </div>
-
-        <div id="initialButtons" style="display:flex; flex-direction:column; gap:10px;">
-            <button id="btnOk" style="background:var(--secondary);">OK (Demand OK)</button>
+        <div id="initialButtons">
+            <button id="btnOk" style="background:var(--secondary);">OK</button>
             <button id="btnBargain" style="background:var(--gold); color:black;">Bargain</button>
-            <button onclick="closeJoinModal()" style="background:#666;">Cancel</button>
         </div>
-
-        <button id="btnFinalSubmit" style="display:none; background:var(--primary); width:100%; margin-top:10px;">Confirm Request</button>
+        <button id="btnFinalSubmit" style="display:none; margin-top:10px;">Confirm Request</button>
+        <button onclick="closeJoinModal()" style="background:#666; margin-top:10px;">Cancel</button>
     </div>
 </div>
 
 <script>
-// --- Configuration ---
-const firebaseConfig = { 
-    apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", 
-    authDomain: "gemini-spinning-wheel-game.firebaseapp.com", 
-    projectId: "gemini-spinning-wheel-game" 
-};
+const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", authDomain: "gemini-spinning-wheel-game.firebaseapp.com", projectId: "gemini-spinning-wheel-game" };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1";
 
-// --- Global States ---
-let currentRideId = null;
-let currentRideData = null;
-let tempOffer = 0;
-
-// --- Auth ---
 function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
 auth.onAuthStateChanged(user => {
@@ -181,22 +155,25 @@ function checkUserStatus(user) {
         if (doc.exists) {
             const data = doc.data();
             if (!data.phone) showPage('basic-info-screen');
-            else if (data.membership === "Active") {
+            else {
                 document.getElementById('coinBalance').innerText = data.coins || 0;
                 showPage('home');
-            } else showPage('activation-screen');
+            }
         } else {
-            db.collection("Users").doc(user.uid).set({
-                name: user.displayName, email: user.email, coins: 0, membership: "Active", joinDate: Date.now()
-            });
+            db.collection("Users").doc(user.uid).set({ name: user.displayName, email: user.email, coins: 0, joinDate: Date.now() });
         }
     });
 }
 
-// --- Navigation ---
+function submitBasicInfo() {
+    const phone = document.getElementById('userPhone').value;
+    const gender = document.getElementById('userGender').value;
+    if(!phone || !gender) return alert("Fill all details!");
+    db.collection("Users").doc(auth.currentUser.uid).update({ phone, gender });
+}
+
 function showPage(pageId) {
-    const pages = ['home', 'wallet', 'ride', 'profile', 'activation-screen', 'login-screen', 'basic-info-screen', 'my-rides'];
-    pages.forEach(id => {
+    ['home', 'wallet', 'ride', 'profile', 'login-screen', 'basic-info-screen', 'my-rides'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = (id === pageId) ? 'block' : 'none';
     });
@@ -204,10 +181,11 @@ function showPage(pageId) {
     if(pageId === 'my-rides') loadMyRides('host');
 }
 
-// --- Ride Functions ---
 async function postRide() {
     const from = document.getElementById('from').value;
     const to = document.getElementById('to').value;
+    const via = document.getElementById('viaRoute').value;
+    const pref = document.getElementById('genderPreference').value;
     const type = document.getElementById('rideType').value;
     const time = document.getElementById('rideTime').value;
     const demand = (type === "Paid") ? Number(document.getElementById('demandPrice').value) : 0;
@@ -216,46 +194,46 @@ async function postRide() {
 
     await db.collection("Rides").add({
         saathiId: auth.currentUser.uid, saathiName: auth.currentUser.displayName,
-        from, to, type, time, demand, status: "Available", createdAt: Date.now()
+        from, to, via, preference: pref, type, time, demand, status: "Available", createdAt: Date.now()
     });
     alert("Ride Posted!");
     showPage('home');
 }
 
-function loadRides() {
+async function loadRides() {
+    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    const myGender = userDoc.data().gender;
+
     db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
         const container = document.getElementById('ridesContainer');
         container.innerHTML = "";
         snap.forEach(doc => {
             const r = doc.data();
-            if(r.saathiId === auth.currentUser.uid) return;
-            container.innerHTML += `
-                <div class="card ride-item">
-                    <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
-                    💰 Demand: ${r.demand} Coins<br>
+            let show = (r.preference === "All") || (r.preference === "Male Only" && myGender === "Male") || (r.preference === "Female Only" && myGender === "Female");
+            if (show && r.saathiId !== auth.currentUser.uid) {
+                container.innerHTML += `<div class="card ride-item">
+                    <b>${r.from} ➔ ${r.to}</b><br>🛣️ Via: ${r.via || 'Direct'}<br>💰 ${r.demand} Coins<br>
                     <button onclick="initiateJoin('${doc.id}', '${r.type}')" style="background:var(--secondary);">Join Ride</button>
                 </div>`;
+            }
         });
     });
 }
 
-// --- Join Request Logic ---
+let currentRideId, currentRideData, tempOffer;
 async function initiateJoin(rideId, rideType) {
     const rideDoc = await db.collection("Rides").doc(rideId).get();
-    const rData = rideDoc.data();
-    currentRideId = rideId;
-    currentRideData = rData;
-    currentRideData.rideType = rideType;
+    currentRideId = rideId; currentRideData = rideDoc.data();
     currentRideData.commToPay = (rideType === "Paid") ? 40 : 500;
 
-    document.getElementById('modalBody').innerHTML = `హోస్ట్ డిమాండ్: <b>${rData.demand} Coins</b>`;
+    document.getElementById('modalBody').innerHTML = `Route: ${currentRideData.via || 'Direct'}<br>Demand: ${currentRideData.demand} Coins`;
     document.getElementById('joinModal').style.display = 'flex';
     document.getElementById('pickupArea').style.display = 'none';
     document.getElementById('bargainArea').style.display = 'none';
     document.getElementById('initialButtons').style.display = 'flex';
     document.getElementById('btnFinalSubmit').style.display = 'none';
 
-    document.getElementById('btnOk').onclick = () => { tempOffer = rData.demand; showPickupStep(); };
+    document.getElementById('btnOk').onclick = () => { tempOffer = currentRideData.demand; showPickupStep(); };
     document.getElementById('btnBargain').onclick = () => { tempOffer = 0; document.getElementById('bargainArea').style.display = 'block'; showPickupStep(); };
 }
 
@@ -267,66 +245,30 @@ function showPickupStep() {
 
 document.getElementById('btnFinalSubmit').onclick = async () => {
     const pickup = document.getElementById('pickupPoint').value;
-    const bargainVal = document.getElementById('customOffer').value;
-    const finalOffer = bargainVal ? Number(bargainVal) : tempOffer;
-
+    const finalOffer = document.getElementById('customOffer').value || tempOffer;
     if(!pickup) return alert("Pickup point enters cheyandi!");
-    
     await db.collection("Requests").add({
-        rideId: currentRideId, hostId: currentRideData.saathiId,
-        coSaathiId: auth.currentUser.uid, coSaathiName: auth.currentUser.displayName,
-        from: currentRideData.from, to: currentRideData.to,
-        offerPrice: finalOffer, pickupPoint: pickup, status: "Pending",
-        rideType: currentRideData.rideType, commToPay: currentRideData.commToPay, createdAt: Date.now()
+        rideId: currentRideId, hostId: currentRideData.saathiId, coSaathiId: auth.currentUser.uid,
+        coSaathiName: auth.currentUser.displayName, from: currentRideData.from, to: currentRideData.to,
+        offerPrice: Number(finalOffer), pickupPoint: pickup, status: "Pending",
+        commToPay: currentRideData.commToPay, createdAt: Date.now()
     });
-    alert("Request Sent!");
-    closeJoinModal();
+    alert("Request Sent!"); closeJoinModal();
 };
 
 function closeJoinModal() { document.getElementById('joinModal').style.display = 'none'; }
 
-// --- My Rides & Coin Transfer ---
 async function loadMyRides(role) {
     const list = document.getElementById('myRidesList');
     list.innerHTML = "Loading...";
-    const queryField = (role === 'host') ? "hostId" : "coSaathiId";
-    
-    db.collection("Requests").where(queryField, "==", auth.currentUser.uid).onSnapshot(snap => {
+    const field = (role === 'host') ? "hostId" : "coSaathiId";
+    db.collection("Requests").where(field, "==", auth.currentUser.uid).onSnapshot(snap => {
         list.innerHTML = "";
         snap.forEach(doc => {
             const r = doc.data();
-            list.innerHTML += `
-                <div class="card">
-                    <b>${r.from} ➔ ${r.to}</b> [${r.status}]<br>
-                    Offer: ${r.offerPrice} | Pickup: ${r.pickupPoint}<br>
-                    ${role === 'host' && r.status === 'Pending' ? `<button onclick="respondRequest('${doc.id}', '${r.rideId}', 'Confirmed')">Confirm</button>` : ''}
-                    ${role === 'host' && r.status === 'Confirmed' ? `<button onclick="startJourney('${doc.id}')">Start Journey</button>` : ''}
-                    ${role === 'co-saathi' && r.status === 'Journey Started' ? `<button onclick="joinSaathi('${doc.id}', '${r.hostId}', ${r.offerPrice}, ${r.commToPay})">Join Saathi (Pay)</button>` : ''}
-                </div>`;
+            list.innerHTML += `<div class="card"><b>${r.from} ➔ ${r.to}</b> [${r.status}]<br>Offer: ${r.offerPrice} | Pickup: ${r.pickupPoint}</div>`;
         });
     });
-}
-
-async function respondRequest(reqId, rideId, status) {
-    const batch = db.batch();
-    batch.update(db.collection("Requests").doc(reqId), { status });
-    if(status === 'Confirmed') batch.update(db.collection("Rides").doc(rideId), { status: "GoSaathi" });
-    await batch.commit();
-}
-
-async function startJourney(reqId) { await db.collection("Requests").doc(reqId).update({ status: "Journey Started" }); }
-
-async function joinSaathi(reqId, hostId, price, comm) {
-    const batch = db.batch();
-    const coRef = db.collection("Users").doc(auth.currentUser.uid);
-    const hostRef = db.collection("Users").doc(hostId);
-    
-    batch.update(coRef, { coins: firebase.firestore.FieldValue.increment(-(price + comm)) });
-    batch.update(hostRef, { coins: firebase.firestore.FieldValue.increment(price) });
-    batch.update(db.collection("Requests").doc(reqId), { status: "Joined" });
-    
-    await batch.commit();
-    alert("Transaction Successful!");
 }
 
 document.getElementById('rideType').addEventListener('change', function() {
