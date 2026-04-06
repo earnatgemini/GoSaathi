@@ -55,6 +55,7 @@
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
+                <option value="Trans">Trans</option>
             </select>
             <p><input type="checkbox" id="tcCheck" style="width:auto;"> I accept Terms & Conditions</p>
             <button onclick="submitBasicInfo()">Save & Continue</button>
@@ -276,7 +277,7 @@ async function postRide() {
 
     await batch.commit();
 
-    alert(" రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!(మీ సౌలబ్యం కొరకు 50 కాయిన్స్ కట్ అయ్యాయి.)");
+    alert(" రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!(మీ సౌలబ్యం కొరకు APP Maintnance - 50 కాయిన్స్ కట్ అయ్యాయి.)");
 
     clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
     showPage('home');
@@ -310,7 +311,7 @@ function loadRides() {
             }
 
             // 2. ఎక్స్‌పైరీ లాజిక్: సమయం ముగిసి 1 గంట దాటితేనే Expired చేయాలి
-            if (now > (rideTimeMillis + 3600000)) {
+            if (now > (rideTimeMillis + 6 * 3600000)) {
                 db.collection("Rides").doc(doc.id).update({ status: "Expired" });
                 return;
             }
