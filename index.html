@@ -35,6 +35,7 @@
     <div class="nav">
         <button onclick="showPage('home')">🏠 Home</button>
         <button onclick="showPage('ride')">🚗 Post</button>
+        <button onclick="showPage('my-rides')">🚗 My Rides</button>
         <button onclick="showPage('wallet')">💰 Wallet</button>
         <button onclick="showPage('profile')">👥 Profile</button>
     </div>
@@ -129,6 +130,14 @@
         </div>
     </div>
 
+    <div id="my-rides" style="display:none; padding:15px;">
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <button onclick="loadMyRides('host')" style="flex:1;">As Host</button>
+        <button onclick="loadMyRides('co-saathi')" style="flex:1;">As Co-Saathi</button>
+    </div>
+    <div id="myRidesList"></div>
+</div>
+    
     <div id="profile" style="display:none;">
         <div class="card">
             <h3>Profile & Invite</h3>
@@ -343,89 +352,90 @@ function loadRides() {
     });
 }
 
+    
 // రిక్వెస్ట్ పంపే లాజిక్ (Co-Saathi Side)
-let currentRideData = null;
+let tempOffer = 0;
 let currentRideId = null;
+let currentRideData = null;
 
 async function initiateJoin(rideId, rideType) {
     const rideDoc = await db.collection("Rides").doc(rideId).get();
     const rData = rideDoc.data();
     const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
     
+    // 1. కమీషన్ చెక్ (తప్పనిసరి)
     const comm = (rideType === "Paid") ? 40 : 500;
     if ((userDoc.data().coins || 0) < comm) {
-        return alert("కమీషన్ కోసం సరిపడా కాయిన్స్ లేవు!");
+        return alert("కమీషన్ కోసం సరిపడా కాయిన్స్ లేవు! కనీసం " + comm + " కాయిన్స్ ఉండాలి.");
     }
 
     currentRideId = rideId;
     currentRideData = rData;
+    currentRideData.rideType = rideType; // rideType ని సేవ్ చేస్తున్నాం
+    currentRideData.commToPay = comm;     // కమీషన్ ని సేవ్ చేస్తున్నాం
 
-    if (rideType === "Paid") {
-        document.getElementById('modalBody').innerHTML = `హోస్ట్ ఈ రైడ్ కోసం <b>${rData.demand} Coins</b> అడుగుతున్నారు. మీరు ఏమంటారు?`;
-        document.getElementById('joinModal').style.display = 'flex';
-        
-        // Reset buttons and inputs
-        document.getElementById('bargainInputArea').style.display = 'none';
-        document.getElementById('btnOk').style.display = 'block';
-        document.getElementById('btnBargain').style.display = 'block';
-        document.getElementById('btnConfirmBargain').style.display = 'none';
+    document.getElementById('modalBody').innerHTML = `హోస్ట్ డిమాండ్: <b>${rData.demand} Coins</b>`;
+    document.getElementById('joinModal').style.display = 'flex';
+    
+    // Reset Modal UI
+    document.getElementById('pickupArea').style.display = 'none';
+    document.getElementById('bargainArea').style.display = 'none';
+    document.getElementById('initialButtons').style.display = 'flex';
+    document.getElementById('btnFinalSubmit').style.display = 'none';
+    document.getElementById('customOffer').value = ""; // క్లియర్ చేయడం
+    document.getElementById('pickupPoint').value = ""; // క్లియర్ చేయడం
 
-        // OK Button Click
-        document.getElementById('btnOk').onclick = () => {
-            sendJoinRequest(currentRideId, currentRideData, "Paid", rData.demand, comm);
-            closeJoinModal();
-        };
+    // OK Clicked
+    document.getElementById('btnOk').onclick = () => {
+        tempOffer = rData.demand;
+        showPickupStep();
+    };
 
-        // Bargain Button Click
-        document.getElementById('btnBargain').onclick = () => {
-            document.getElementById('modalBody').innerText = "మీరు ఎంత ఆఫర్ చేయాలనుకుంటున్నారు?";
-            document.getElementById('bargainInputArea').style.display = 'block';
-            document.getElementById('btnOk').style.display = 'none';
-            document.getElementById('btnBargain').style.display = 'none';
-            document.getElementById('btnConfirmBargain').style.display = 'block';
-        };
-
-        // Confirm Bargain Click
-        document.getElementById('btnConfirmBargain').onclick = () => {
-            const offer = document.getElementById('customOffer').value;
-            if(!offer) return alert("ఆఫర్ ఎంటర్ చేయండి!");
-            sendJoinRequest(currentRideId, currentRideData, "Paid", Number(offer), comm);
-            closeJoinModal();
-        };
-
-    } else {
-        // Free Ride
-        if(confirm("ఈ ఫ్రీ రైడ్ లో జాయిన్ అవ్వాలనుకుంటున్నారా? (500 కాయిన్స్ కమీషన్ కట్ అవుతుంది)")) {
-            sendJoinRequest(rideId, rData, "Free", 0, comm);
-        }
-    }
+    // Bargain Clicked
+    document.getElementById('btnBargain').onclick = () => {
+        tempOffer = 0; // బేరమాడుతున్నాం కాబట్టి temp సున్నా చేస్తున్నాం
+        document.getElementById('bargainArea').style.display = 'block';
+        showPickupStep();
+    };
 }
 
-function closeJoinModal() {
-    document.getElementById('joinModal').style.display = 'none';
-    document.getElementById('customOffer').value = "";
+function showPickupStep() {
+    document.getElementById('initialButtons').style.display = 'none';
+    document.getElementById('pickupArea').style.display = 'block';
+    document.getElementById('btnFinalSubmit').style.display = 'block';
 }
 
-    // రిక్వెస్ట్ పంపే కామన్ ఫంక్షన్
-function sendJoinRequest(rideId, rData, rideType, offer, comm) {
+document.getElementById('btnFinalSubmit').onclick = () => {
+    const pickup = document.getElementById('pickupPoint').value.trim();
+    const bargainVal = document.getElementById('customOffer').value;
+    
+    // ఒకవేళ బార్గైన్ బాక్స్ లో వాల్యూ ఉంటే అది తీసుకుంటుంది, లేదంటే హోస్ట్ డిమాండ్ తీసుకుంటుంది
+    const finalOffer = bargainVal ? Number(bargainVal) : tempOffer;
+
+    if(!pickup) return alert("దయచేసి పికప్ పాయింట్ ఎంటర్ చేయండి!");
+    
+    sendJoinRequest(currentRideId, currentRideData, finalOffer, pickup);
+    closeJoinModal();
+};
+
+function sendJoinRequest(rideId, rData, offer, pickup) {
     db.collection("Requests").add({
         rideId: rideId,
         hostId: rData.saathiId, 
         coSaathiId: auth.currentUser.uid,
         coSaathiName: auth.currentUser.displayName,
-        from: rData.from,
+        from: rData.from, 
         to: rData.to,
-        rideType: rideType,
+        rideType: rData.rideType, // ఇది యాడ్ చేశాను
         offerPrice: Number(offer),
-        commToPay: comm,
+        commToPay: rData.commToPay, // ఇది యాడ్ చేశాను
+        pickupPoint: pickup,
         status: "Pending",
         createdAt: Date.now()
     }).then(() => {
         alert("రిక్వెస్ట్ పంపబడింది!");
-    });
+    }).catch(err => alert("Error: " + err.message));
 }
-
-
 // హోస్ట్ కోసం రిక్వెస్ట్ లు లోడ్ చేయడం
 function loadIncomingRequests() {
     const container = document.getElementById('incomingRequests');
@@ -604,21 +614,28 @@ document.getElementById('rideType').addEventListener('change', function() {
         (this.value === 'Paid') ? 'block' : 'none';
 });
 </script>
-    <div id="joinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
-    <div class="card" style="width:90%; max-width:400px; padding:20px; text-align:center;">
-        <h3 id="modalTitle">Ride Request</h3>
-        <p id="modalBody"></p>
+   <div id="joinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div class="card" style="width:90%; max-width:400px; padding:20px; border-radius:15px;">
+        <h3 id="modalTitle" style="color:var(--dark);">Ride Request</h3>
+        <p id="modalBody" style="margin-bottom:15px;"></p>
         
-        <div id="bargainInputArea" style="display:none; margin-bottom:15px;">
-            <input type="number" id="customOffer" placeholder="మీ ఆఫర్ (Coins)">
+        <div id="pickupArea" style="display:none; margin-bottom:15px; text-align:left;">
+            <label>📍 మీ పికప్ పాయింట్ (Pickup Point):</label>
+            <input type="text" id="pickupPoint" placeholder="ఉదా: కేపీహెచ్‌బీ మెయిన్ రోడ్" style="margin-top:5px;">
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:10px;">
-            <button id="btnOk" style="background:var(--secondary);">(రేటు నచ్చింది) OK </button>
-            <button id="btnBargain" style="background:var(--gold); color:black;">(బేరం అడగండి) Bargain</button>
-            <button id="btnConfirmBargain" style="display:none; background:var(--primary);">Confirm Offer</button>
+        <div id="bargainArea" style="display:none; margin-bottom:15px; text-align:left;">
+            <label>💰 మీ ఆఫర్ (Your Offer):</label>
+            <input type="number" id="customOffer" placeholder="Coins లో ఎంటర్ చేయండి">
+        </div>
+
+        <div id="initialButtons" style="display:flex; flex-direction:column; gap:10px;">
+            <button id="btnOk" style="background:var(--secondary);">OK (Demand OK)</button>
+            <button id="btnBargain" style="background:var(--gold); color:black;">Bargain (బేరమాడండి)</button>
             <button onclick="closeJoinModal()" style="background:#666;">Cancel</button>
         </div>
+
+        <button id="btnFinalSubmit" style="display:none; background:var(--primary); width:100%; margin-top:10px;">Confirm Request</button>
     </div>
 </div>
 </body>
