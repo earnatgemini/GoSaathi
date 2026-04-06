@@ -55,7 +55,6 @@
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
-                <option value="Trans">Trans</option>
             </select>
             <p><input type="checkbox" id="tcCheck" style="width:auto;"> I accept Terms & Conditions</p>
             <button onclick="submitBasicInfo()">Save & Continue</button>
@@ -79,7 +78,7 @@
     </div>
 <div id="requests-section" class="card" style="display:none; border-top: 5px solid var(--gold);">
     <h3>📩 ప్రయాణ రిక్వెస్ట్‌లు (Requests)</h3>
-    <div id="incomingRequests">రిక్వెస్ట్‌లు ఏమీ లేవు...</div>
+    <div id="incomingRequests">రిక్వెస్ట్‌లు ఏమీ లేవు.</div>
 </div>
     <div id="wallet" style="display:none;">
         <div class="card wallet-card">
@@ -115,15 +114,15 @@
                 <option value="Female">Women Only</option>
             </select>
             <select id="rideType">
-                <option value="Free">Free Ride (Cost: 10 Coins)</option>
-                <option value="Paid">Paid Ride (Cost: 100 Coins)</option>
+                <option value="Free">Free Ride</option>
+                <option value="Paid">Paid Ride</option>
             </select>
             <input type="number" id="seats" placeholder="Seats Available">
             <div id="paidExtraFields" style="display:none;">
     <input type="number" id="demandPrice" placeholder="అడిగే కాయిన్స్ (Price in Coins)">
 </div>
 
-<p style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):<hr> </p>
+<p style="margin-top:10px; font-weight:bold;"> <hr> ప్రయాణ సమయం (Ride Time): </p>
 <input type="datetime-local" id="rideTime">
             <button onclick="postRide()">Post Ride</button>
         </div>
