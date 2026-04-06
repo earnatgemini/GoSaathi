@@ -21,7 +21,6 @@
         .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
         table { width:100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        #joinModal { display: none; display: flex; } /* Flex display ensures centering when visible */
     </style>
 </head>
 <body>
@@ -35,7 +34,7 @@
     <div class="nav">
         <button onclick="showPage('home')">🏠 Home</button>
         <button onclick="showPage('ride')">🚗 Post</button>
-        <button onclick="showPage('my-rides')">🚗 My Rides</button>
+        <button onclick="showPage('my-rides')">📅 My Rides</button>
         <button onclick="showPage('wallet')">💰 Wallet</button>
         <button onclick="showPage('profile')">👥 Profile</button>
     </div>
@@ -78,105 +77,99 @@
         <h3>Available Rides (Live)</h3>
         <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
     </div>
-<div id="requests-section" class="card" style="display:none; border-top: 5px solid var(--gold);">
-    <h3>📩 ప్రయాణ రిక్వెస్ట్‌లు (Requests)</h3>
-    <div id="incomingRequests">రిక్వెస్ట్‌లు ఏమీ లేవు.</div>
-</div>
+
     <div id="wallet" style="display:none;">
         <div class="card wallet-card">
             <h3>My Balance</h3>
             <h2 id="coinBalance">0</h2>
             <p>Coins</p>
         </div>
-        <div class="card">
-            <h3>Transfer Coins to Saathi</h3>
-            <input type="text" id="transferTargetUid" placeholder="Enter Receiver UID">
-            <input type="number" id="transferAmount" placeholder="Amount of Coins">
-            <button onclick="transferCoins()" style="background:var(--dark);">Send Coins</button>
         </div>
-        <div class="card">
-            <h3>Add Coins (Scan & Pay)</h3>
-            <img src="qr.png" style="width:150px; display:block; margin:auto;">
-            <input type="number" id="payAmount" placeholder="Amount (₹)">
-            <input type="text" id="utrId" placeholder="UTR Number">
-            <button onclick="requestCoins()" style="background:var(--secondary);">Submit Payment</button>
-        </div>
-    </div>
 
     <div id="ride" style="display:none;">
         <div class="card">
             <h3>Post a New Ride</h3>
             <input id="from" placeholder="From City">
             <input id="to" placeholder="To City">
-            <input id="route" placeholder="Via / Route">
-            <input type="number" id="distanceKm" placeholder="Distance in KM">
-            <select id="ridePref">
-                <option value="Any">Anyone</option>
-                <option value="Male">Men Only</option>
-                <option value="Female">Women Only</option>
-            </select>
             <select id="rideType">
                 <option value="Free">Free Ride</option>
                 <option value="Paid">Paid Ride</option>
             </select>
-            <input type="number" id="seats" placeholder="Seats Available">
             <div id="paidExtraFields" style="display:none;">
-    <input type="number" id="demandPrice" placeholder="అడిగే కాయిన్స్ (Price in Coins)">
-</div>
-
-<p style="margin-top:10px; font-weight:bold;"> <hr> ప్రయాణ సమయం (Ride Time): </p>
-<input type="datetime-local" id="rideTime">
+                <input type="number" id="demandPrice" placeholder="అడిగే కాయిన్స్">
+            </div>
+            <input type="datetime-local" id="rideTime">
             <button onclick="postRide()">Post Ride</button>
         </div>
     </div>
 
-    <div id="my-rides" style="display:none; padding:15px; background:#f8f9fa; min-height:100vh;">
-    <div style="display:flex; gap:10px; margin-bottom:15px; background:white; padding:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-        <button id="btnHostTab" onclick="loadMyRides('host')" style="flex:1; background:var(--dark); color:white;">As Host (నా రైడ్స్)</button>
-        <button id="btnGuestTab" onclick="loadMyRides('co-saathi')" style="flex:1; background:#ddd; color:#333;">As Co-Saathi (బుకింగ్స్)</button>
+    <div id="my-rides" style="display:none;">
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <button id="btnHostTab" onclick="loadMyRides('host')" style="flex:1;">As Host</button>
+            <button id="btnGuestTab" onclick="loadMyRides('co-saathi')" style="flex:1;">As Co-Saathi</button>
+        </div>
+        <div id="myRidesList"></div>
     </div>
-    <div id="myRidesList"></div>
-</div>
-        
+
     <div id="profile" style="display:none;">
         <div class="card">
-            <h3>Profile & Invite</h3>
-            <p>Invitations Left: <b id="inviteCount">0</b></p>
-            <p>Your UID:</p>
-            <code id="myUidDisplay" style="display:block; background:#eee; padding:10px;"></code>
-            <button onclick="shareInvite()" style="background:#25D366;">WhatsApp Invite</button>
-            <button onclick="auth.signOut()" style="background:#666; margin-top:20px;">Logout</button>
+            <p>Your UID: <code id="myUidDisplay"></code></p>
+            <button onclick="auth.signOut()">Logout</button>
         </div>
+    </div>
+</div>
+
+<div id="joinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div class="card" style="width:90%; max-width:400px; padding:20px; border-radius:15px;">
+        <h3 id="modalTitle">Ride Request</h3>
+        <p id="modalBody" style="margin-bottom:15px;"></p>
         
-        <div id="admin-panel" style="display:none; border:2px solid red; padding:10px; border-radius:10px; margin-top:10px;">
-            <h2 style="color:red; text-align:center;">🛡️ Admin Panel</h2>
-            <h4>Users List</h4>
-            <div style="overflow-x:auto;"><table id="userTable"></table></div>
-            <h4>Manage Active Rides</h4>
-            <div id="adminRidesContainer"></div>
+        <div id="pickupArea" style="display:none; margin-bottom:15px; text-align:left;">
+            <label>📍 మీ పికప్ పాయింట్ (Pickup Point):</label>
+            <input type="text" id="pickupPoint" placeholder="ఉదా: కేపీహెచ్‌బీ మెయిన్ రోడ్">
         </div>
+
+        <div id="bargainArea" style="display:none; margin-bottom:15px; text-align:left;">
+            <label>💰 మీ ఆఫర్ (Your Offer):</label>
+            <input type="number" id="customOffer" placeholder="Coins లో ఎంటర్ చేయండి">
+        </div>
+
+        <div id="initialButtons" style="display:flex; flex-direction:column; gap:10px;">
+            <button id="btnOk" style="background:var(--secondary);">OK (Demand OK)</button>
+            <button id="btnBargain" style="background:var(--gold); color:black;">Bargain</button>
+            <button onclick="closeJoinModal()" style="background:#666;">Cancel</button>
+        </div>
+
+        <button id="btnFinalSubmit" style="display:none; background:var(--primary); width:100%; margin-top:10px;">Confirm Request</button>
     </div>
 </div>
 
 <script>
-const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", authDomain: "gemini-spinning-wheel-game.firebaseapp.com", projectId: "gemini-spinning-wheel-game" };
+// --- Configuration ---
+const firebaseConfig = { 
+    apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", 
+    authDomain: "gemini-spinning-wheel-game.firebaseapp.com", 
+    projectId: "gemini-spinning-wheel-game" 
+};
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1";
 
-const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1"; 
+// --- Global States ---
+let currentRideId = null;
+let currentRideData = null;
+let tempOffer = 0;
 
+// --- Auth ---
 function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
 auth.onAuthStateChanged(user => {
     if (user) {
         document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-ui').style.display = 'block';
         document.getElementById('myUidDisplay').innerText = user.uid;
         checkUserStatus(user);
-        if(user.uid === ADMIN_UID) {
-            document.getElementById('admin-panel').style.display = 'block';
-            loadAdminData();
-        }
     } else {
         document.getElementById('main-ui').style.display = 'none';
         showPage('login-screen');
@@ -189,59 +182,29 @@ function checkUserStatus(user) {
             const data = doc.data();
             if (!data.phone) showPage('basic-info-screen');
             else if (data.membership === "Active") {
-                document.getElementById('main-ui').style.display = 'block';
                 document.getElementById('coinBalance').innerText = data.coins || 0;
-                document.getElementById('inviteCount').innerText = data.invites || 0;
                 showPage('home');
             } else showPage('activation-screen');
-        } else handleNewUser(user);
-    });
-}
-
-async function handleNewUser(user) {
-    const userRef = db.collection("Users").doc(user.uid);
-    
-    // 1. మొదట యూజర్ డేటా ఉందో లేదో ఖచ్చితంగా చెక్ చేయాలి
-    const doc = await userRef.get();
-    if (doc.exists) {
-        console.log("User already exists, skipping creation.");
-        return; // యూజర్ ఆల్రెడీ ఉంటే ఇక్కడే ఆగిపోతుంది
-    }
-
-    const inviteCode = new URLSearchParams(window.location.search).get('invite');
-    let isInvited = false;
-    
-    if(inviteCode) {
-        const inviterDoc = await db.collection("Users").doc(inviteCode).get();
-        if(inviterDoc.exists && inviterDoc.data().invites > 0) {
-            isInvited = true;
-            await db.collection("Users").doc(inviteCode).update({ 
-                invites: firebase.firestore.FieldValue.increment(-1) 
+        } else {
+            db.collection("Users").doc(user.uid).set({
+                name: user.displayName, email: user.email, coins: 0, membership: "Active", joinDate: Date.now()
             });
         }
-    }
-
-    // 2. కొత్త యూజర్ అయితేనే 'set' చేయాలి
-    return userRef.set({
-        name: user.displayName, 
-        email: user.email, 
-        coins: isInvited ? 500 : 0,
-        membership: isInvited ? "Active" : "Pending", 
-        invites: 5, 
-        joinDate: Date.now()
     });
 }
 
-function submitBasicInfo() {
-    const phone = document.getElementById('userPhone').value;
-    const village = document.getElementById('userVillage').value;
-    const gender = document.getElementById('userGender').value;
-    const tc = document.getElementById('tcCheck').checked;
-    if(!phone || !gender || !tc) return alert("Fill all details!");
-    db.collection("Users").doc(auth.currentUser.uid).update({ phone, village, gender })
-    .then(() => clearForm(['userPhone', 'userVillage', 'userGender', 'tcCheck']));
+// --- Navigation ---
+function showPage(pageId) {
+    const pages = ['home', 'wallet', 'ride', 'profile', 'activation-screen', 'login-screen', 'basic-info-screen', 'my-rides'];
+    pages.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (id === pageId) ? 'block' : 'none';
+    });
+    if(pageId === 'home') loadRides();
+    if(pageId === 'my-rides') loadMyRides('host');
 }
 
+// --- Ride Functions ---
 async function postRide() {
     const from = document.getElementById('from').value;
     const to = document.getElementById('to').value;
@@ -249,247 +212,51 @@ async function postRide() {
     const time = document.getElementById('rideTime').value;
     const demand = (type === "Paid") ? Number(document.getElementById('demandPrice').value) : 0;
 
-    if(!from || !to || !time) return alert("దయచేసి ఊరి పేరు మరియు సమయం ఎంటర్ చేయండి!");
-    if(type === "Paid" && !demand) return alert("దయచేసి మీరు కోరుకునే కాయిన్స్ ఎంటర్ చేయండి!");
+    if(!from || !to || !time) return alert("Details fill cheyandi!");
 
-    const hostUid = auth.currentUser.uid;
-    const hostDoc = await db.collection("Users").doc(hostUid).get();
-
-    if ((hostDoc.data().coins || 0) < 50)
-        return alert("రైడ్ పోస్ట్ చేయడానికి కనీసం 50 కాయిన్స్ ఉండాలి!");
-
-    const batch = db.batch();
-
-    // ✅ 50 coins to admin
-    batch.update(db.collection("Users").doc(hostUid), {
-        coins: firebase.firestore.FieldValue.increment(-50)
+    await db.collection("Rides").add({
+        saathiId: auth.currentUser.uid, saathiName: auth.currentUser.displayName,
+        from, to, type, time, demand, status: "Available", createdAt: Date.now()
     });
-    batch.update(db.collection("Users").doc(ADMIN_UID), {
-        coins: firebase.firestore.FieldValue.increment(50)
-    });
-
-    const rideRef = db.collection("Rides").doc();
-
-    batch.set(rideRef, {
-        saathiId: hostUid,
-        saathiName: auth.currentUser.displayName,
-        from, to, type,
-        time,
-        demand,
-        distance: Number(document.getElementById('distanceKm').value),
-        status: "Available",
-        createdAt: Date.now(),
-        route: document.getElementById('route').value,
-        seats: Number(document.getElementById('seats').value),
-        preference: document.getElementById('ridePref').value
-    });
-
-    await batch.commit();
-
-    alert(" రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!(మీ సౌలబ్యం (App నిర్వహణ/బాగోగులు) కొరకు - 50 Coins కట్ అయ్యాయి.)");
-
-    clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
+    alert("Ride Posted!");
     showPage('home');
 }
 
 function loadRides() {
-    db.collection("Rides")
-    .where("status", "in", ["Available", "GoSaathi"])
-    .onSnapshot(snap => {
+    db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
         const container = document.getElementById('ridesContainer');
-        if (!container) return;
         container.innerHTML = "";
-
-        if (snap.empty) {
-            container.innerHTML = "<p style='text-align:center;'>ప్రస్తుతానికి రైడ్స్ ఏవీ లేవు!</p>";
-            return;
-        }
-
         snap.forEach(doc => {
             const r = doc.data();
-            const now = Date.now();
-            
-            // రైడ్ టైమ్ ని మిల్లీ సెకన్లలోకి మార్చడం
-            const rideDate = new Date(r.time);
-            const rideTimeMillis = rideDate.getTime();
-
-            // 1. సమయం చెక్: ఒకవేళ సమయం చెల్లనిది అయితే (Invalid Date)
-            if (isNaN(rideTimeMillis)) {
-                console.error("Invalid ride time for doc:", doc.id);
-                return;
-            }
-
-            // 2. ఎక్స్‌పైరీ లాజిక్: సమయం ముగిసి 1 గంట దాటితేనే Expired చేయాలి
-            if (now > (rideTimeMillis + 6 * 3600000)) {
-                db.collection("Rides").doc(doc.id).update({ status: "Expired" });
-                return;
-            }
-
-            // 3. రైడ్ పోస్ట్ చేసిన వాడికి తన రైడ్ కనిపించాల్సిన అవసరం లేదు (ఐచ్ఛికం)
-            if (r.saathiId === auth.currentUser.uid) return;
-
-            // ✅ రైడ్ ని చూపించడం
+            if(r.saathiId === auth.currentUser.uid) return;
             container.innerHTML += `
-            <div class="card ride-item">
-                <div style="display:flex; justify-content:space-between;">
-                    <b>${r.from} ➔ ${r.to}</b>
-                    <span style="font-size:12px; color:gray;">${r.type}</span>
-                </div>
-                <div style="font-size:14px; margin-top:5px;">
-                    📅 సమయం: ${rideDate.toLocaleString()}<br>
-                    💰 ధర: ${r.type === 'Paid' ? '<b>' + r.demand + ' Coins</b>' : '<b style="color:green;">FREE</b>'}
-                </div>
-                <button onclick="initiateJoin('${doc.id}', '${r.type}')"
-                style="margin-top:10px; background:var(--secondary);">
-                Join Ride</button>
-            </div>`;
+                <div class="card ride-item">
+                    <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
+                    💰 Demand: ${r.demand} Coins<br>
+                    <button onclick="initiateJoin('${doc.id}', '${r.type}')" style="background:var(--secondary);">Join Ride</button>
+                </div>`;
         });
-    }, error => {
-        console.error("Rides Load Error: ", error);
-        if(error.message.includes("permission-denied")) {
-            alert("సెక్యూరిటీ రూల్స్ వల్ల రైడ్స్ లోడ్ అవ్వడం లేదు!");
-        }
     });
 }
 
-    async function loadMyRides(role) {
-    const list = document.getElementById('myRidesList');
-    list.innerHTML = "<p style='text-align:center;'>Loading...</p>";
-    
-    // బటన్ కలర్స్ మార్చడం కోసం
-    document.getElementById('btnHostTab').style.background = (role === 'host') ? 'var(--dark)' : '#ddd';
-    document.getElementById('btnGuestTab').style.background = (role === 'co-saathi') ? 'var(--dark)' : '#ddd';
-
-    if (role === 'host') {
-        // హోస్ట్ పోస్ట్ చేసిన రైడ్స్ కి వచ్చిన రిక్వెస్ట్ లు
-        db.collection("Requests")
-          .where("hostId", "==", auth.currentUser.uid)
-          .orderBy("createdAt", "desc")
-          .onSnapshot(snap => {
-            list.innerHTML = "";
-            if(snap.empty) list.innerHTML = "<p style='text-align:center;'>ఎటువంటి రిక్వెస్ట్‌లు లేవు.</p>";
-            
-            snap.forEach(doc => {
-                const r = doc.data();
-                const statusColor = r.status === 'Pending' ? 'orange' : (r.status === 'Confirmed' ? 'green' : 'red');
-                
-                list.innerHTML += `
-                <div class="card" style="border-left: 5px solid ${statusColor}; margin-bottom:15px; padding:15px;">
-                    <div style="display:flex; justify-content:space-between;">
-                        <b>${r.from} ➔ ${r.to}</b>
-                        <span style="color:${statusColor}; font-weight:bold;">${r.status}</span>
-                    </div>
-                    <p style="margin:5px 0;">👤 Co-Saathi: ${r.coSaathiName}</p>
-                    <p style="margin:5px 0;">📍 Pickup: <b>${r.pickupPoint}</b></p>
-                    <p style="margin:5px 0;">💰 Offer: <b>${r.offerPrice} Coins</b> (${r.rideType})</p>
-                    
-                    ${r.status === 'Pending' ? `
-                        <div style="display:flex; gap:10px; margin-top:10px;">
-                            <button onclick="respondRequest('${doc.id}', '${r.rideId}', 'Confirmed')" style="background:var(--secondary); flex:1;">Confirm</button>
-                            <button onclick="respondRequest('${doc.id}', '${r.rideId}', 'Rejected')" style="background:#dc3545; flex:1;">Reject</button>
-                        </div>
-                    ` : ''}
-                    
-                    ${r.status === 'Confirmed' ? `
-                        <button onclick="startJourney('${r.rideId}', '${doc.id}')" style="background:var(--dark); width:100%; margin-top:10px;">Start Journey</button>
-                    ` : ''}
-                </div>`;
-            });
-        });
-    } else {
-        // కో-సాథీ పంపిన రిక్వెస్ట్ ల స్టేటస్
-        db.collection("Requests")
-          .where("coSaathiId", "==", auth.currentUser.uid)
-          .onSnapshot(snap => {
-            list.innerHTML = "";
-            snap.forEach(doc => {
-                // loadMyRides('co-saathi') లోపల snap.forEach లో ఇలా యాడ్ చేయి
-${r.status === 'Journey Started' ? `
-    <button onclick="joinSaathi('${doc.id}', '${r.hostId}', ${r.offerPrice}, ${r.commToPay})" 
-            style="background:var(--secondary); width:100%; margin-top:10px;">
-        🤝 Join Saathi (Confirm Meeting)
-    </button>
-` : ''}
-                const r = doc.data();
-                list.innerHTML += `
-                <div class="card" style="margin-bottom:10px;">
-                    <b>${r.from} ➔ ${r.to}</b><br>
-                    Status: <b style="color:blue;">${r.status}</b><br>
-                    Offer: ${r.offerPrice} Coins
-                </div>`;
-            });
-        });
-    }
-}
-
-    async function respondRequest(requestId, rideId, newStatus) {
-    try {
-        const batch = db.batch();
-        
-        // 1. రిక్వెస్ట్ స్టేటస్ అప్‌డేట్
-        const reqRef = db.collection("Requests").doc(requestId);
-        batch.update(reqRef, { status: newStatus });
-
-        if (newStatus === 'Confirmed') {
-            // 2. రైడ్ ని లైవ్ నుండి తీసేయడం (Status: GoSaathi)
-            const rideRef = db.collection("Rides").doc(rideId);
-            batch.update(rideRef, { status: "GoSaathi" });
-            
-            alert("రైడ్ కన్ఫర్మ్ అయ్యింది! కో-సాథీకి నోటిఫికేషన్ వెళ్తుంది.");
-        }
-
-        await batch.commit();
-        if(newStatus === 'Rejected') alert("రిక్వెస్ట్ రిజెక్ట్ చేయబడింది.");
-        
-    } catch (error) {
-        console.error("Error responding to request:", error);
-        alert("ఏదో తప్పు జరిగింది!");
-    }
-}
-// రిక్వెస్ట్ పంపే లాజిక్ (Co-Saathi Side)
-let tempOffer = 0;
-let currentRideId = null;
-let currentRideData = null;
-
+// --- Join Request Logic ---
 async function initiateJoin(rideId, rideType) {
     const rideDoc = await db.collection("Rides").doc(rideId).get();
     const rData = rideDoc.data();
-    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
-    
-    // 1. కమీషన్ చెక్ (తప్పనిసరి)
-    const comm = (rideType === "Paid") ? 40 : 500;
-    if ((userDoc.data().coins || 0) < comm) {
-        return alert("కమీషన్ కోసం సరిపడా కాయిన్స్ లేవు! కనీసం " + comm + " కాయిన్స్ ఉండాలి.");
-    }
-
     currentRideId = rideId;
     currentRideData = rData;
-    currentRideData.rideType = rideType; // rideType ని సేవ్ చేస్తున్నాం
-    currentRideData.commToPay = comm;     // కమీషన్ ని సేవ్ చేస్తున్నాం
+    currentRideData.rideType = rideType;
+    currentRideData.commToPay = (rideType === "Paid") ? 40 : 500;
 
     document.getElementById('modalBody').innerHTML = `హోస్ట్ డిమాండ్: <b>${rData.demand} Coins</b>`;
     document.getElementById('joinModal').style.display = 'flex';
-    
-    // Reset Modal UI
     document.getElementById('pickupArea').style.display = 'none';
     document.getElementById('bargainArea').style.display = 'none';
     document.getElementById('initialButtons').style.display = 'flex';
     document.getElementById('btnFinalSubmit').style.display = 'none';
-    document.getElementById('customOffer').value = ""; // క్లియర్ చేయడం
-    document.getElementById('pickupPoint').value = ""; // క్లియర్ చేయడం
 
-    // OK Clicked
-    document.getElementById('btnOk').onclick = () => {
-        tempOffer = rData.demand;
-        showPickupStep();
-    };
-
-    // Bargain Clicked
-    document.getElementById('btnBargain').onclick = () => {
-        tempOffer = 0; // బేరమాడుతున్నాం కాబట్టి temp సున్నా చేస్తున్నాం
-        document.getElementById('bargainArea').style.display = 'block';
-        showPickupStep();
-    };
+    document.getElementById('btnOk').onclick = () => { tempOffer = rData.demand; showPickupStep(); };
+    document.getElementById('btnBargain').onclick = () => { tempOffer = 0; document.getElementById('bargainArea').style.display = 'block'; showPickupStep(); };
 }
 
 function showPickupStep() {
@@ -498,332 +265,73 @@ function showPickupStep() {
     document.getElementById('btnFinalSubmit').style.display = 'block';
 }
 
-document.getElementById('btnFinalSubmit').onclick = () => {
-    const pickup = document.getElementById('pickupPoint').value.trim();
+document.getElementById('btnFinalSubmit').onclick = async () => {
+    const pickup = document.getElementById('pickupPoint').value;
     const bargainVal = document.getElementById('customOffer').value;
-    
-    // ఒకవేళ బార్గైన్ బాక్స్ లో వాల్యూ ఉంటే అది తీసుకుంటుంది, లేదంటే హోస్ట్ డిమాండ్ తీసుకుంటుంది
     const finalOffer = bargainVal ? Number(bargainVal) : tempOffer;
 
-    if(!pickup) return alert("దయచేసి పికప్ పాయింట్ ఎంటర్ చేయండి!");
+    if(!pickup) return alert("Pickup point enters cheyandi!");
     
-    sendJoinRequest(currentRideId, currentRideData, finalOffer, pickup);
+    await db.collection("Requests").add({
+        rideId: currentRideId, hostId: currentRideData.saathiId,
+        coSaathiId: auth.currentUser.uid, coSaathiName: auth.currentUser.displayName,
+        from: currentRideData.from, to: currentRideData.to,
+        offerPrice: finalOffer, pickupPoint: pickup, status: "Pending",
+        rideType: currentRideData.rideType, commToPay: currentRideData.commToPay, createdAt: Date.now()
+    });
+    alert("Request Sent!");
     closeJoinModal();
 };
 
-function sendJoinRequest(rideId, rData, offer, pickup) {
-    db.collection("Requests").add({
-        rideId: rideId,
-        hostId: rData.saathiId, 
-        coSaathiId: auth.currentUser.uid,
-        coSaathiName: auth.currentUser.displayName,
-        from: rData.from, 
-        to: rData.to,
-        rideType: rData.rideType, // ఇది యాడ్ చేశాను
-        offerPrice: Number(offer),
-        commToPay: rData.commToPay, // ఇది యాడ్ చేశాను
-        pickupPoint: pickup,
-        status: "Pending",
-        createdAt: Date.now()
-    }).then(() => {
-        alert("రిక్వెస్ట్ పంపబడింది!");
-    }).catch(err => alert("Error: " + err.message));
-}
+function closeJoinModal() { document.getElementById('joinModal').style.display = 'none'; }
 
-    async function respondRequest(requestId, rideId, newStatus) {
-    try {
-        const batch = db.batch();
-        
-        // 1. రిక్వెస్ట్ స్టేటస్ అప్‌డేట్
-        const reqRef = db.collection("Requests").doc(requestId);
-        batch.update(reqRef, { status: newStatus });
-
-        if (newStatus === 'Confirmed') {
-            // 2. రైడ్ ని లైవ్ నుండి తీసేయడం (Status: GoSaathi)
-            const rideRef = db.collection("Rides").doc(rideId);
-            batch.update(rideRef, { status: "GoSaathi" });
-            
-            alert("రైడ్ కన్ఫర్మ్ అయ్యింది! కో-సాథీకి నోటిఫికేషన్ వెళ్తుంది.");
-        }
-
-        await batch.commit();
-        if(newStatus === 'Rejected') alert("రిక్వెస్ట్ రిజెక్ట్ చేయబడింది.");
-        
-    } catch (error) {
-        console.error("Error responding to request:", error);
-        alert("ఏదో తప్పు జరిగింది!");
-    }
-}
-
-    async function startJourney(rideId, requestId) {
-    await db.collection("Requests").doc(requestId).update({
-        status: "Journey Started"
-    });
-    alert("కో-సాథీకి మీరు బయలుదేరినట్లు సమాచారం వెళ్ళింది!");
-    // ఇక్కడ మనం కావాలంటే చాట్ లో ఆటో మెసేజ్ పంపొచ్చు
-}
+// --- My Rides & Coin Transfer ---
+async function loadMyRides(role) {
+    const list = document.getElementById('myRidesList');
+    list.innerHTML = "Loading...";
+    const queryField = (role === 'host') ? "hostId" : "coSaathiId";
     
-// హోస్ట్ కోసం రిక్వెస్ట్ లు లోడ్ చేయడం
-function loadIncomingRequests() {
-    const container = document.getElementById('incomingRequests');
-    const section = document.getElementById('requests-section');
-
-    db.collection("Requests")
-        .where("hostId", "==", auth.currentUser.uid)
-        .where("status", "==", "Pending")
-        .onSnapshot(snap => {
-            if (snap.empty) {
-                section.style.display = "none";
-                return;
-            }
-            section.style.display = "block";
-            container.innerHTML = "";
-            snap.forEach(doc => {
-                const req = doc.data();
-                container.innerHTML += `
-                    <div class="card" style="border:1px solid #ddd; padding:10px; margin-bottom:10px;">
-                        <p><b>${req.coSaathiName}</b> ${req.from} నుండి ${req.to} కి రావాలనుకుంటున్నారు.</p>
-                        <p>ఆఫర్ చేసిన ధర: <b style="color:green;">${req.offerPrice} Coins</b></p>
-                        <div style="display:flex; justify-content:space-between;">
-                            <button onclick="acceptRequest('${doc.id}')" style="background:var(--secondary); width:48%;">Accept</button>
-                            <button onclick="rejectRequest('${doc.id}')" style="background:red; width:48%;">Reject</button>
-                        </div>
-                    </div>`;
-            });
-        });
-}
-
-async function acceptRequest(reqId) {
-    const reqDoc = await db.collection("Requests").doc(reqId).get();
-    const req = reqDoc.data();
-
-    const hostUid = req.hostId;
-    const coUid = req.coSaathiId;
-
-    const hostDoc = await db.collection("Users").doc(hostUid).get();
-    const coDoc = await db.collection("Users").doc(coUid).get();
-
-    const batch = db.batch();
-
-    if (req.rideType === "Free") {
-        // ✅ 499 from Co-Saathi
-        if ((coDoc.data().coins || 0) < 499)
-            return alert("Co-Saathi దగ్గర సరిపడా coins లేవు!");
-
-        batch.update(db.collection("Users").doc(coUid), {
-            coins: firebase.firestore.FieldValue.increment(-499)
-        });
-
-        batch.update(db.collection("Users").doc(ADMIN_UID), {
-            coins: firebase.firestore.FieldValue.increment(499)
-        });
-
-    } else {
-        // ✅ Paid Ride → 99 host + 49 co
-        if ((hostDoc.data().coins || 0) < 99)
-            return alert("Host దగ్గర 99 coins లేవు!");
-
-        if ((coDoc.data().coins || 0) < 49)
-            return alert("Co-Saathi దగ్గర 49 coins లేవు!");
-
-        batch.update(db.collection("Users").doc(hostUid), {
-            coins: firebase.firestore.FieldValue.increment(-99)
-        });
-
-        batch.update(db.collection("Users").doc(coUid), {
-            coins: firebase.firestore.FieldValue.increment(-49)
-        });
-
-        batch.update(db.collection("Users").doc(ADMIN_UID), {
-            coins: firebase.firestore.FieldValue.increment(148)
-        });
-    }
-
-    batch.update(db.collection("Rides").doc(req.rideId), { status: "GoSaathi" });
-    batch.update(db.collection("Requests").doc(reqId), { status: "Accepted" });
-
-    await batch.commit();
-
-    alert("డీల్ కన్ఫర్మ్ అయింది! కాయిన్స్ ట్రాన్స్‌ఫర్ అయ్యాయి.");
-}
-
-function rejectRequest(reqId) {
-    if(confirm("ఈ రిక్వెస్ట్ ని రిజెక్ట్ చేయాలా?")) {
-        db.collection("Requests").doc(reqId).update({ status: "Rejected" });
-    }
-}
-
-async function transferCoins() {
-    const target = document.getElementById('transferTargetUid').value;
-    const amount = Number(document.getElementById('transferAmount').value);
-    const userRef = db.collection("Users").doc(auth.currentUser.uid);
-    const userDoc = await userRef.get();
-    if(userDoc.data().coins < amount) return alert("Insufficient balance!");
-
-    const batch = db.batch();
-    batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
-    batch.update(db.collection("Users").doc(target), { coins: firebase.firestore.FieldValue.increment(amount) });
-    await batch.commit();
-    alert("Transferred!");
-    clearForm(['transferTargetUid', 'transferAmount']);
-}
-
-async function requestCoins() {
-    const utr = document.getElementById('utrId').value.trim();
-    const payAmountInput = document.getElementById('payAmount').value;
-
-    if (!utr || !payAmountInput) {
-        return alert("అమౌంట్ మరియు UTR నంబర్ ఖచ్చితంగా ఎంటర్ చేయాలి!");
-    }
-
-    const amount = Number(payAmountInput);
-
-    // నోట్: డూప్లికేట్ UTR చెక్ ని క్లయింట్ సైడ్ కాకుండా అడ్మిన్ ప్యానెల్ లో చేయడం సులభం.
-    // ఎందుకంటే అందరి పేమెంట్స్ చదివే పర్మిషన్ యూజర్ కి ఇవ్వడం సేఫ్ కాదు.
-
-    db.collection("Payments").add({
-        userId: auth.currentUser.uid,
-        userName: auth.currentUser.displayName,
-        amount: amount,
-        utr: utr,
-        status: "Pending",
-        time: Date.now() // ఇక్కడ '5' తీసేయబడింది
-    }).then(() => {
-        alert("పేమెంట్ సబ్మిట్ చేయబడింది! అడ్మిన్ వెరిఫై చేసిన తర్వాత కాయిన్స్ యాడ్ అవుతాయి.");
-        clearForm(['payAmount', 'utrId']);
-    }).catch(err => {
-        console.error("Firestore Error:", err);
-        alert("సబ్మిట్ చేయడంలో సమస్య వచ్చింది: " + err.message);
-    });
-}
-async function joinSaathi(requestId, hostId, offerPrice, comm) {
-    if (!confirm("మీరు హోస్ట్ ని కలిశారా? ఇది నొక్కితే కాయిన్స్ హోస్ట్ కి ట్రాన్స్‌ఫర్ అవుతాయి.")) return;
-
-    const coSaathiId = auth.currentUser.uid;
-    const batch = db.batch();
-
-    try {
-        // 1. కో-సాథీ అకౌంట్ నుండి కమీషన్ మరియు ఆఫర్ ప్రైస్ తగ్గించడం
-        const coSaathiRef = db.collection("Users").doc(coSaathiId);
-        const totalToDeduct = offerPrice + comm;
-        batch.update(coSaathiRef, {
-            coins: firebase.firestore.FieldValue.increment(-totalToDeduct)
-        });
-
-        // 2. హోస్ట్ అకౌంట్ కి ఆఫర్ ప్రైస్ యాడ్ చేయడం
-        const hostRef = db.collection("Users").doc(hostId);
-        batch.update(hostRef, {
-            coins: firebase.firestore.FieldValue.increment(offerPrice)
-        });
-
-        // 3. రిక్వెస్ట్ స్టేటస్ ని 'Joined' గా మార్చడం
-        const reqRef = db.collection("Requests").doc(requestId);
-        batch.update(reqRef, { status: "Joined" });
-
-        // 4. అడ్మిన్ అకౌంట్ కి కమీషన్ యాడ్ చేయడం (Optional)
-        const adminRef = db.collection("Users").doc('JiHQO3M0UUdftGqDPUKBwxPqv9q1');
-        batch.update(adminRef, {
-            coins: firebase.firestore.FieldValue.increment(comm)
-        });
-
-        await batch.commit();
-
-        alert(`🤝 సాథీతో కలిశారు! ${offerPrice} కాయిన్స్ ట్రాన్స్‌ఫర్ అయ్యాయి.`);
-        
-        // హోస్ట్ కి నోటిఫికేషన్ లాగా ఒక మెసేజ్ పంపడం (చాట్ లో)
-        sendSystemMessage(requestId, `✅ ${auth.currentUser.displayName} జాయిన్ అయ్యారు. ${offerPrice} కాయిన్స్ మీకు అందాయి!`);
-
-    } catch (error) {
-        console.error("Transfer Error:", error);
-        alert("ట్రాన్సాక్షన్ విఫలమైంది: " + error.message);
-    }
-}
-
-// సిస్టమ్ మెసేజ్ పంపే చిన్న ఫంక్షన్
-function sendSystemMessage(rideId, text) {
-    db.collection("Messages").add({
-        chatId: rideId,
-        senderId: "System",
-        senderName: "GoSaathi",
-        text: text,
-        time: Date.now()
-    });
-}
-
-    // loadMyRides లో 'Joined' స్టేటస్ ఉన్నప్పుడు ఈ బటన్ చూపించు
-async function completeRide(requestId) {
-    await db.collection("Requests").doc(requestId).update({ status: "Completed" });
-    const rating = prompt("మీ ప్రయాణం ఎలా ఉంది? (1-5 రేటింగ్ ఇవ్వండి)", "5");
-    alert("ధన్యవాదాలు! మీ రైడ్ విజయవంతంగా పూర్తయింది.");
-}
-    
-function loadAdminData() {
-    db.collection("Users").onSnapshot(snap => {
-        const table = document.getElementById('userTable');
-        table.innerHTML = `<tr><th>Name</th><th>Coins</th><th>Action</th></tr>`;
+    db.collection("Requests").where(queryField, "==", auth.currentUser.uid).onSnapshot(snap => {
+        list.innerHTML = "";
         snap.forEach(doc => {
-            const u = doc.data();
-            table.innerHTML += `<tr><td>${u.name}</td><td>${u.coins}</td>
-                <td><button onclick="adminManageCoins('${doc.id}', 'add')">+</button>
-                <button onclick="adminManageCoins('${doc.id}', 'sub')">-</button></td></tr>`;
+            const r = doc.data();
+            list.innerHTML += `
+                <div class="card">
+                    <b>${r.from} ➔ ${r.to}</b> [${r.status}]<br>
+                    Offer: ${r.offerPrice} | Pickup: ${r.pickupPoint}<br>
+                    ${role === 'host' && r.status === 'Pending' ? `<button onclick="respondRequest('${doc.id}', '${r.rideId}', 'Confirmed')">Confirm</button>` : ''}
+                    ${role === 'host' && r.status === 'Confirmed' ? `<button onclick="startJourney('${doc.id}')">Start Journey</button>` : ''}
+                    ${role === 'co-saathi' && r.status === 'Journey Started' ? `<button onclick="joinSaathi('${doc.id}', '${r.hostId}', ${r.offerPrice}, ${r.commToPay})">Join Saathi (Pay)</button>` : ''}
+                </div>`;
         });
     });
 }
 
-function adminManageCoins(uid, type) {
-    const amt = Number(prompt("Amount?"));
-    db.collection("Users").doc(uid).update({ coins: firebase.firestore.FieldValue.increment(type==='add'?amt:-amt) });
+async function respondRequest(reqId, rideId, status) {
+    const batch = db.batch();
+    batch.update(db.collection("Requests").doc(reqId), { status });
+    if(status === 'Confirmed') batch.update(db.collection("Rides").doc(rideId), { status: "GoSaathi" });
+    await batch.commit();
 }
 
-function showPage(pageId) {
-    ['home', 'wallet', 'ride', 'profile', 'activation-screen', 'login-screen', 'basic-info-screen'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = (id === pageId) ? 'block' : 'none';
-    });
-    if(pageId === 'home') {
-        loadRides();
-        loadIncomingRequests(); // హోమ్ పేజీ లో రిక్వెస్ట్ లు చెక్ చేస్తుంది
-    }
+async function startJourney(reqId) { await db.collection("Requests").doc(reqId).update({ status: "Journey Started" }); }
+
+async function joinSaathi(reqId, hostId, price, comm) {
+    const batch = db.batch();
+    const coRef = db.collection("Users").doc(auth.currentUser.uid);
+    const hostRef = db.collection("Users").doc(hostId);
+    
+    batch.update(coRef, { coins: firebase.firestore.FieldValue.increment(-(price + comm)) });
+    batch.update(hostRef, { coins: firebase.firestore.FieldValue.increment(price) });
+    batch.update(db.collection("Requests").doc(reqId), { status: "Joined" });
+    
+    await batch.commit();
+    alert("Transaction Successful!");
 }
 
-function clearForm(ids) { ids.forEach(id => { 
-    let el = document.getElementById(id); 
-    if(el.type === "checkbox") el.checked = false; else el.value = ""; 
-}); }
-
-function shareInvite() {
-    const link = window.location.origin + window.location.pathname + "?invite=" + auth.currentUser.uid;
-    window.open("https://api.whatsapp.com/send?text=Join GoSaathi: " + encodeURIComponent(link));
-}
-    // rideType change → show/hide demand field
 document.getElementById('rideType').addEventListener('change', function() {
-    document.getElementById('paidExtraFields').style.display =
-        (this.value === 'Paid') ? 'block' : 'none';
+    document.getElementById('paidExtraFields').style.display = (this.value === 'Paid') ? 'block' : 'none';
 });
 </script>
-   <div id="joinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
-    <div class="card" style="width:90%; max-width:400px; padding:20px; border-radius:15px;">
-        <h3 id="modalTitle" style="color:var(--dark);">Ride Request</h3>
-        <p id="modalBody" style="margin-bottom:15px;"></p>
-        
-        <div id="pickupArea" style="display:none; margin-bottom:15px; text-align:left;">
-            <label>📍 మీ పికప్ పాయింట్ (Pickup Point):</label>
-            <input type="text" id="pickupPoint" placeholder="ఉదా: కేపీహెచ్‌బీ మెయిన్ రోడ్" style="margin-top:5px;">
-        </div>
-
-        <div id="bargainArea" style="display:none; margin-bottom:15px; text-align:left;">
-            <label>💰 మీ ఆఫర్ (Your Offer):</label>
-            <input type="number" id="customOffer" placeholder="Coins లో ఎంటర్ చేయండి">
-        </div>
-
-        <div id="initialButtons" style="display:flex; flex-direction:column; gap:10px;">
-            <button id="btnOk" style="background:var(--secondary);">OK (Demand OK)</button>
-            <button id="btnBargain" style="background:var(--gold); color:black;">Bargain (బేరమాడండి)</button>
-            <button onclick="closeJoinModal()" style="background:#666;">Cancel</button>
-        </div>
-
-        <button id="btnFinalSubmit" style="display:none; background:var(--primary); width:100%; margin-top:10px;">Confirm Request</button>
-    </div>
-</div>
 </body>
 </html>
