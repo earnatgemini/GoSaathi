@@ -190,10 +190,13 @@ function checkUserStatus(user) {
 
 async function handleNewUser(user) {
     const userRef = db.collection("Users").doc(user.uid);
+    
+    // 1. మొదట యూజర్ డేటా ఉందో లేదో ఖచ్చితంగా చెక్ చేయాలి
     const doc = await userRef.get();
-
-    // యూజర్ ఆల్రెడీ ఉంటే మళ్ళీ క్రియేట్ చేయొద్దు
-    if (doc.exists) return; 
+    if (doc.exists) {
+        console.log("User already exists, skipping creation.");
+        return; // యూజర్ ఆల్రెడీ ఉంటే ఇక్కడే ఆగిపోతుంది
+    }
 
     const inviteCode = new URLSearchParams(window.location.search).get('invite');
     let isInvited = false;
@@ -208,7 +211,7 @@ async function handleNewUser(user) {
         }
     }
 
-    // కేవలం కొత్త యూజర్ కి మాత్రమే ఇది రన్ అవుతుంది
+    // 2. కొత్త యూజర్ అయితేనే 'set' చేయాలి
     return userRef.set({
         name: user.displayName, 
         email: user.email, 
