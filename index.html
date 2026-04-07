@@ -399,26 +399,29 @@ function loadRides() {
     } else {
         // కో-సాథీ పంపిన రిక్వెస్ట్ ల స్టేటస్
         db.collection("Requests")
-          .where("coSaathiId", "==", auth.currentUser.uid)
-          .onSnapshot(snap => {
-            list.innerHTML = "";
-            snap.forEach(doc => {
-                // loadMyRides('co-saathi') లోపల snap.forEach లో ఇలా యాడ్ చేయి
-${r.status === 'Journey Started' ? `
-    <button onclick="joinSaathi('${doc.id}', '${r.hostId}', ${r.offerPrice}, ${r.commToPay})" 
-            style="background:var(--secondary); width:100%; margin-top:10px;">
-        🤝 Join Saathi (Confirm Meeting)
-    </button>
-` : ''}
-                const r = doc.data();
-                list.innerHTML += `
-                <div class="card" style="margin-bottom:10px;">
-                    <b>${r.from} ➔ ${r.to}</b><br>
-                    Status: <b style="color:blue;">${r.status}</b><br>
-                    Offer: ${r.offerPrice} Coins
-                </div>`;
-            });
-        });
+  .where("coSaathiId", "==", auth.currentUser.uid)
+  .onSnapshot(snap => {
+    list.innerHTML = "";
+    snap.forEach(doc => {
+
+        const r = doc.data();
+
+        list.innerHTML += `
+        <div class="card" style="margin-bottom:10px;">
+            <b>${r.from} ➔ ${r.to}</b><br>
+            Status: <b style="color:blue;">${r.status}</b><br>
+            Offer: ${r.offerPrice} Coins
+
+            ${r.status === 'Journey Started' ? `
+                <button onclick="joinSaathi('${doc.id}', '${r.hostId}', ${r.offerPrice}, ${r.commToPay})" 
+                        style="background:var(--secondary); width:100%; margin-top:10px;">
+                    🤝 Join Saathi (Confirm Meeting)
+                </button>
+            ` : ''}
+
+        </div>`;
+    });
+});
     }
 }
 
