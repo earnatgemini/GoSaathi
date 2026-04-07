@@ -351,14 +351,6 @@ function loadRides() {
             alert("సెక్యూరిటీ రూల్స్ వల్ల రైడ్స్ లోడ్ అవ్వడం లేదు!");
         }
     });
-
-    // ఉదాహరణకు రైడ్ కార్డ్ లో ఇలా మార్చు:
-if (data.status === "Accepted") {
-    container.innerHTML += `
-        <button onclick="openChat('${doc.id}', 'Partner')" style="background:var(--primary);">
-            💬 Chat with Saathi
-        </button>`;
-}
 }
 let currentChatId = null; // rideId ని చాట్ ఐడిగా వాడుతాం
 
