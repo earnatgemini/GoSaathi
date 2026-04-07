@@ -409,6 +409,76 @@ async function transferCoins() {
             console.error("Requests Load Error: ", error);
         });
 }
+    async function loadMyRides(role) {
+    const list = document.getElementById('myRidesList');
+    if (!list) return;
+    list.innerHTML = "<p style='text-align:center;'>Loading...</p>";
+    
+    // బటన్ కలర్స్ మార్చడం
+    document.getElementById('btnHostTab').style.background = (role === 'host') ? 'var(--dark)' : '#ddd';
+    document.getElementById('btnGuestTab').style.background = (role === 'co-saathi') ? 'var(--dark)' : '#ddd';
+
+    let query;
+    if (role === 'host') {
+        query = db.collection("Requests").where("hostId", "==", auth.currentUser.uid);
+    } else {
+        query = db.collection("Requests").where("coSaathiId", "==", auth.currentUser.uid);
+    }
+
+    query.onSnapshot(snap => {
+        list.innerHTML = "";
+        if (snap.empty) {
+            list.innerHTML = "<p style='text-align:center;'>రైడ్స్ ఏవీ లేవు.</p>";
+            return;
+        }
+
+        snap.forEach(doc => {
+            const r = doc.data();
+            list.innerHTML += `
+                <div class="card" style="border-left: 5px solid var(--primary);">
+                    <b>${r.from} ➔ ${r.to}</b><br>
+                    Status: <b style="color:blue;">${r.status}</b><br>
+                    ${role === 'host' ? `Co-Saathi: ${r.coSaathiName}` : `Offer: ${r.offerPrice} Coins`}
+                    <br>
+                    ${r.status === 'Accepted' && role === 'host' ? 
+                        `<button onclick="startJourney('${r.rideId}', '${doc.id}')" style="background:var(--dark);">Start Journey</button>` : ''}
+                    ${r.status === 'Journey Started' && role === 'co-saathi' ? 
+                        `<button onclick="joinSaathi('${doc.id}', '${r.hostId}', ${r.offerPrice}, 500)" style="background:var(--secondary);">🤝 Join Saathi (Confirm)</button>` : ''}
+                </div>`;
+        });
+    });
+}
+
+    function loadAdminData() {
+    const table = document.getElementById('userTable');
+    if (!table) return;
+
+    db.collection("Users").onSnapshot(snap => {
+        table.innerHTML = `<tr><th>Name</th><th>Coins</th><th>Action</th></tr>`;
+        snap.forEach(doc => {
+            const u = doc.data();
+            table.innerHTML += `<tr>
+                <td>${u.name || 'User'}</td>
+                <td>${u.coins || 0}</td>
+                <td><button onclick="adminManageCoins('${doc.id}', 'add')" style="padding:2px 5px;">+</button></td>
+            </tr>`;
+        });
+    });
+}
+
+function adminManageCoins(uid, type) {
+    const amt = Number(prompt("ఎన్ని కాయిన్స్ యాడ్ చేయాలి?"));
+    if (amt) {
+        db.collection("Users").doc(uid).update({
+            coins: firebase.firestore.FieldValue.increment(amt)
+        }).then(() => alert("Coins Updated!"));
+    }
+}
+
+    async function startJourney(rideId, requestId) {
+    await db.collection("Requests").doc(requestId).update({ status: "Journey Started" });
+    alert("కో-సాథీకి మీరు బయలుదేరినట్లు నోటిఫికేషన్ వెళ్ళింది!");
+}
 </script>
 </body>
 </html>
