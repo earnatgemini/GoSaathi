@@ -367,6 +367,48 @@ async function transferCoins() {
     batch.update(db.collection("Users").doc(target), { coins: firebase.firestore.FieldValue.increment(amt) });
     await batch.commit(); alert("Transferred!");
 }
+    function loadIncomingRequests() {
+    const container = document.getElementById('incomingRequests');
+    const section = document.getElementById('requests-section');
+
+    if (!container || !section) return;
+
+    db.collection("Requests")
+        .where("hostId", "==", auth.currentUser.uid)
+        .where("status", "==", "Pending")
+        .onSnapshot(snap => {
+            if (snap.empty) {
+                section.style.display = "none";
+                return;
+            }
+
+            // కొత్త రిక్వెస్ట్ వచ్చినప్పుడు సౌండ్ ప్లే చేయడానికి
+            snap.docChanges().forEach(change => {
+                if (change.type === "added") {
+                    requestSound.play().catch(e => console.log("Sound play blocked by browser"));
+                }
+            });
+
+            section.style.display = "block";
+            container.innerHTML = ""; // పాతవి క్లియర్ చేసి కొత్తవి చూపించడం
+
+            snap.forEach(doc => {
+                const req = doc.data();
+                container.innerHTML += `
+                    <div class="card" style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-left: 5px solid var(--gold);">
+                        <p>👤 <b>${req.coSaathiName}</b></p>
+                        <p>📍 ${req.from} ➔ ${req.to}</p>
+                        <p>💰 Offer: <b style="color:green;">${req.offerPrice} Coins</b></p>
+                        <div style="display:flex; justify-content:space-between; gap:10px;">
+                            <button onclick="acceptRequest('${doc.id}')" style="background:var(--secondary); flex:1;">Accept</button>
+                            <button onclick="rejectRequest('${doc.id}')" style="background:#dc3545; flex:1;">Reject</button>
+                        </div>
+                    </div>`;
+            });
+        }, error => {
+            console.error("Requests Load Error: ", error);
+        });
+}
 </script>
 </body>
 </html>
