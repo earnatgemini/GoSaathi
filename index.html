@@ -294,45 +294,25 @@ async function postRide() {
 }
 
 function loadRides() {
-    const container = document.getElementById('rides-list');
-    
-    // ప్రస్తుత సమయం కంటే ముందు ఉన్న రైడ్స్ ని కూడా ఫిల్టర్ చేయొచ్చు
-    db.collection("Rides")
-      .where("status", "==", "Available") 
-      .orderBy("time", "asc") // సమయం ప్రకారం వరుసగా చూపిస్తుంది
-      .onSnapshot(snapshot => {
+    const container = document.getElementById('ridesContainer');
+    const now = Date.now();
+    db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
         container.innerHTML = "";
-        if (snapshot.empty) {
-            container.innerHTML = "<p style='text-align:center;'>ప్రస్తుతానికి రైడ్స్ ఏమీ లేవు!</p>";
-            return;
-        }
-
-        snapshot.forEach(doc => {
-            const r = doc.id;
-            const data = doc.data();
+        snap.forEach(doc => {
+            const r = doc.data();
+            const age = (now - r.createdAt) / (1000 * 60 * 60);
+            if (r.distance < 100 && age > 6) { db.collection("Rides").doc(doc.id).delete(); return; }
             
-            // రైడ్ పోస్ట్ చేసిన వాళ్ళు కాకుండా మిగిలిన వారికే కనిపించాలి (Optional)
-            if (data.saathiId !== auth.currentUser.uid) {
-                container.innerHTML += `
-                <div class="card ride-item" style="border-left: 5px solid #28a745; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between;">
-                        <b>${data.from} ➔ ${data.to}</b>
-                        <span class="badge">${data.type}</span>
-                    </div>
-                    <p>📅 సమయం: ${new Date(data.time).toLocaleString()}</p>
-                    <p>💰 డిమాండ్: ${data.type === 'Paid' ? data.demand + ' Coins' : 'FREE'}</p>
-                    <button class="btn" onclick="initiateJoin('${doc.id}', '${data.type}')">Join Ride</button>
-                </div>`;
-            }
+            container.innerHTML += `<div class="card ride-item">
+                <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
+                <small>Host: ${r.saathiName} | Route: ${r.route}</small>
+                <button onclick="initiateJoin('${doc.id}', '${r.type}')" style="margin-top:10px; background:var(--secondary);">Join Ride</button>
+            </div>`;
         });
-    }, error => {
-        console.error("Rides Load Error: ", error);
-        // ఒకవేళ ఇండెక్స్ ఎర్రర్ వస్తే ఇక్కడ లింక్ కనిపిస్తుంది
-        if(error.message.includes("index")) {
-            alert("Firebase Index క్రియేట్ చేయాలి. Console లోని లింక్ క్లిక్ చేయి.");
-        }
     });
 }
+
+
 let currentChatId = null; // rideId ని చాట్ ఐడిగా వాడుతాం
 
 function openChat(rideId, otherName) {
