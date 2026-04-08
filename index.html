@@ -301,12 +301,7 @@ function loadRides() {
         snap.forEach(doc => {
             const r = doc.data();
             const age = (now - r.createdAt) / (1000 * 60 * 60);
-            if (data.status === "Available") {
-    container.innerHTML += `
-        <button onclick="openChat('${doc.id}', 'Partner')" style="background:var(--primary);">
-            💬 Chat with Saathi
-        </button>`;
-}
+           
             if (r.distance < 100 && age > 6) { db.collection("Rides").doc(doc.id).delete(); return; }
             
             container.innerHTML += `<div class="card ride-item">
