@@ -296,12 +296,12 @@ async function postRide() {
 function loadRides() {
     const container = document.getElementById('ridesContainer');
     const now = Date.now();
-    db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
+    db.collection("Rides").where("status", "==", "Accepted").onSnapshot(snap => {
         container.innerHTML = "";
         snap.forEach(doc => {
             const r = doc.data();
             const age = (now - r.createdAt) / (1000 * 60 * 60);
-            if (data.status === "GoSaathi") {
+            if (data.status === "Available") {
     container.innerHTML += `
         <button onclick="openChat('${doc.id}', 'Partner')" style="background:var(--primary);">
             💬 Chat with Saathi
