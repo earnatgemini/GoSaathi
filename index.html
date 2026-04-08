@@ -322,7 +322,7 @@ function loadRides() {
                     <p>📅 సమయం: ${new Date(data.time).toLocaleString()}</p>
                     <p>💰 డిమాండ్: ${data.type === 'Paid' ? data.demand + ' Coins' : 'FREE'}</p>
                     <button class="btn" onclick="initiateJoin('${doc.id}', '${data.type}')">Join Ride</button>
-                ${data.status === "GoSaathi" ? `
+                ${data.status === "Accepted" ? `
         <button onclick="openChat('${doc.id}', 'Partner')" style="background:var(--primary); margin-top:5px;">
             💬 Chat with Saathi
         </button>
