@@ -322,6 +322,87 @@ function loadRides() {
         });
     });
 }
+async function loadMyRides(role) {
+    const container = document.getElementById('myRidesList');
+    container.innerHTML = "<p style='text-align:center;'>Loading...</p>";
+    const myId = auth.currentUser.uid;
+
+    if (role === 'host') {
+        // హోస్ట్ గా నేను పోస్ట్ చేసిన రైడ్స్
+        db.collection("Rides").where("saathiId", "==", myId).onSnapshot(snap => {
+            container.innerHTML = "<h4>My Hosted Rides</h4>";
+            snap.forEach(async rideDoc => {
+                const ride = rideDoc.data();
+                const rideId = rideDoc.id;
+                
+                // ఈ రైడ్ కి వచ్చిన రిక్వెస్ట్ లు
+                const reqSnap = await db.collection("Requests").where("rideId", "==", rideId).get();
+                
+                let reqHtml = "";
+                reqSnap.forEach(reqDoc => {
+                    const req = reqDoc.data();
+                    if(req.status === "Pending") {
+                        reqHtml += `
+                        <div style="background:#fff; padding:10px; border:1px solid #ddd; margin-top:5px; border-radius:8px;">
+                            <p>👤 <b>${req.coSaathiName}</b></p>
+                            <p>📍 Pickup: ${req.pickupPoint}</p>
+                            <p>💰 Offer: ${req.offerPrice} Coins</p>
+                            <button onclick="confirmRide('${rideId}', '${reqDoc.id}', '${req.coSaathiId}', ${req.offerPrice})" 
+                                style="background:var(--secondary); width:100%;">Confirm</button>
+                            <button onclick="rejectRequest('${reqDoc.id}')" 
+                                style="background:#dc3545; width:100%; margin-top:5px;">Reject</button>
+                        </div>`;
+                    }
+                });
+
+                container.innerHTML += `
+                <div class="card" style="margin-bottom:15px; border-left:5px solid var(--dark);">
+                    <b>${ride.from} ➔ ${ride.to}</b> (${ride.status})
+                    <div id="requests-${rideId}">${reqHtml || '<p style="font-size:12px; color:gray;">No pending requests</p>'}</div>
+                </div>`;
+            });
+        });
+    } else {
+        // కో-సాథీ గా నేను జాయిన్ అయిన రైడ్స్ లాజిక్ ఇక్కడ వస్తుంది
+        loadCoSaathiRides(myId);
+    }
+}
+
+    async function confirmRide(rideId, requestId, coSaathiId, finalPrice) {
+    if(!confirm("ఈ రైడ్ ని కన్ఫర్మ్ చేయాలా?")) return;
+
+    const batch = db.batch();
+
+    // 1. రైడ్ స్టేటస్ ని 'GoSaathi' గా మార్చాలి (ఇలా మారగానే loadRides లోని filter వల్ల ఇది మాయం అవుతుంది)
+    const rideRef = db.collection("Rides").doc(rideId);
+    batch.update(rideRef, { 
+        status: "GoSaathi",
+        bookedBy: coSaathiId,
+        finalPrice: finalPrice 
+    });
+
+    // 2. రిక్వెస్ట్ స్టేటస్ ని 'Confirmed' గా మార్చాలి
+    const reqRef = db.collection("Requests").doc(requestId);
+    batch.update(reqRef, { status: "Confirmed" });
+
+    // 3. మిగిలిన పెండింగ్ రిక్వెస్ట్ లని రిజెక్ట్ చేయాలి (ఎందుకంటే సీటు బుక్ అయిపోయింది)
+    const otherReqs = await db.collection("Requests")
+                        .where("rideId", "==", rideId)
+                        .where("status", "==", "Pending").get();
+    
+    otherReqs.forEach(doc => {
+        if(doc.id !== requestId) batch.update(doc.ref, { status: "Rejected" });
+    });
+
+    try {
+        await batch.commit();
+        alert("Ride Confirmed! మీరు ఇప్పుడు కో-సాథీతో చాట్ చేయవచ్చు.");
+    } catch (err) {
+        console.error(err);
+        alert("Error confirming ride!");
+    }
+}
+    
 let currentChatId = null; // rideId ని చాట్ ఐడిగా వాడుతాం
 
 function openChat(rideId, otherName) {
