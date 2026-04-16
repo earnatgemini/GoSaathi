@@ -472,54 +472,7 @@ async function sendMessage() {
 
     document.getElementById('msgInput').value = "";
 }
-// రిక్వెస్ట్ పంపే లాజిక్ (Co-Saathi Side)
-let tempOffer = 0;
-
-async function initiateJoin(rideId, rideType) {
-    const rideDoc = await db.collection("Rides").doc(rideId).get();
-    const rData = rideDoc.data();
-    currentRideId = rideId;
-    currentRideData = rData;
-
-    document.getElementById('modalBody').innerHTML = `హోస్ట్ డిమాండ్: <b>${rData.demand} Coins</b>`;
-    document.getElementById('joinModal').style.display = 'flex';
-    
-    // Reset Modal
-    document.getElementById('pickupArea').style.display = 'none';
-    document.getElementById('bargainArea').style.display = 'none';
-    document.getElementById('initialButtons').style.display = 'flex';
-    document.getElementById('btnFinalSubmit').style.display = 'none';
-
-    // OK Clicked
-    document.getElementById('btnOk').onclick = () => {
-        tempOffer = rData.demand;
-        showPickupStep();
-    };
-
-    // Bargain Clicked
-    document.getElementById('btnBargain').onclick = () => {
-        document.getElementById('bargainArea').style.display = 'block';
-        showPickupStep();
-    };
-}
-
-function showPickupStep() {
-    document.getElementById('initialButtons').style.display = 'none';
-    document.getElementById('pickupArea').style.display = 'block';
-    document.getElementById('btnFinalSubmit').style.display = 'block';
-}
-
-document.getElementById('btnFinalSubmit').onclick = () => {
-    const pickup = document.getElementById('pickupPoint').value;
-    const bargainVal = document.getElementById('customOffer').value;
-    const finalOffer = bargainVal ? Number(bargainVal) : tempOffer;
-
-    if(!pickup) return alert("దయచేసి పికప్ పాయింట్ ఎంటర్ చేయండి!");
-    
-    sendJoinRequest(currentRideId, currentRideData, finalOffer, pickup);
-    closeJoinModal();
-};
-
+// రిక్వెస్ట్ పంపే లాజిక్ 
 let currentRideId = null;
 let currentRideData = null;
 let tempOffer = 0;
