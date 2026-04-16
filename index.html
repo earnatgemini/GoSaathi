@@ -170,6 +170,30 @@
         <button onclick="sendMessage()" style="width:80px; margin-top:0; margin-left:5px;">Send</button>
     </div>
 </div>
+    <div id="joinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div class="card" style="width:90%; max-width:400px; padding:20px; border-radius:15px; background: white;">
+        <h3 id="modalTitle" style="color:var(--dark);">Ride Request</h3>
+        <p id="modalBody" style="margin-bottom:15px;"></p>
+        
+        <div id="pickupArea" style="display:none; margin-bottom:15px; text-align:left;">
+            <label>📍 మీ పికప్ పాయింట్ (Pickup Point):</label>
+            <input type="text" id="pickupPoint" placeholder="ఉదా: బస్ స్టాప్ దగ్గర">
+        </div>
+
+        <div id="bargainArea" style="display:none; margin-bottom:15px; text-align:left;">
+            <label>💰 మీ ఆఫర్ (Your Offer):</label>
+            <input type="number" id="customOffer" placeholder="Coins ఎంటర్ చేయండి">
+        </div>
+
+        <div id="initialButtons" style="display:flex; flex-direction:column; gap:10px;">
+            <button id="btnOk" style="background:var(--secondary);">OK (Demand OK)</button>
+            <button id="btnBargain" style="background:var(--gold); color:black;">Bargain (బేరమాడండి)</button>
+            <button onclick="closeJoinModal()" style="background:#666;">Cancel</button>
+        </div>
+
+        <button id="btnFinalSubmit" style="display:none; background:var(--primary); width:100%; margin-top:10px;">Confirm Request</button>
+    </div>
+</div>
 <script>
 const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", authDomain: "gemini-spinning-wheel-game.firebaseapp.com", projectId: "gemini-spinning-wheel-game" };
 firebase.initializeApp(firebaseConfig);
@@ -496,90 +520,83 @@ document.getElementById('btnFinalSubmit').onclick = () => {
     closeJoinModal();
 };
 
-function sendJoinRequest(rideId, rData, offer, pickup) {
+let currentRideId = null;
+let currentRideData = null;
+let tempOffer = 0;
+
+// 1. జాయిన్ రిక్వెస్ట్ స్టార్ట్ చేసే ఫంక్షన్
+async function initiateJoin(rideId, rideType) {
+    const rideDoc = await db.collection("Rides").doc(rideId).get();
+    const rData = rideDoc.data();
+    currentRideId = rideId;
+    currentRideData = rData;
+
+    document.getElementById('modalBody').innerHTML = `హోస్ట్ డిమాండ్: <b>${rData.demand || 0} Coins</b>`;
+    document.getElementById('joinModal').style.display = 'flex';
+    
+    // Reset UI
+    document.getElementById('pickupArea').style.display = 'none';
+    document.getElementById('bargainArea').style.display = 'none';
+    document.getElementById('initialButtons').style.display = 'flex';
+    document.getElementById('btnFinalSubmit').style.display = 'none';
+    document.getElementById('pickupPoint').value = "";
+    document.getElementById('customOffer').value = "";
+
+    // OK Button
+    document.getElementById('btnOk').onclick = () => {
+        tempOffer = rData.demand || 0;
+        showPickupStep();
+    };
+
+    // Bargain Button
+    document.getElementById('btnBargain').onclick = () => {
+        document.getElementById('bargainArea').style.display = 'block';
+        showPickupStep();
+    };
+}
+
+function showPickupStep() {
+    document.getElementById('initialButtons').style.display = 'none';
+    document.getElementById('pickupArea').style.display = 'block';
+    document.getElementById('btnFinalSubmit').style.display = 'block';
+}
+
+// 2. ఫైనల్ సబ్మిట్ బటన్ లాజిక్
+document.getElementById('btnFinalSubmit').onclick = () => {
+    const pickup = document.getElementById('pickupPoint').value;
+    const bargainVal = document.getElementById('customOffer').value;
+    const finalOffer = bargainVal ? Number(bargainVal) : tempOffer;
+
+    if(!pickup) return alert("దయచేసి పికప్ పాయింట్ ఎంటర్ చేయండి!");
+    
+    // ఒకే ఒక్క ఫంక్షన్ కాల్
+    processSendRequest(currentRideId, currentRideData, finalOffer, pickup);
+    closeJoinModal();
+};
+
+// 3. రిక్వెస్ట్ పంపే మెయిన్ ఫంక్షన్ (దీన్ని ఒక్కదాన్నే ఉంచు)
+function processSendRequest(rideId, rData, offer, pickup) {
     db.collection("Requests").add({
         rideId: rideId,
         hostId: rData.saathiId, 
         coSaathiId: auth.currentUser.uid,
         coSaathiName: auth.currentUser.displayName,
-        from: rData.from, to: rData.to,
-        offerPrice: offer,
+        from: rData.from, 
+        to: rData.to,
+        offerPrice: Number(offer),
         pickupPoint: pickup,
+        rideType: rData.type,
         status: "Pending",
         createdAt: Date.now()
-    }).then(() => alert("రిక్వెస్ట్ పంపబడింది!"));
+    }).then(() => {
+        alert("రిక్వెస్ట్ పంపబడింది!");
+    }).catch(err => {
+        alert("Error: " + err.message);
+    });
 }
 
 function closeJoinModal() {
     document.getElementById('joinModal').style.display = 'none';
-    document.getElementById('customOffer').value = "";
-}
-
-function sendJoinRequest(rideId, rData, rideType, offer, comm) {
-    db.collection("Requests").add({
-        rideId: rideId,
-        hostId: rData.saathiId, 
-        coSaathiId: auth.currentUser.uid,
-        coSaathiName: auth.currentUser.displayName,
-        from: rData.from,
-        to: rData.to,
-        rideType: rideType,
-        offerPrice: Number(offer),
-        commToPay: comm,
-        status: "Pending",
-        createdAt: Date.now()
-    }).then(() => {
-        alert("రిక్వెస్ట్ పంపబడింది!");
-    });
-}
-
-// రిక్వెస్ట్ పంపే కామన్ ఫంక్షన్
-function sendJoinRequest(rideId, rData, rideType, offer, comm) {
-    db.collection("Requests").add({
-        rideId: rideId,
-        hostId: rData.saathiId, 
-        coSaathiId: auth.currentUser.uid,
-        coSaathiName: auth.currentUser.displayName,
-        from: rData.from,
-        to: rData.to,
-        rideType: rideType,
-        offerPrice: Number(offer),
-        commToPay: comm,
-        status: "Pending",
-        createdAt: Date.now()
-    }).then(() => {
-        alert("రిక్వెస్ట్ పంపబడింది!");
-    });
-}
-
-// హోస్ట్ కోసం రిక్వెస్ట్ లు లోడ్ చేయడం
-function loadIncomingRequests() {
-    const container = document.getElementById('incomingRequests');
-    const section = document.getElementById('requests-section');
-
-    db.collection("Requests")
-        .where("hostId", "==", auth.currentUser.uid)
-        .where("status", "==", "Pending")
-        .onSnapshot(snap => {
-            if (snap.empty) {
-                section.style.display = "none";
-                return;
-            }
-            section.style.display = "block";
-            container.innerHTML = "";
-            snap.forEach(doc => {
-                const req = doc.data();
-                container.innerHTML += `
-                    <div class="card" style="border:1px solid #ddd; padding:10px; margin-bottom:10px;">
-                        <p><b>${req.coSaathiName}</b> ${req.from} నుండి ${req.to} కి రావాలనుకుంటున్నారు.</p>
-                        <p>ఆఫర్ చేసిన ధర: <b style="color:green;">${req.offerPrice} Coins</b></p>
-                        <div style="display:flex; justify-content:space-between;">
-                            <button onclick="acceptRequest('${doc.id}')" style="background:var(--secondary); width:48%;">Accept</button>
-                            <button onclick="rejectRequest('${doc.id}')" style="background:red; width:48%;">Reject</button>
-                        </div>
-                    </div>`;
-            });
-        });
 }
 
 async function acceptRequest(reqId) {
@@ -730,29 +747,6 @@ document.getElementById('rideType').addEventListener('change', function() {
         (this.value === 'Paid') ? 'block' : 'none';
 });
 </script>
-    <div id="joinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
-    <div class="card" style="width:90%; max-width:400px; padding:20px; border-radius:15px;">
-        <h3 id="modalTitle" style="color:var(--dark);">Ride Request</h3>
-        <p id="modalBody" style="margin-bottom:15px;"></p>
-        
-        <div id="pickupArea" style="display:none; margin-bottom:15px; text-align:left;">
-            <label>📍 మీ పికప్ పాయింట్ (Pickup Point):</label>
-            <input type="text" id="pickupPoint" placeholder="ఉదా: కేపీహెచ్‌బీ మెయిన్ రోడ్" style="margin-top:5px;">
-        </div>
-
-        <div id="bargainArea" style="display:none; margin-bottom:15px; text-align:left;">
-            <label>💰 మీ ఆఫర్ (Your Offer):</label>
-            <input type="number" id="customOffer" placeholder="Coins లో ఎంటర్ చేయండి">
-        </div>
-
-        <div id="initialButtons" style="display:flex; flex-direction:column; gap:10px;">
-            <button id="btnOk" style="background:var(--secondary);">OK (Demand OK)</button>
-            <button id="btnBargain" style="background:var(--gold); color:black;">Bargain (బేరమాడండి)</button>
-            <button onclick="closeJoinModal()" style="background:#666;">Cancel</button>
-        </div>
-
-        <button id="btnFinalSubmit" style="display:none; background:var(--primary); width:100%; margin-top:10px;">Confirm Request</button>
-    </div>
-</div>
+    
 </body>
 </html>
