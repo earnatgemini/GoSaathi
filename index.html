@@ -299,9 +299,15 @@ async function postRide() {
     showPage('home');
 }
 
+// -------------------------------------------------------------
+// RIDES & BOOKING FLOW SECTION (MODIFIED AS PER NEW INSTRUCTIONS)
+// -------------------------------------------------------------
+
+// 1. Load Available Rides (Main List)
 function loadRides() {
     const container = document.getElementById('ridesContainer');
     const now = Date.now();
+    // కేవలం "Available" ఉన్నవి మాత్రమే మెయిన్ లిస్ట్ లో కనిపిస్తాయి. 'Accepted' అవ్వగానే ఇక్కడ నుండి మాయం అవుతాయి.
     db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
         container.innerHTML = "";
         snap.forEach(doc => {
@@ -318,89 +324,7 @@ function loadRides() {
     });
 }
 
-// Active Rides లో బటన్లను చూపించే లాజిక్ (ఉదాహరణకు)
-function getRideButtons(rideId, status, isHost, rideAmount) {
-    if (isHost) {
-        if (status === 'Accepted') {
-            return `<button onclick="updateRideStatus('${rideId}', 'Journey Started')" class="btn-start">Start Journey</button>`;
-        }
-        if (status === 'Journey Started') {
-            return `<p>Waiting for Co-Saathi to Join...</p>`;
-        }
-    } else {
-        if (status === 'Journey Started') {
-            return `<button onclick="joinSaathi('${rideId}', ${rideAmount})" class="btn-join">Join Saathi</button>`;
-        }
-        if (status === 'Joined') {
-            return `<button onclick="completeRide('${rideId}')" class="btn-complete">Complete Ride</button>`;
-        }
-    }
-    return '';
-}
-
-    async function joinSaathi(rideId, amount) {
-    const userRef = db.collection("Users").doc(auth.currentUser.uid);
-    const rideRef = db.collection("Rides").doc(rideId);
-
-    try {
-        await db.runTransaction(async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            if (userDoc.data().coins < amount) {
-                throw "మీ వద్ద సరిపడా కాయిన్స్ లేవు!";
-            }
-
-            // 1. Co-Saathi కాయిన్స్ తగ్గించడం
-            transaction.update(userRef, {
-                coins: firebase.firestore.FieldValue.increment(-amount)
-            });
-
-            // 2. రైడ్ స్టేటస్ మార్చడం
-            transaction.update(rideRef, {
-                status: "Joined"
-            });
-        });
-        alert("Ride Joined! కాయిన్స్ కట్ అయ్యాయి. ప్రయాణం ముగిశాక Complete నొక్కండి.");
-    } catch (error) {
-        alert("Error: " + error);
-    }
-}
-
-    async function completeRide(rideId) {
-    const rideRef = db.collection("Rides").doc(rideId);
-    const rideDoc = await rideRef.get();
-    const rideData = rideDoc.data();
-    
-    const hostRef = db.collection("Users").doc(rideData.hostUid); // Host ID ఉండాలి
-
-    try {
-        await db.runTransaction(async (transaction) => {
-            // 1. Host Saathi కి కాయిన్స్ యాడ్ చేయడం
-            transaction.update(hostRef, {
-                coins: firebase.firestore.FieldValue.increment(rideData.amount)
-            });
-
-            // 2. రైడ్ స్టేటస్ 'Completed' కి మార్చడం
-            transaction.update(rideRef, {
-                status: "Completed"
-            });
-        });
-        alert("Ride Completed Successfully!");
-        showPage('home'); // హోమ్ పేజీకి వెళ్తే ఆటోమేటిక్ గా 'Active Ride' మాయం అవుతుంది
-    } catch (error) {
-        console.error("Transaction failed: ", error);
-    }
-}
-
-// సాధారణ స్టేటస్ అప్‌డేట్ ఫంక్షన్
-function updateRideStatus(rideId, newStatus) {
-    db.collection("Rides").doc(rideId).update({
-        status: newStatus
-    }).then(() => {
-        alert("Status Updated: " + newStatus);
-    });
-}
-    
-// 🚀 NEW: Load Active Chats (Both for Host & Co-Saathi)
+// 2. Active Rides & Chats Loader
 function loadActiveChats() {
     const uid = auth.currentUser.uid;
     const container = document.getElementById('activeChatsContainer');
@@ -421,21 +345,39 @@ function loadActiveChats() {
             const req = activeRides[k];
             const isHost = req.hostId === uid;
             const chatPartner = isHost ? req.coSaathiName : "Host";
+            const rideStatus = req.status; 
             
+            // బటన్స్ లాజిక్ ఫంక్షన్
+            let actionButtons = getRideButtons(k, rideStatus, isHost, req.offerPrice);
+
+            // "Joined" కాగానే చాట్ బటన్ మాయం అవ్వాలి (Visibility logic)
+            let chatButton = '';
+            if (rideStatus !== 'Joined') {
+                chatButton = `<button onclick="openChat('${req.rideId}', '${chatPartner}')" style="background:var(--primary); width:auto; padding:8px 15px; border-radius:20px; color:white; border:none; margin-left:10px; font-weight:bold;">💬 Chat</button>`;
+            }
+
             container.innerHTML += `
-                <div class="card" style="border-left: 5px solid var(--secondary); display:flex; justify-content:space-between; align-items:center; padding:10px;">
-                    <div>
-                        <b>${req.from} ➔ ${req.to}</b><br>
-                        <small style="color:gray;">With: ${chatPartner}</small>
+                <div class="card" style="border-left: 5px solid var(--secondary); display:flex; flex-direction:column; padding:15px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <b>${req.from} ➔ ${req.to}</b><br>
+                            <small style="color:gray;">With: ${chatPartner} | Status: <b style="color:var(--dark);">${rideStatus}</b></small>
+                        </div>
+                        <div>
+                            ${chatButton}
+                        </div>
                     </div>
-                    <button onclick="openChat('${req.rideId}', '${chatPartner}')" style="background:var(--primary); width:auto; padding:8px 15px; border-radius:20px;">💬 Chat</button>
+                    <div style="margin-top:15px;">
+                        ${actionButtons}
+                    </div>
                 </div>
             `;
         });
     };
 
-    // As Host
-    db.collection("Requests").where("hostId", "==", uid).where("status", "==", "Accepted").onSnapshot(snap => {
+    // 'Accepted', 'Journey Started', 'Joined' ఉన్నవి మాత్రమే Active Section లోకి వస్తాయి.
+    // 'Completed' అవ్వగానే ఇక్కడ నుండి కూడా మాయం అవుతాయి.
+    db.collection("Requests").where("hostId", "==", uid).where("status", "in", ["Accepted", "Journey Started", "Joined"]).onSnapshot(snap => {
         snap.docChanges().forEach(change => {
             if(change.type === "removed") delete activeRides[change.doc.id];
             else activeRides[change.doc.id] = change.doc.data();
@@ -443,8 +385,7 @@ function loadActiveChats() {
         renderChats();
     });
 
-    // As Co-Saathi
-    db.collection("Requests").where("coSaathiId", "==", uid).where("status", "==", "Accepted").onSnapshot(snap => {
+    db.collection("Requests").where("coSaathiId", "==", uid).where("status", "in", ["Accepted", "Journey Started", "Joined"]).onSnapshot(snap => {
         snap.docChanges().forEach(change => {
             if(change.type === "removed") delete activeRides[change.doc.id];
             else activeRides[change.doc.id] = change.doc.data();
@@ -453,7 +394,112 @@ function loadActiveChats() {
     });
 }
 
-// 💬 ADVANCED CHAT LOGIC
+// 3. Dynamic Buttons Logic (The core flow)
+function getRideButtons(reqId, status, isHost, offerPrice) {
+    if (isHost) {
+        if (status === 'Accepted') {
+            return `<button onclick="updateRequestStatus('${reqId}', 'Journey Started')" style="background:var(--secondary); color:white; padding:10px; border-radius:8px; border:none; width:100%; font-weight:bold;">🚀 Start Journey</button>`;
+        }
+        if (status === 'Journey Started') {
+            return `<p style="color:var(--gold); font-weight:bold; text-align:center; margin:0;">Waiting for Co-Saathi to Join...</p>`;
+        }
+        if (status === 'Joined') {
+            return `<p style="color:var(--primary); font-weight:bold; text-align:center; margin:0;">🚗 Journey in Progress...</p>`;
+        }
+    } else {
+        if (status === 'Accepted') {
+            return `<p style="color:var(--dark); font-weight:bold; text-align:center; margin:0;">Waiting for Host to Start Journey...</p>`;
+        }
+        if (status === 'Journey Started') {
+            return `<button onclick="processJoinSaathi('${reqId}', ${offerPrice})" style="background:var(--primary); color:white; padding:10px; border-radius:8px; border:none; width:100%; font-weight:bold;">🤝 Join Saathi (Pay Coins)</button>`;
+        }
+        if (status === 'Joined') {
+            return `<button onclick="processCompleteRide('${reqId}')" style="background:orange; color:white; padding:10px; border-radius:8px; border:none; width:100%; font-weight:bold;">✅ Complete Ride</button>`;
+        }
+    }
+    return '';
+}
+
+// 4. Status Update Actions
+async function updateRequestStatus(reqId, newStatus) {
+    const reqDoc = await db.collection("Requests").doc(reqId).get();
+    const rideId = reqDoc.data().rideId;
+    
+    const batch = db.batch();
+    batch.update(db.collection("Requests").doc(reqId), { status: newStatus });
+    batch.update(db.collection("Rides").doc(rideId), { status: newStatus });
+    await batch.commit();
+}
+
+async function processJoinSaathi(reqId, amount) {
+    const reqRef = db.collection("Requests").doc(reqId);
+    const userRef = db.collection("Users").doc(auth.currentUser.uid);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if ((userDoc.data().coins || 0) < amount) {
+                throw "మీ వద్ద సరిపడా కాయిన్స్ లేవు!";
+            }
+            
+            const reqDoc = await transaction.get(reqRef);
+            const rideRef = db.collection("Rides").doc(reqDoc.data().rideId);
+
+            // Co-Saathi అకౌంట్ నుండి కాయిన్స్ కట్ చేయడం
+            transaction.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
+            
+            // Status -> 'Joined' గా మార్చడం (దీనివల్ల చాట్ సెక్షన్ డిసప్పియర్ అవుతుంది)
+            transaction.update(reqRef, { status: "Joined" });
+            transaction.update(rideRef, { status: "Joined" });
+        });
+        alert("Ride Joined! కాయిన్స్ కట్ అయ్యాయి.");
+    } catch (error) {
+        alert("Error: " + error);
+    }
+}
+
+async function processCompleteRide(reqId) {
+    const reqRef = db.collection("Requests").doc(reqId);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const reqDoc = await transaction.get(reqRef);
+            const reqData = reqDoc.data();
+            const hostRef = db.collection("Users").doc(reqData.hostId);
+            const rideRef = db.collection("Rides").doc(reqData.rideId);
+
+            // Host కి కట్ అయిన కాయిన్స్ యాడ్ చేయడం
+            transaction.update(hostRef, { coins: firebase.firestore.FieldValue.increment(reqData.offerPrice) });
+
+            // Status -> 'Completed' (దీనివల్ల Active Rides నుండి పూర్తిగా డిసప్పియర్ అవుతుంది)
+            transaction.update(reqRef, { status: "Completed" });
+            transaction.update(rideRef, { status: "Completed" });
+        });
+        alert("Ride Completed Successfully! కాయిన్స్ హోస్ట్ కి బదిలీ అయ్యాయి.");
+        showPage('home'); 
+    } catch (error) {
+        console.error("Transaction failed: ", error);
+    }
+}
+
+// 5. Initial Accept Logic
+async function acceptRequest(reqId) {
+    const reqDoc = await db.collection("Requests").doc(reqId).get();
+    const req = reqDoc.data();
+    const batch = db.batch();
+
+    // Status 'Accepted' చేయడం వల్ల మెయిన్ లిస్ట్ నుండి మాయమై 'Active Section' లోకి వస్తుంది.
+    batch.update(db.collection("Rides").doc(req.rideId), { status: "Accepted" });
+    batch.update(db.collection("Requests").doc(reqId), { status: "Accepted" });
+
+    await batch.commit();
+    alert("డీల్ కన్ఫర్మ్ అయింది! ఇప్పుడు మీరు హోమ్ పేజీలో చాట్ చేయవచ్చు.");
+}
+
+// -------------------------------------------------------------
+// CHAT & OTHER RETAINED LOGIC
+// -------------------------------------------------------------
+
 let currentChatId = null; 
 function openChat(rideId, otherName) {
     currentChatId = rideId;
@@ -469,8 +515,6 @@ function loadMessages(rideId) {
         snap.forEach(doc => {
             const m = doc.data();
             const isMe = m.senderId === auth.currentUser.uid;
-            
-            // Format time nicely
             const dateObj = new Date(m.time);
             const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
@@ -481,7 +525,7 @@ function loadMessages(rideId) {
                     <span class="chat-time">${timeStr}</span>
                 </div>`;
         });
-        cont.scrollTop = cont.scrollHeight; // Auto-scroll to bottom
+        cont.scrollTop = cont.scrollHeight; 
     });
 }
 
@@ -490,16 +534,12 @@ async function sendMessage() {
     if(!text) return;
 
     await db.collection("Messages").add({
-        chatId: currentChatId,
-        senderId: auth.currentUser.uid,
-        senderName: auth.currentUser.displayName,
-        text: text,
-        time: Date.now()
+        chatId: currentChatId, senderId: auth.currentUser.uid, senderName: auth.currentUser.displayName,
+        text: text, time: Date.now()
     });
     document.getElementById('msgInput').value = "";
 }
 
-// JOIN LOGIC
 let currentRideData = null;
 let currentRideId = null;
 
@@ -584,24 +624,10 @@ function loadIncomingRequests() {
     });
 }
 
-async function acceptRequest(reqId) {
-    const reqDoc = await db.collection("Requests").doc(reqId).get();
-    const req = reqDoc.data();
-    const batch = db.batch();
-
-    // Update statuses
-    batch.update(db.collection("Rides").doc(req.rideId), { status: "GoSaathi" });
-    batch.update(db.collection("Requests").doc(reqId), { status: "Accepted" });
-
-    await batch.commit();
-    alert("డీల్ కన్ఫర్మ్ అయింది! ఇప్పుడు మీరు హోమ్ పేజీలో చాట్ చేయవచ్చు.");
-}
-
 function rejectRequest(reqId) {
     if(confirm("ఈ రిక్వెస్ట్ ని రిజెక్ట్ చేయాలా?")) db.collection("Requests").doc(reqId).update({ status: "Rejected" });
 }
 
-// Payment/Wallet logic simplified
 async function transferCoins() {
     const target = document.getElementById('transferTargetUid').value;
     const amount = Number(document.getElementById('transferAmount').value);
@@ -635,19 +661,17 @@ function loadAdminData() { /* Intentionally left same */ }
 function adminManageCoins(uid, type) { /* Intentionally left same */ }
 
 function showPage(pageId) {
-    // 1. Hide all pages
     ['home', 'wallet', 'ride', 'profile', 'activation-screen', 'login-screen', 'basic-info-screen', 'chat-page'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = (id === pageId) ? 'block' : 'none';
     });
 
-    // 2. Hide Bottom Nav when inside Chat (Immersive Mode)
     document.getElementById('bottomNav').style.display = (pageId === 'chat-page') ? 'none' : 'flex';
 
     if(pageId === 'home') {
         loadRides();
         loadIncomingRequests(); 
-        loadActiveChats(); // Load chats when returning home
+        loadActiveChats(); 
     }
 }
 
