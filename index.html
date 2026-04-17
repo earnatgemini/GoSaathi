@@ -318,6 +318,88 @@ function loadRides() {
     });
 }
 
+// Active Rides లో బటన్లను చూపించే లాజిక్ (ఉదాహరణకు)
+function getRideButtons(rideId, status, isHost, rideAmount) {
+    if (isHost) {
+        if (status === 'Accepted') {
+            return `<button onclick="updateRideStatus('${rideId}', 'Journey Started')" class="btn-start">Start Journey</button>`;
+        }
+        if (status === 'Journey Started') {
+            return `<p>Waiting for Co-Saathi to Join...</p>`;
+        }
+    } else {
+        if (status === 'Journey Started') {
+            return `<button onclick="joinSaathi('${rideId}', ${rideAmount})" class="btn-join">Join Saathi</button>`;
+        }
+        if (status === 'Joined') {
+            return `<button onclick="completeRide('${rideId}')" class="btn-complete">Complete Ride</button>`;
+        }
+    }
+    return '';
+}
+
+    async function joinSaathi(rideId, amount) {
+    const userRef = db.collection("Users").doc(auth.currentUser.uid);
+    const rideRef = db.collection("Rides").doc(rideId);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (userDoc.data().coins < amount) {
+                throw "మీ వద్ద సరిపడా కాయిన్స్ లేవు!";
+            }
+
+            // 1. Co-Saathi కాయిన్స్ తగ్గించడం
+            transaction.update(userRef, {
+                coins: firebase.firestore.FieldValue.increment(-amount)
+            });
+
+            // 2. రైడ్ స్టేటస్ మార్చడం
+            transaction.update(rideRef, {
+                status: "Joined"
+            });
+        });
+        alert("Ride Joined! కాయిన్స్ కట్ అయ్యాయి. ప్రయాణం ముగిశాక Complete నొక్కండి.");
+    } catch (error) {
+        alert("Error: " + error);
+    }
+}
+
+    async function completeRide(rideId) {
+    const rideRef = db.collection("Rides").doc(rideId);
+    const rideDoc = await rideRef.get();
+    const rideData = rideDoc.data();
+    
+    const hostRef = db.collection("Users").doc(rideData.hostUid); // Host ID ఉండాలి
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            // 1. Host Saathi కి కాయిన్స్ యాడ్ చేయడం
+            transaction.update(hostRef, {
+                coins: firebase.firestore.FieldValue.increment(rideData.amount)
+            });
+
+            // 2. రైడ్ స్టేటస్ 'Completed' కి మార్చడం
+            transaction.update(rideRef, {
+                status: "Completed"
+            });
+        });
+        alert("Ride Completed Successfully!");
+        showPage('home'); // హోమ్ పేజీకి వెళ్తే ఆటోమేటిక్ గా 'Active Ride' మాయం అవుతుంది
+    } catch (error) {
+        console.error("Transaction failed: ", error);
+    }
+}
+
+// సాధారణ స్టేటస్ అప్‌డేట్ ఫంక్షన్
+function updateRideStatus(rideId, newStatus) {
+    db.collection("Rides").doc(rideId).update({
+        status: newStatus
+    }).then(() => {
+        alert("Status Updated: " + newStatus);
+    });
+}
+    
 // 🚀 NEW: Load Active Chats (Both for Host & Co-Saathi)
 function loadActiveChats() {
     const uid = auth.currentUser.uid;
