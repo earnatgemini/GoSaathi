@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoSaathi - Share Together Save Together</title>
+    <title>GoSathi - Ride Together</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -35,8 +35,8 @@
 
 <div id="main-ui" style="display:none;">
     <div class="header">
-        <img src="logo.png" alt="Gosaathi" style="height:50px;">
-        <h1>GoSaathi</h1>
+        <img src="logoSathi.png" alt="Gosaathi" style="height:50px;">
+        <h1>GoSathi</h1>
         <p>భారతదేశం అంతటా సురక్షిత ప్రయాణం</p>
     </div>
     <div class="nav" id="bottomNav">
@@ -50,7 +50,7 @@
 <div class="container">
     <div id="login-screen" style="text-align:center; margin-top:100px;">
         <img src="logo.png" style="height:80px; margin-bottom:20px;"><br>
-        <h2>Welcome to Gosaathi</h2>
+        <h2>Welcome to Gosathi</h2>
         <button onclick="googleLogin()" style="background:#db4437; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
     </div>
 
@@ -102,26 +102,27 @@
             <h2 id="coinBalance">0</h2>
             <p>Coins</p>
         </div>
-        <div class="card">
-            <h3>Transfer Coins to Saathi</h3>
-            <input type="text" id="transferTargetUid" placeholder="Enter Receiver UID">
-            <input type="number" id="transferAmount" placeholder="Amount of Coins">
-            <button onclick="transferCoins()" style="background:var(--dark);">Send Coins</button>
-        </div>
-        <div class="card">
+         <div class="card">
             <h3>Add Coins (Scan & Pay)</h3>
             <img src="qr.png" style="width:150px; display:block; margin:auto;">
             <input type="number" id="payAmount" placeholder="Amount (₹)">
             <input type="text" id="utrId" placeholder="UTR Number">
             <button onclick="requestCoins()" style="background:var(--secondary);">Submit Payment</button>
         </div>
+        <div class="card">
+            <h3>Transfer Coins to Saathi</h3>
+            <input type="text" id="transferTargetUid" placeholder="Enter Receiver UID">
+            <input type="number" id="transferAmount" placeholder="Amount of Coins">
+            <button onclick="transferCoins()" style="background:var(--dark);">Send Coins</button>
+        </div>
+       
     </div>
 
     <div id="ride" style="display:none;">
         <div class="card">
             <h3>Post a New Ride</h3>
-            <input id="from" placeholder="From City">
-            <input id="to" placeholder="To City">
+            <input id="from" placeholder="From">
+            <input id="to" placeholder="To">
             <input id="route" placeholder="Via / Route">
             <input type="number" id="distanceKm" placeholder="Distance in KM">
             <select id="ridePref">
@@ -129,14 +130,15 @@
                 <option value="Male">Men Only</option>
                 <option value="Female">Women Only</option>
             </select>
+           <input type="number" id="seats" placeholder="Seats Available">
             <select id="rideType">
-                <option value="Free">Free Ride (Cost: 10 Coins)</option>
-                <option value="Paid">Paid Ride (Cost: 100 Coins)</option>
+                <option value="Free">Free Ride</option>
+                <option value="Paid">Paid Ride</option>
             </select>
-            <input type="number" id="seats" placeholder="Seats Available">
             <div id="paidExtraFields" style="display:none;">
                 <input type="number" id="demandPrice" placeholder="అడిగే కాయిన్స్ (Price in Coins)">
             </div>
+            <br>
             <p style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):</p>
             <input type="datetime-local" id="rideTime">
             <button onclick="postRide()">Post Ride</button>
@@ -164,7 +166,7 @@
 
     <div id="chat-page" style="display:none; margin-top:-15px;">
         <div style="background:var(--dark); color:white; padding:15px; border-radius:15px 15px 0 0; display:flex; align-items:center;">
-            <button onclick="showPage('home')" style="width:auto; background:none; color:white; font-size:20px; padding:0; margin-right:15px;">⬅</button>
+            <button onclick="showPage('home')" style="width:auto; background:none; color:white; font-size:20px; padding:0; margin-right:15px;">Close ✖</button>
             <h3 id="chatWith" style="margin:0;">Chat</h3>
         </div>
         
@@ -187,7 +189,7 @@
         </div>
         <div style="display:flex; flex-direction:column; gap:10px;">
             <button id="btnOk" style="background:var(--secondary);">OK (అడిగినంత ఇవ్వడానికి)</button>
-            <button id="btnBargain" style="background:var(--gold); color:black;">Bargain (తక్కువ అడగండి)</button>
+            <button id="btnBargain" style="background:var(--gold); color:black;">Bargain (బేరం ఆడు)</button>
             <button id="btnConfirmBargain" style="display:none; background:var(--primary);">Confirm Offer</button>
             <button onclick="closeJoinModal()" style="background:#666;">Cancel</button>
         </div>
@@ -261,7 +263,7 @@ function submitBasicInfo() {
     const village = document.getElementById('userVillage').value;
     const gender = document.getElementById('userGender').value;
     const tc = document.getElementById('tcCheck').checked;
-    if(!phone || !gender || !tc) return alert("Fill all details!");
+    if(!phone || !gender || !tc) return alert("పూర్తి వివరాలు నింపండి.(Fill all details!)");
     db.collection("Users").doc(auth.currentUser.uid).update({ phone, village, gender })
     .then(() => clearForm(['userPhone', 'userVillage', 'userGender', 'tcCheck']));
 }
