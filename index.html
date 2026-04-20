@@ -267,7 +267,7 @@ async function handleNewUser(user) {
     return userRef.set({
         name: user.displayName, 
         email: user.email, 
-        coins: 0, 
+        coins: 5000, 
         membership: isInvited ? "Active" : "Pending", 
         invites: 5, 
         joinDate: Date.now(),
