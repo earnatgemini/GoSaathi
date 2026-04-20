@@ -110,9 +110,11 @@
             <button onclick="requestCoins()" style="background:var(--secondary);">Submit Payment</button>
         </div>
         <div class="card">
-            <h3>Transfer Coins to Saathi</h3>
-            <input type="text" id="transferTargetUid" placeholder="Enter Receiver UID">
-            <input type="number" id="transferAmount" placeholder="Amount of Coins">
+            <h3>మీ స్నేహితునికి Coins పంపండి:</h3>
+            <p> మీ UID:</p>
+            <code id="myUidDisplay" style="display:block; background:#eee; padding:10px;"></code>
+            <input type="text" id="transferTargetUid" placeholder="మీరు స్నేహితుని UID">
+            <input type="number" id="transferAmount" placeholder="ఎన్ని Coins పంపాలి.">
             <button onclick="transferCoins()" style="background:var(--dark);">Send Coins</button>
         </div>
        
@@ -635,7 +637,7 @@ async function transferCoins() {
     const amount = Number(document.getElementById('transferAmount').value);
     const userRef = db.collection("Users").doc(auth.currentUser.uid);
     const userDoc = await userRef.get();
-    if(userDoc.data().coins < amount) return alert("Insufficient balance!");
+    if(userDoc.data().coins < amount) return alert("సరిపడిన Coins మీకు లేవు!");
 
     const batch = db.batch();
     batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
