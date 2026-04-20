@@ -236,26 +236,76 @@ function checkUserStatus(user) {
     });
 }
 
+// -------------------------------------------------------------
+// INVITATION & ACTIVATION SECTION (MODIFIED)
+// -------------------------------------------------------------
+
 async function handleNewUser(user) {
     const userRef = db.collection("Users").doc(user.uid);
     const doc = await userRef.get();
     if (doc.exists) return;
 
+    // URL నుండి invite code తీసుకోవడం
     const inviteCode = new URLSearchParams(window.location.search).get('invite');
     let isInvited = false;
     
     if(inviteCode) {
         const inviterDoc = await db.collection("Users").doc(inviteCode).get();
+        // Inviter కి ఇంకా invites ఉంటేనే...
         if(inviterDoc.exists && inviterDoc.data().invites > 0) {
             isInvited = true;
-            await db.collection("Users").doc(inviteCode).update({ invites: firebase.firestore.FieldValue.increment(-1) });
+            // మార్పు 3: Invite చేసిన వారికి (Inviter) 5000 Coins గిఫ్ట్ గా యాడ్ చేయడం
+            await db.collection("Users").doc(inviteCode).update({ 
+                invites: firebase.firestore.FieldValue.increment(-1),
+                coins: firebase.firestore.FieldValue.increment(5000) 
+            });
         }
     }
 
+    // మార్పు 2: Invite ద్వారా వస్తే డైరెక్ట్ గా "Active" అవుతుంది. 
+    // దీనివల్ల Basic Info సబ్మిట్ చేయగానే onSnapshot ఆటోమేటిక్ గా Home కి తీసుకెళ్తుంది.
     return userRef.set({
-        name: user.displayName, email: user.email, coins: isInvited ? 5000 : 0,
-        membership: isInvited ? "Active" : "Pending", invites: 5, joinDate: Date.now()
+        name: user.displayName, 
+        email: user.email, 
+        coins: 0, 
+        membership: isInvited ? "Active" : "Pending", 
+        invites: 5, 
+        joinDate: Date.now(),
+        invitedBy: isInvited ? inviteCode : null // రిఫరెన్స్ కోసం
     });
+}
+
+// మార్పు 1: HTML లో ఉన్న "activateByCode()" బటన్ పనిచేయడానికి మిస్ అయిన ఫంక్షన్.
+async function activateByCode() {
+    const codeInput = document.getElementById('manualInviteCode').value.trim();
+    if(!codeInput) return alert("దయచేసి Invite Code ఎంటర్ చేయండి.");
+    if(codeInput === auth.currentUser.uid) return alert("మీ కోడ్ మీరే వాడలేరు!");
+
+    const inviterRef = db.collection("Users").doc(codeInput);
+    const inviterDoc = await inviterRef.get();
+
+    if(inviterDoc.exists && inviterDoc.data().invites > 0) {
+        const batch = db.batch();
+        
+        // Invite చేసినవారికి 5000 Coins గిఫ్ట్ గా యాడ్ అవ్వడం
+        batch.update(inviterRef, {
+            invites: firebase.firestore.FieldValue.increment(-1),
+            coins: firebase.firestore.FieldValue.increment(5000)
+        });
+
+        // క్రొత్త యూజర్ ని Active చేయడం
+        batch.update(db.collection("Users").doc(auth.currentUser.uid), {
+            membership: "Active",
+            invitedBy: codeInput
+        });
+
+        await batch.commit();
+        alert("అకౌంట్ సక్సెస్ ఫుల్ గా యాక్టివేట్ అయింది!");
+        document.getElementById('manualInviteCode').value = "";
+        // onSnapshot ఆటోమేటిక్ గా Home page కి రీడైరెక్ట్ చేస్తుంది.
+    } else {
+        alert("ఈ ఇన్వైట్ కోడ్ చెల్లదు లేదా ఇన్విటేషన్ లిమిట్ అయిపోయింది.");
+    }
 }
 
 function submitBasicInfo() {
