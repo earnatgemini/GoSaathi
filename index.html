@@ -35,7 +35,7 @@
 
 <div id="main-ui" style="display:none;">
     <div class="header">
-        <img src="logoSathi.png" alt="Gosaathi" style="height:50px;">
+        <img src="logoSathi.jpeg" alt="Gosaathi" style="height:50px;">
         <h1>GoSathi</h1>
         <p>భారతదేశం అంతటా సురక్షిత ప్రయాణం</p>
     </div>
@@ -138,8 +138,8 @@
             <div id="paidExtraFields" style="display:none;">
                 <input type="number" id="demandPrice" placeholder="అడిగే కాయిన్స్ (Price in Coins)">
             </div>
-            
-            <p <br> style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):</p>
+            <p> ___ ____ </p>
+            <p style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):</p>
             <input type="datetime-local" id="rideTime">
             <button onclick="postRide()">Post Ride</button>
         </div>
@@ -253,7 +253,7 @@ async function handleNewUser(user) {
     }
 
     return userRef.set({
-        name: user.displayName, email: user.email, coins: isInvited ? 500 : 0,
+        name: user.displayName, email: user.email, coins: isInvited ? 5000 : 0,
         membership: isInvited ? "Active" : "Pending", invites: 5, joinDate: Date.now()
     });
 }
@@ -454,7 +454,7 @@ async function processJoinSaathi(reqId, amount) {
             transaction.update(reqRef, { status: "Joined" });
             transaction.update(rideRef, { status: "Joined" });
         });
-        alert("Ride Joined! కాయిన్స్ కట్ అయ్యాయి.");
+        alert("Ride Joined! కాయిన్స్ బదిలీ అయ్యాయి.");
     } catch (error) {
         alert("Error: " + error);
     }
@@ -495,7 +495,7 @@ async function acceptRequest(reqId) {
     batch.update(db.collection("Requests").doc(reqId), { status: "Accepted" });
 
     await batch.commit();
-    alert("డీల్ కన్ఫర్మ్ అయింది! ఇప్పుడు మీరు హోమ్ పేజీలో చాట్ చేయవచ్చు.");
+    alert("డీల్ కన్ఫర్మ్ అయింది! ఇప్పుడు మీరు జాయిన్ నొక్కినచోట చాట్ చేయవచ్చు.");
 }
 
 // -------------------------------------------------------------
@@ -585,7 +585,7 @@ async function initiateJoin(rideId, rideType) {
             closeJoinModal();
         };
     } else {
-        if(confirm("ఈ ఫ్రీ రైడ్ లో జాయిన్ అవ్వాలనుకుంటున్నారా? (500 కాయిన్స్ కమీషన్ కట్ అవుతుంది)")) {
+        if(confirm("ఈ ఫ్రీ రైడ్ లో జాయిన్ అవ్వాలనుకుంటున్నారా? (5 రూపాయలు కమీషన్ కట్ అవుతుంది)")) {
             sendJoinRequest(rideId, rData, "Free", 0, comm);
         }
     }
@@ -654,7 +654,7 @@ async function requestCoins() {
         userId: auth.currentUser.uid, userName: auth.currentUser.displayName,
         amount: amount, utr: utr, status: "Pending", time: Date.now()
     }).then(() => {
-        alert("పేమెంట్ సబ్మిట్ చేయబడింది!");
+        alert("పేమెంట్ సబ్మిట్ చేయబడింది! Checking పూర్తి అయిన వెంటనే కోయిన్స్ add అవుతాయి.");
         clearForm(['payAmount', 'utrId']);
     });
 }
