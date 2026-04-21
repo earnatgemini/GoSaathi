@@ -1,59 +1,74 @@
 <!DOCTYPE html>
 <html lang="te">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoSathi - Ride Together</title>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <style>
-        :root { --primary: #007bff; --secondary: #28a745; --dark: #1e3c72; --gold: #ffcc00; }
-        body { margin:0; font-family: 'Segoe UI', sans-serif; background:#f4f7f6; color: #333; padding-bottom: 70px; }
-        .header { background: linear-gradient(135deg, var(--dark), #2a5298); color:white; padding:20px; text-align:center; }
-        .nav { display:flex; justify-content:space-around; background:white; padding:12px; position:fixed; bottom:0; width:100%; z-index:100; border-top:1px solid #ddd; }
-        .nav button { background:none; border:none; font-weight:bold; color: var(--dark); cursor:pointer; }
-        .container { padding:15px; max-width: 500px; margin: auto; }
-        .card { background:white; padding:15px; border-radius:15px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
-        .wallet-card { background: var(--dark); color: white; text-align: center; }
-        input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; font-size: 16px; }
-        button { background: var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; }
-        .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
-        table { width:100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        #joinModal { display: none; display: flex; }
-        
-        /* Advanced Chat UI Styles */
-        .chat-bubble { padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; max-width: 75%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); position: relative; }
-        .chat-me { align-self: flex-end; background: #dcf8c6; border-bottom-right-radius: 2px; }
-        .chat-other { align-self: flex-start; background: #ffffff; border-bottom-left-radius: 2px; }
-        .chat-time { font-size: 9px; color: gray; display: block; text-align: right; margin-top: 4px; }
-        .chat-sender { font-size: 10px; font-weight: bold; margin-bottom: 2px; display: block; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoSathi - Ride Together</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root { --primary: #007bff; --secondary: #28a745; --dark: #1e3c72; --gold: #ffcc00; }
+        body { margin:0; font-family: 'Segoe UI', sans-serif; background:#f4f7f6; color: #333; padding-bottom: 70px; }
+        
+        /* New Header Style for Integrated Banner Image */
+        .header {
+            padding: 0;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            background-color: #f4f7f6; /* Matching body background for seamless blend */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header img {
+            width: 100%;
+            max-width: 500px;
+            display: block;
+            margin: auto;
+            height: auto;
+        }
+
+        .nav { display:flex; justify-content:space-around; background:white; padding:12px; position:fixed; bottom:0; width:100%; z-index:100; border-top:1px solid #ddd; }
+        .nav button { background:none; border:none; font-weight:bold; color: var(--dark); cursor:pointer; }
+        .container { padding:15px; max-width: 500px; margin: auto; }
+        .card { background:white; padding:15px; border-radius:15px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+        .wallet-card { background: var(--dark); color: white; text-align: center; }
+        input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+        button { background: var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; }
+        .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
+        table { width:100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        #joinModal { display: none; display: flex; }
+        
+        /* Advanced Chat UI Styles */
+        .chat-bubble { padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; max-width: 75%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); position: relative; }
+        .chat-me { align-self: flex-end; background: #dcf8c6; border-bottom-right-radius: 2px; }
+        .chat-other { align-self: flex-start; background: #ffffff; border-bottom-left-radius: 2px; }
+        .chat-time { font-size: 9px; color: gray; display: block; text-align: right; margin-top: 4px; }
+        .chat-sender { font-size: 10px; font-weight: bold; margin-bottom: 2px; display: block; }
+    </style>
 </head>
 <body>
 
 <div id="main-ui" style="display:none;">
-    <div class="header">
-        <img src="logoSathi.png" alt="Gosaathi" style="height:50px;">
-        <h1>GoSathi</h1>
-        <p>భారతదేశం అంతటా సురక్షిత ప్రయాణం</p>
-    </div>
-    <div class="nav" id="bottomNav">
-        <button onclick="showPage('home')">🏠 Home</button>
-        <button onclick="showPage('ride')">🚗 Post</button>
-        <button onclick="showPage('wallet')">💰 Wallet</button>
-        <button onclick="showPage('profile')">👥 Profile</button>
-    </div>
+        <div class="header">
+        <img src="image_9.png" alt="GoSathi Mobile App Header">
+    </div>
+    <div class="nav" id="bottomNav">
+        <button onclick="showPage('home')">🏠 Home</button>
+        <button onclick="showPage('ride')">🚗 Post</button>
+        <button onclick="showPage('wallet')">💰 Wallet</button>
+        <button onclick="showPage('profile')">👥 Profile</button>
+    </div>
 </div>
 
 <div class="container">
-    <div id="login-screen" style="text-align:center; margin-top:100px;">
-        <img src="logoSathi.png" style="height:80px; margin-bottom:20px;"><br>
-        <h2>Welcome to GoSathi</h2>
-        <button onclick="googleLogin()" style="background:#db4437; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
-    </div>
-
+    <div id="login-screen" style="text-align:center; margin-top:100px;">
+        <img src="image_9.png" style="height:80px; margin-bottom:20px;"><br>
+        <h2>Welcome to GoSathi</h2>
+        <button onclick="googleLogin()" style="background:#db4437; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
+    </div>
+... (మిగిలిన కోడ్ యథాతథంగా ఉంటుంది)
     <div id="basic-info-screen" style="display:none;">
         <div class="card">
             <h3>Basic Information</h3>
