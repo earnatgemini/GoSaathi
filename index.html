@@ -581,15 +581,20 @@ function loadMessages(rideId) {
     });
 }
 
-async function sendMessage() {
-    const text = document.getElementById('msgInput').value.trim();
-    if(!text) return;
+function sendMessage(rideId, text) {
+    const now = new Date();
+    // మెసేజ్ పంపిన సమయం నుండి సరిగ్గా 24 గంటల తర్వాత టైమ్ సెట్ చేస్తున్నాం
+    const expireTime = new Date(now.getTime() + (24 * 60 * 60 * 1000)); 
 
-    await db.collection("Messages").add({
-        chatId: currentChatId, senderId: auth.currentUser.uid, senderName: auth.currentUser.displayName,
-        text: text, time: Date.now()
+    db.collection("Messages").add({
+        chatId: rideId,
+        text: text,
+        senderId: auth.currentUser.uid,
+        senderName: auth.currentUser.displayName,
+        time: now.getTime(),
+        // ఈ క్రింది ఫీల్డ్ TTL కి అవసరం
+        expireAt: firebase.firestore.Timestamp.fromDate(expireTime) 
     });
-    document.getElementById('msgInput').value = "";
 }
 
 let currentRideData = null;
