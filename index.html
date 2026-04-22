@@ -585,21 +585,17 @@ function loadMessages(rideId) {
     });
 }
 
-function sendMessage(rideId, text) {
-    const now = new Date();
-    // మెసేజ్ పంపిన సమయం నుండి సరిగ్గా 24 గంటల తర్వాత టైమ్ సెట్ చేస్తున్నాం
-    const expireTime = new Date(now.getTime() + (24 * 60 * 60 * 1000)); 
+async function sendMessage() {
+    const text = document.getElementById('msgInput').value.trim();
+    if(!text) return;
 
-    db.collection("Messages").add({
-        chatId: rideId,
-        text: text,
-        senderId: auth.currentUser.uid,
-        senderName: auth.currentUser.displayName,
-        time: now.getTime(),
-        // ఈ క్రింది ఫీల్డ్ TTL కి అవసరం
-        expireAt: firebase.firestore.Timestamp.fromDate(expireTime) 
+    await db.collection("Messages").add({
+        chatId: currentChatId, senderId: auth.currentUser.uid, senderName: auth.currentUser.displayName,
+        text: text, time: Date.now()
     });
+    document.getElementById('msgInput').value = "";
 }
+
 
 let currentRideData = null;
 let currentRideId = null;
