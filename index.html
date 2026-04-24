@@ -35,16 +35,35 @@
         .chat-other { align-self: flex-start; background: #ffffff; border-bottom-left-radius: 2px; }
         .chat-time { font-size: 9px; color: gray; display: block; text-align: right; margin-top: 4px; }
         .chat-sender { font-size: 10px; font-weight: bold; margin-bottom: 2px; display: block; }
+   
+    
     </style>
 </head>
 <body>
+  <style>
+    /* కొత్త హెడర్ స్టైల్ */
+    .header { 
+        padding: 0; 
+        width: 100%; 
+        overflow: hidden; 
+        background: #f4f7f6; /* ఇమేజ్ లోడ్ అయ్యేలోపు కనిపించే రంగు */
+    }
+    
+    .header img { 
+        width: 100%; 
+        max-width: 500px; /* మొబైల్ ఫ్రెండ్లీ విడ్త్ */
+        height: auto; 
+        display: block; 
+        margin: auto; 
+    }
+</style>
 
 <div id="main-ui" style="display:none;">
     <div class="header">
-        <img src="logoSathi.png" alt="Gosaathi" style="height:50px;">
-        <h1>GoSathi</h1>
-        <p>భారతదేశం అంతటా సురక్షిత ప్రయాణం</p>
+        <img src="banner.png" alt="Go Sathi Banner">
     </div>
+    </div>
+    
     <div class="nav" id="bottomNav">
         <button onclick="showPage('home')">🏠 Home</button>
         <button onclick="showPage('ride')">🚗 Post</button>
