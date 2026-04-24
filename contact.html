@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Go Sathi</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .contact-container { padding: 50px 20px; max-width: 600px; margin: auto; }
+        .contact-form { display: flex; flex-direction: column; gap: 15px; }
+        input, textarea { padding: 12px; border: 1px solid #ccc; border-radius: 5px; }
+        .contact-info { margin-top: 30px; text-align: center; background: #eee; padding: 15px; }
+    </style>
+</head>
+<body>
+    <div class="contact-container">
+        <h2 style="text-align:center;">మమ్మల్ని సంప్రదించండి</h2>
+        <p style="text-align:center;">మీకు ఏవైనా ప్రశ్నలు ఉన్నాయా? కింద ఫారమ్ ద్వారా మాకు మెసేజ్ పంపండి.</p>
+        
+        <form class="contact-form">
+            <input type="text" placeholder="మీ పేరు" required>
+            <input type="email" placeholder="మీ ఈమెయిల్" required>
+            <textarea placeholder="మీ సందేశం..." rows="5" required></textarea>
+            <button type="submit" style="background:var(--primary); color:white; padding:15px; border:none; cursor:pointer;">Send Message</button>
+        </form>
+
+        <div class="contact-info">
+            <p>📧 Email: support@gosaathi.com</p>
+            <p>📍 Location: India</p>
+        </div>
+        <br>
+        <center><a href="index.html">Back to Home</a></center>
+    </div>
+</body>
+</html>
