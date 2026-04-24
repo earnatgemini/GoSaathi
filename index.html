@@ -14,21 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-         /* కొత్త హెడర్ స్టైల్ */
-    .header { 
-        padding: 0; 
-        width: 100%; 
-        overflow: hidden; 
-        background: #f4f7f6; /* ఇమేజ్ లోడ్ అయ్యేలోపు కనిపించే రంగు */
-    }
-    
-    .header img { 
-        width: 100%; 
-        max-width: 500px; /* మొబైల్ ఫ్రెండ్లీ విడ్త్ */
-        height: auto; 
-        display: block; 
-        margin: auto; 
-    }
+        
 
         
         :root { --primary: #007bff; --secondary: #28a745; --dark: #1e3c72; --gold: #ffcc00; }
@@ -57,6 +43,24 @@
     </style>
 </head>
 <body>
+<style>
+     /* కొత్త హెడర్ స్టైల్ */
+    .header { 
+        padding: 0; 
+        width: 100%; 
+        overflow: hidden; 
+        background: #f4f7f6; /* ఇమేజ్ లోడ్ అయ్యేలోపు కనిపించే రంగు */
+    }
+    
+    .header img { 
+        width: 100%; 
+        max-width: 500px; /* మొబైల్ ఫ్రెండ్లీ విడ్త్ */
+        height: auto; 
+        display: block; 
+        margin: auto; 
+    }
+    
+    </style>
 
 <div id="main-ui" style="display:none;">
     <div class="header">
@@ -75,8 +79,8 @@
 <div class="container">
     <div id="login-screen" style="text-align:center; margin-top:100px;">
         <img src="header_image.png" style="height:80px; margin-bottom:20px;"><br>
-        <h2>Welcome to GoSathi</h2>
-        <button onclick="googleLogin()" style="background:#db4437; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
+        <h2>Welcome</h2>
+        <button onclick="googleLogin()" style="background:#db3437; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
     </div>
 
     <div id="basic-info-screen" style="display:none;">
