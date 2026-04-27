@@ -75,8 +75,8 @@
 
 <div class="container">
     <div id="login-screen" style="text-align:center; margin-top:100px;">
-        <img src="header_image.png" style="height:80px; margin-bottom:20px;"><br>
         <h2>Welcome</h2>
+        <img src="banner_header.webp" style="height:80px; margin-bottom:20px;"><br>
         <button onclick="googleLogin()" style="background:#db3437; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
     </div>
 
@@ -570,15 +570,36 @@ async function processCompleteRide(reqId) {
 // 5. Initial Accept Logic
 async function acceptRequest(reqId) {
     const reqDoc = await db.collection("Requests").doc(reqId).get();
-    const req = reqDoc.data();
+    const reqData = reqDoc.data();
+    const rideId = reqData.rideId;
+
     const batch = db.batch();
 
-    // Status 'Accepted' చేయడం వల్ల మెయిన్ లిస్ట్ నుండి మాయమై 'Active Section' లోకి వస్తుంది.
-    batch.update(db.collection("Rides").doc(req.rideId), { status: "Accepted" });
+    // 1. ప్రస్తుత రిక్వెస్ట్‌ని 'Accepted' గా మార్చడం
     batch.update(db.collection("Requests").doc(reqId), { status: "Accepted" });
 
-    await batch.commit();
-    alert("డీల్ కన్ఫర్మ్ అయింది! ఇప్పుడు మీరు జాయిన్ నొక్కినచోట చాట్ చేయవచ్చు.");
+    // 2. రైడ్ స్టేటస్‌ని 'Accepted' గా మార్చడం (తద్వారా మెయిన్ లిస్ట్ నుండి మాయమవుతుంది)
+    batch.update(db.collection("Rides").doc(rideId), { status: "Accepted" });
+
+    // 3. అదే రైడ్‌కి సంబంధించిన మిగిలిన పెండింగ్ రిక్వెస్ట్‌లను రిజెక్ట్ చేయడం
+    const otherRequests = await db.collection("Requests")
+        .where("rideId", "==", rideId)
+        .where("status", "==", "Pending")
+        .get();
+
+    otherRequests.forEach(doc => {
+        if (doc.id !== reqId) { // ఇప్పుడు యాక్సెప్ట్ చేసిన ఐడి కాకుండా మిగిలినవి
+            batch.update(doc.ref, { status: "Rejected" });
+        }
+    });
+
+    try {
+        await batch.commit();
+        alert("డీల్ కన్ఫర్మ్ అయింది! ఇప్పుడు మీరు జాయిన్ నొక్కినచోట చాట్ చేయవచ్చు.");
+    } catch (error) {
+        console.error("Error accepting request: ", error);
+        alert("ఏదో పొరపాటు జరిగింది, మళ్ళీ ప్రయత్నించండి.");
+    }
 }
 
 // -------------------------------------------------------------
