@@ -19,7 +19,21 @@
         
         :root { --primary: #007bff; --secondary: #28a745; --dark: #1e3c72; --gold: #ffcc00; }
         body { margin:0; font-family: 'Segoe UI', sans-serif; background:#f4f7f6; color: #333; padding-bottom: 70px; }
-        .header { background: linear-gradient(135deg, var(--dark), #2a5298); color:white; padding:20px; text-align:center; }
+        /* header { background: linear-gradient(135deg, var(--dark), #2a5298); color:white; padding:20px; text-align:center; } */
+        .header { 
+        padding: 0; 
+        width: 100%; 
+        overflow: hidden; 
+        background: #f4f7f6; /* ఇమేజ్ లోడ్ అయ్యేలోపు కనిపించే రంగు */
+    }
+    
+    .header img { 
+        width: 100%; 
+        max-width: 500px; /* మొబైల్ ఫ్రెండ్లీ విడ్త్ */
+        height: auto; 
+        display: block; 
+        margin: auto; 
+    }
         .nav { display:flex; justify-content:space-around; background:white; padding:12px; position:fixed; bottom:0; width:100%; z-index:100; border-top:1px solid #ddd; }
         .nav button { background:none; border:none; font-weight:bold; color: var(--dark); cursor:pointer; }
         .container { padding:15px; max-width: 500px; margin: auto; }
@@ -45,26 +59,13 @@
 <body>
 <style>
      /* కొత్త హెడర్ స్టైల్ */
-    .header { 
-        padding: 0; 
-        width: 100%; 
-        overflow: hidden; 
-        background: #f4f7f6; /* ఇమేజ్ లోడ్ అయ్యేలోపు కనిపించే రంగు */
-    }
     
-    .header img { 
-        width: 100%; 
-        max-width: 500px; /* మొబైల్ ఫ్రెండ్లీ విడ్త్ */
-        height: auto; 
-        display: block; 
-        margin: auto; 
-    }
     
     </style>
 
 <div id="main-ui" style="display:none;">
     <div class="header">
-        <img src="header_image.png" alt="Go Sathi Banner">
+        <img src="banner_header.webp" alt="Go Sathi Banner">
     </div>
     </div>
     
