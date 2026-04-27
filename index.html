@@ -118,6 +118,12 @@
         </div>
 
         <h3>Available Rides (Live)</h3>
+        <p>🔍 SEARCH RIDE (రైడ్లు వెతుకు):</p>
+        <div style="display:flex; gap:10px; margin-bottom:15px; background:white; padding:10px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+    <input type="text" id="searchFrom" placeholder="🔍📍 From (ఎక్కడి నుండి)" onkeyup="filterRides()" style="margin-top:0;">
+    <input type="text" id="searchTo" placeholder="📍 To (ఎక్కడికి)" onkeyup="filterRides()" style="margin-top:0;">
+</div>
+
         <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
     </div>
 
@@ -221,7 +227,7 @@
             <input type="number" id="customOffer" placeholder="మీ ఆఫర్ (Coins)">
         </div>
         <div style="display:flex; flex-direction:column; gap:10px;">
-            <button id="btnOk" style="background:var(--secondary);">OK (అడిగినంత ఇవ్వడానికి)</button>
+            <button id="btnOk" style="background:var(--secondary);">(అడిగినంత ఇవ్వడానికి) OK</button>
             <button id="btnBargain" style="background:var(--gold); color:black;">Bargain (బేరం ఆడు)</button>
             <button id="btnConfirmBargain" style="display:none; background:var(--primary);">Confirm Offer</button>
             <button onclick="closeJoinModal()" style="background:#666;">Cancel</button>
@@ -333,7 +339,7 @@ async function activateByCode() {
         });
 
         await batch.commit();
-        alert("అకౌంట్ సక్సెస్ ఫుల్ గా యాక్టివేట్ అయింది!");
+        alert("🎉 అభినందనలు! అకౌంట్ సక్సెస్ ఫుల్ గా యాక్టివేట్ అయింది! మీ స్నేహితులకు తెలియజేయండి.5,000 coins లాభపడండి");
         document.getElementById('manualInviteCode').value = "";
         // onSnapshot ఆటోమేటిక్ గా Home page కి రీడైరెక్ట్ చేస్తుంది.
     } else {
@@ -524,7 +530,7 @@ async function processJoinSaathi(reqId, amount) {
         await db.runTransaction(async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if ((userDoc.data().coins || 0) < amount) {
-                throw "మీ వద్ద సరిపడా కాయిన్స్ లేవు!";
+                throw "మీ వద్ద సరిపడా కాయిన్స్ లేవు! 💰Wallet లోకి కనీసం 10 రూపాయలు పంపుకోండి";
             }
             
             const reqDoc = await transaction.get(reqRef);
@@ -656,7 +662,7 @@ async function initiateJoin(rideId, rideType) {
     const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
     
     const comm = (rideType === "Paid") ? 40 : 500;
-    if ((userDoc.data().coins || 0) < comm) return alert("కమీషన్ కోసం సరిపడా కాయిన్స్ లేవు!");
+    if ((userDoc.data().coins || 0) < comm) return alert("సరిపడా కాయిన్స్ లేవు! 💰Wallet లోకి కనీసం 10 రూపాయలు పంపుకోండి");
 
     currentRideId = rideId;
     currentRideData = rData;
@@ -720,7 +726,7 @@ function loadIncomingRequests() {
             const req = doc.data();
             container.innerHTML += `
                 <div class="card" style="border:1px solid #ddd; padding:10px; margin-bottom:10px;">
-                    <p><b>${req.coSaathiName}</b> ${req.from} నుండి ${req.to} కి రావాలనుకుంటున్నారు.</p>
+                    <p><b>${req.coSaathiName}</b> మీతో కలిసి ${req.from} నుండి ${req.to} ప్రయాణం చేయాలనుకుంటున్నారు.</p>
                     <p>ఆఫర్ చేసిన ధర: <b style="color:green;">${req.offerPrice} Coins</b></p>
                     <div style="display:flex; justify-content:space-between;">
                         <button onclick="acceptRequest('${doc.id}')" style="background:var(--secondary); width:48%;">Accept</button>
@@ -759,7 +765,7 @@ async function requestCoins() {
         userId: auth.currentUser.uid, userName: auth.currentUser.displayName,
         amount: amount, utr: utr, status: "Pending", time: Date.now()
     }).then(() => {
-        alert("పేమెంట్ సబ్మిట్ చేయబడింది! Checking పూర్తి అయిన వెంటనే కోయిన్స్ add అవుతాయి.");
+        alert("పేమెంట్ సబ్మిట్ చేయబడింది! Checking జరుగుతుంది. ధృవీకరణ అయిన వెంటనే కోయిన్స్ add అవుతాయి.");
         clearForm(['payAmount', 'utrId']);
     });
 }
@@ -795,6 +801,31 @@ function shareInvite() {
 document.getElementById('rideType').addEventListener('change', function() {
     document.getElementById('paidExtraFields').style.display = (this.value === 'Paid') ? 'block' : 'none';
 });
+    // Live Search Filter Function
+function filterRides() {
+    // యూజర్ టైప్ చేసిన దాన్ని చిన్న అక్షరాలు (lowercase) లోకి మారుస్తున్నాం
+    let fromValue = document.getElementById('searchFrom').value.toLowerCase();
+    let toValue = document.getElementById('searchTo').value.toLowerCase();
+    
+    // డాక్యుమెంట్ లో ఉన్న రైడ్ కార్డ్స్ అన్నింటినీ తీసుకుంటున్నాం
+    let rides = document.getElementsByClassName('ride-item');
+    
+    for (let i = 0; i < rides.length; i++) {
+        // మన డిజైన్ ప్రకారం <b> ట్యాగ్‌లో "From ➔ To" పేర్లు ఉన్నాయి
+        let routeText = rides[i].getElementsByTagName('b')[0].innerText.toLowerCase();
+        
+        // "➔" గుర్తు ఆధారంగా From మరియు To పేర్లను విడదీస్తున్నాం
+        let [rideFrom, rideTo] = routeText.split(' ➔ ');
+        
+        // యూజర్ టైప్ చేసిన అక్షరాలు ఈ రైడ్‌లో ఉన్నాయో లేదో చెక్ చేస్తున్నాం (includes)
+        if (rideFrom.includes(fromValue) && rideTo.includes(toValue)) {
+            rides[i].style.display = "block"; // మ్యాచ్ అయితే చూపించు
+        } else {
+            rides[i].style.display = "none";  // మ్యాచ్ కాకపోతే దాచేయ్
+        }
+    }
+}
+    
 </script>
 </body>
 </html>
