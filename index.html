@@ -64,7 +64,7 @@
 
 <div id="main-ui" style="display:none;">
     <div class="header">
-        <img src="header_image.png" alt="Go Sathi Banner">
+        <img src="banner_header.webp" alt="Go Sathi Banner">
     </div>
     </div>
     
@@ -78,7 +78,7 @@
 
 <div class="container">
     <div id="login-screen" style="text-align:center; margin-top:100px;">
-        <img src="header_image.png" style="height:80px; margin-bottom:20px;"><br>
+        <img src="banner_header.webp" style="height:80px; margin-bottom:20px;"><br>
         <h2>Welcome</h2>
         <button onclick="googleLogin()" style="background:#db3437; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
     </div>
@@ -200,6 +200,11 @@
         </div>
     </div>
 
+    <div style="display:flex; gap:10px; margin-bottom:15px; background:white; padding:10px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+    <input type="text" id="searchFrom" placeholder="🔍 From (ఎక్కడి నుండి)" onkeyup="filterRides()" style="margin-top:0;">
+    <input type="text" id="searchTo" placeholder="📍 To (ఎక్కడికి)" onkeyup="filterRides()" style="margin-top:0;">
+    </div>
+    
     <div id="chat-page" style="display:none; margin-top:-15px;">
         <div style="background:var(--dark); color:white; padding:15px; border-radius:15px 15px 0 0; display:flex; align-items:center;">
             <button onclick="showPage('home')" style="width:auto; background:none; color:white; font-size:20px; padding:0; margin-right:15px;">Close ✖</button>
@@ -412,6 +417,32 @@ function loadRides() {
     });
 }
 
+    // Live Search Filter Function
+function filterRides() {
+    // యూజర్ టైప్ చేసిన దాన్ని చిన్న అక్షరాలు (lowercase) లోకి మారుస్తున్నాం
+    let fromValue = document.getElementById('searchFrom').value.toLowerCase();
+    let toValue = document.getElementById('searchTo').value.toLowerCase();
+    
+    // డాక్యుమెంట్ లో ఉన్న రైడ్ కార్డ్స్ అన్నింటినీ తీసుకుంటున్నాం
+    let rides = document.getElementsByClassName('ride-item');
+    
+    for (let i = 0; i < rides.length; i++) {
+        // మన డిజైన్ ప్రకారం <b> ట్యాగ్‌లో "From ➔ To" పేర్లు ఉన్నాయి
+        let routeText = rides[i].getElementsByTagName('b')[0].innerText.toLowerCase();
+        
+        // "➔" గుర్తు ఆధారంగా From మరియు To పేర్లను విడదీస్తున్నాం
+        let [rideFrom, rideTo] = routeText.split(' ➔ ');
+        
+        // యూజర్ టైప్ చేసిన అక్షరాలు ఈ రైడ్‌లో ఉన్నాయో లేదో చెక్ చేస్తున్నాం (includes)
+        if (rideFrom.includes(fromValue) && rideTo.includes(toValue)) {
+            rides[i].style.display = "block"; // మ్యాచ్ అయితే చూపించు
+        } else {
+            rides[i].style.display = "none";  // మ్యాచ్ కాకపోతే దాచేయ్
+        }
+    }
+    }
+                                               
+
 // 2. Active Rides & Chats Loader
 function loadActiveChats() {
     const uid = auth.currentUser.uid;
@@ -573,16 +604,38 @@ async function processCompleteRide(reqId) {
 // 5. Initial Accept Logic
 async function acceptRequest(reqId) {
     const reqDoc = await db.collection("Requests").doc(reqId).get();
-    const req = reqDoc.data();
+    const reqData = reqDoc.data();
+    const rideId = reqData.rideId;
+
     const batch = db.batch();
 
-    // Status 'Accepted' చేయడం వల్ల మెయిన్ లిస్ట్ నుండి మాయమై 'Active Section' లోకి వస్తుంది.
-    batch.update(db.collection("Rides").doc(req.rideId), { status: "Accepted" });
+    // 1. ప్రస్తుత రిక్వెస్ట్‌ని 'Accepted' గా మార్చడం
     batch.update(db.collection("Requests").doc(reqId), { status: "Accepted" });
 
-    await batch.commit();
-    alert("డీల్ కన్ఫర్మ్ అయింది! ఇప్పుడు మీరు జాయిన్ నొక్కినచోట చాట్ చేయవచ్చు.");
+    // 2. రైడ్ స్టేటస్‌ని 'Accepted' గా మార్చడం (తద్వారా మెయిన్ లిస్ట్ నుండి మాయమవుతుంది)
+    batch.update(db.collection("Rides").doc(rideId), { status: "Accepted" });
+
+    // 3. అదే రైడ్‌కి సంబంధించిన మిగిలిన పెండింగ్ రిక్వెస్ట్‌లను రిజెక్ట్ చేయడం
+    const otherRequests = await db.collection("Requests")
+        .where("rideId", "==", rideId)
+        .where("status", "==", "Pending")
+        .get();
+
+    otherRequests.forEach(doc => {
+        if (doc.id !== reqId) { // ఇప్పుడు యాక్సెప్ట్ చేసిన ఐడి కాకుండా మిగిలినవి
+            batch.update(doc.ref, { status: "Rejected" });
+        }
+    });
+
+    try {
+        await batch.commit();
+        alert("డీల్ కన్ఫర్మ్ అయింది! మిగిలిన రిక్వెస్ట్‌లు ఆటోమేటిక్‌గా రిజెక్ట్ చేయబడ్డాయి.");
+    } catch (error) {
+        console.error("Error accepting request: ", error);
+        alert("ఏదో పొరపాటు జరిగింది, మళ్ళీ ప్రయత్నించండి.");
+    }
 }
+
 
 // -------------------------------------------------------------
 // CHAT & OTHER RETAINED LOGIC
