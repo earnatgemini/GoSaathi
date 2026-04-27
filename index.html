@@ -116,18 +116,20 @@
             <h3 style="color:var(--dark); border-bottom: 2px solid var(--primary); padding-bottom: 5px;">💬 Active Rides & Chats</h3>
             <div id="activeChatsContainer"></div>
         </div>
-        <div id="requests-section" class="card" style="display:none; border-top: 5px solid var(--gold);">
-        <h3>📩 ప్రయాణ రిక్వెస్ట్‌లు (Requests)</h3>
-        <div id="incomingRequests">రిక్వెస్ట్‌లు ఏమీ లేవు...</div>
-        </div>
-
+        
         <h3>Available Rides (Live)</h3>
         <p>🔍 SEARCH RIDE (రైడ్లు వెతుకు):</p>
+        
         <div style="display:flex; gap:5px; margin-bottom:15px; background:white; padding:5px; border-radius:5px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
         <input type="text" id="searchFrom" placeholder="📍 From (ఎక్కడి నుండి)" onkeyup="filterRides()" style="margin-top:0;">
         <input type="text" id="searchTo" placeholder="📍 To (ఎక్కడికి)" onkeyup="filterRides()" style="margin-top:0;">
         </div>
-
+        
+        <div id="requests-section" class="card" style="display:none; border-top: 5px solid var(--gold);">
+        <h3>📩 ప్రయాణ రిక్వెస్ట్‌లు (Requests)</h3>
+        <div id="incomingRequests">రిక్వెస్ట్‌లు ఏమీ లేవు...</div>
+        </div>
+        
         <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
     </div>
 
