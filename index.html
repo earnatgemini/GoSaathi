@@ -124,6 +124,11 @@
         <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
     </div>
 
+    <div style="display:flex; gap:10px; margin-bottom:15px; background:white; padding:6px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+    <input type="text" id="searchFrom" placeholder="🔍 From (ఎక్కడి నుండి)" onkeyup="filterRides()" style="margin-top:0;">
+    <input type="text" id="searchTo" placeholder="📍 To (ఎక్కడికి)" onkeyup="filterRides()" style="margin-top:0;">
+    </div>
+
     <div id="requests-section" class="card" style="display:none; border-top: 5px solid var(--gold);">
         <h3>📩 ప్రయాణ రిక్వెస్ట్‌లు (Requests)</h3>
         <div id="incomingRequests">రిక్వెస్ట్‌లు ఏమీ లేవు...</div>
@@ -199,12 +204,7 @@
             <div id="adminRidesContainer"></div>
         </div>
     </div>
-
-    <div style="display:flex; gap:10px; margin-bottom:15px; background:white; padding:10px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-    <input type="text" id="searchFrom" placeholder="🔍 From (ఎక్కడి నుండి)" onkeyup="filterRides()" style="margin-top:0;">
-    <input type="text" id="searchTo" placeholder="📍 To (ఎక్కడికి)" onkeyup="filterRides()" style="margin-top:0;">
-    </div>
-    
+   
     <div id="chat-page" style="display:none; margin-top:-15px;">
         <div style="background:var(--dark); color:white; padding:15px; border-radius:15px 15px 0 0; display:flex; align-items:center;">
             <button onclick="showPage('home')" style="width:auto; background:none; color:white; font-size:20px; padding:0; margin-right:15px;">Close ✖</button>
