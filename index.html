@@ -18,6 +18,21 @@
         :root { --primary: #007bff; --secondary: #28a745; --dark: #1e3c72; --gold: #ffcc00; }
         body { margin:0; font-family: 'Segoe UI', sans-serif; background:#f4f7f6; color: #333; padding-bottom: 70px; }
         .header { background: linear-gradient(135deg, var(--dark), #2a5298); color:white; padding:20px; text-align:center; }
+       /* కొత్త హెడర్ స్టైల్ */
+    .header { 
+        padding: 0; 
+        width: 100%; 
+        overflow: hidden; 
+        background: #f4f7f6; /* ఇమేజ్ లోడ్ అయ్యేలోపు కనిపించే రంగు */
+    }
+    
+    .header img { 
+        width: 100%; 
+        max-width: 500px; /* మొబైల్ ఫ్రెండ్లీ విడ్త్ */
+        height: auto; 
+        display: block; 
+        margin: auto; 
+            }
         .nav { display:flex; justify-content:space-around; background:white; padding:12px; position:fixed; bottom:0; width:100%; z-index:100; border-top:1px solid #ddd; }
         .nav button { background:none; border:none; font-weight:bold; color: var(--dark); cursor:pointer; }
         .container { padding:15px; max-width: 500px; margin: auto; }
@@ -37,21 +52,7 @@
         .chat-time { font-size: 9px; color: gray; display: block; text-align: right; margin-top: 4px; }
         .chat-sender { font-size: 10px; font-weight: bold; margin-bottom: 2px; display: block; }
    
-     /* కొత్త హెడర్ స్టైల్ */
-    .header { 
-        padding: 0; 
-        width: 100%; 
-        overflow: hidden; 
-        background: #f4f7f6; /* ఇమేజ్ లోడ్ అయ్యేలోపు కనిపించే రంగు */
-    }
-    
-    .header img { 
-        width: 100%; 
-        max-width: 500px; /* మొబైల్ ఫ్రెండ్లీ విడ్త్ */
-        height: auto; 
-        display: block; 
-        margin: auto; 
-    }
+     
     
     </style>
 </head>
@@ -117,9 +118,8 @@
 
         <h3>Available Rides (Live)</h3>
         <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
-        
-        <div style="display:flex; gap:10px; margin-bottom:15px; background:white; padding:6px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
         <p>🔍 వెతుకు </p>
+        <div style="display:flex; gap:10px; margin-bottom:15px; background:white; padding:6px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
         <input type="text" id="searchFrom" placeholder="🔍 From (ఎక్కడి నుండి)" onkeyup="filterRides()" style="margin-top:0;">
         <input type="text" id="searchTo" placeholder="📍 To (ఎక్కడికి)" onkeyup="filterRides()" style="margin-top:0;">
         </div>
