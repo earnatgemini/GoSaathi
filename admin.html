@@ -124,6 +124,28 @@ function loadAdminData() {
         });
     });
 
+    db.collection("Withdrawals").where("status", "==", "Pending").onSnapshot(snap => {
+    const div = document.getElementById('pendingList');
+    div.innerHTML = snap.empty ? "No pending withdrawals." : "";
+    
+    snap.forEach(doc => {
+        const w = doc.data();
+        const finalPayable = w.amountINR - (w.amountINR * 0.05); // 5% Service Fee
+        
+        div.innerHTML += `
+            <div style="background:#252525; padding:15px; margin-top:10px; border-radius:10px; border-left: 5px solid #ffcc00;">
+                <b style="color:white; font-size:16px;">${w.userName}</b><br>
+                Requested: <b>₹${w.amountINR}</b> | <span style="color:#00ff00">Payable: ₹${finalPayable}</span><br>
+                UPI: <span style="color:cyan">${w.upiId}</span> 
+                <button onclick="navigator.clipboard.writeText('${w.upiId}'); alert('Copied!')" style="padding:2px 5px; font-size:10px;">Copy</button><br>
+                
+                <input type="text" id="ref_${doc.id}" placeholder="Enter Transaction UTR" style="width:70%; margin:5px 0;">
+                <br>
+                <button class="btn-approve" onclick="approveWithdrawal('${doc.id}', '${refNo}')">Mark Paid</button>
+                <button class="btn-reject" onclick="rejectWithdrawal('${doc.id}', '${w.userId}', ${w.coinsRedeemed})">Reject</button>
+            </div>`;
+    });
+});
     // 3. User Table
     db.collection("Users").onSnapshot(snap => {
         const tbody = document.getElementById('userTableBody');
@@ -202,6 +224,31 @@ function manageCoins(uid, type) {
     }).then(() => alert("User coins updated!"));
 }
 
+    // Admin Functions
+async function approveWithdrawal(docId) {
+    const refNo = document.getElementById(`ref_${docId}`).value;
+    if(!refNo) return alert("UTR నంబర్ తప్పనిసరి!");
+
+    await db.collection("Withdrawals").doc(docId).update({
+        status: "Success",
+        utrNumber: refNo,
+        processedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert("Success గా మార్చబడింది!");
+}
+
+async function rejectWithdrawal(docId, userId, coins) {
+    if(confirm("Reject చేయాలా? కాయిన్స్ యూజర్‌కి తిరిగి వెళ్తాయి.")) {
+        const batch = db.batch();
+        batch.update(db.collection("Users").doc(userId), {
+            coins: firebase.firestore.FieldValue.increment(coins)
+        });
+        batch.update(db.collection("Withdrawals").doc(docId), { status: "Rejected" });
+        await batch.commit();
+        alert("Rejected!");
+    }
+}
+    
 function deleteRide(rideId) {
     if(confirm("Are you sure you want to delete this ride?")) {
         db.collection("Rides").doc(rideId).delete();
