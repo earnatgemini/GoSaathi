@@ -39,7 +39,27 @@
         .nav button { background:none; border:none; font-weight:bold; color: var(--dark); cursor:pointer; }
         .container { padding:15px; max-width: 500px; margin: auto; }
         .card { background:white; padding:15px; border-radius:15px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
-        .wallet-card { background: var(--dark); color: white; text-align: center; }
+        /* Updated Wallet Card for Single Line */
+.wallet-card { 
+    background: var(--dark); 
+    color: white; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 10px; /* Text మధ్య దూరం కోసం */
+    padding: 10px !important; /* కార్డ్ ఎత్తు తగ్గించడానికి */
+    margin-bottom: 15px;
+}
+.wallet-card h3, .wallet-card h2, .wallet-card p { 
+    margin: 0; 
+    display: inline-block; 
+}
+.wallet-card h2 { 
+    color: var(--gold); /* Balance హైలైట్ అవ్వడానికి */
+    font-size: 24px;
+}
+
+        
         input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; font-size: 16px; }
         button { background: var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; }
         .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
@@ -132,15 +152,13 @@
         
         <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
     </div>
-
     
-
     <div id="wallet" style="display:none;">
         <div class="card wallet-card">
-          <h3> Balance: </h3>
-          <h2 id="coinBalance">0 </h2>
-          <p>Coins</p> 
-        </div>
+            <h3>Balance:</h3>
+            <h2 id="coinBalance">0</h2>
+            <p>Coins</p> 
+         </div>
          <div class="card">
             <h3>Add Coins (Scan & Pay)</h3>
             <img src="qr.png" style="width:150px; display:block; margin:auto;">
