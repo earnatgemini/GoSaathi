@@ -172,8 +172,15 @@
             <input type="text" id="transferTargetUid" placeholder="మీ స్నేహితుని UID ఇక్కడ ఇవ్వండి.">
             <input type="number" id="transferAmount" placeholder="ఎన్ని Coins పంపాలి.">
             <button onclick="transferCoins()" style="background:var(--dark);">Send Coins</button>
-        </div>.
-       
+        </div>
+        <div class="card">
+            <h3>💰 Withdraw Money</h3>
+            <p>Current Coins: <span id="userCoinsDisplay">0</span></p>
+            <input type="number" id="withdrawAmount" placeholder="Enter Amount (₹)">
+            <input type="text" id="upiId" placeholder="Enter UPI ID (e.g., name@upi)">
+            <button onclick="requestWithdrawal()" style="background: #2e7d32; color: white;">Withdraw Now</button>
+            <p style="font-size: 12px; color: #aaa;">* Min. Balance 50,000 coins required.<br>* Min. Withdrawal ₹100.</p>
+         </div>
     </div>
 
     <div id="ride" style="display:none;">
@@ -791,7 +798,55 @@ async function requestCoins() {
         clearForm(['payAmount', 'utrId']);
     });
 }
+    
+async function requestWithdrawal() {
+    const amountINR = Number(document.getElementById('withdrawAmount').value);
+    const upiId = document.getElementById('upiId').value;
+    const coinsNeeded = amountINR * 100;
+    
+    // Fetch User Data
+    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    const userData = userDoc.data();
+    const currentCoins = userData.coins || 0;
 
+    // 1. Check Daily Limit (5 transactions)
+    const today = new Date().toISOString().split('T')[0];
+    const dailySnap = await db.collection("Withdrawals")
+        .where("userId", "==", auth.currentUser.uid)
+        .where("date", "==", today).get();
+    
+    if (dailySnap.size >= 5) return alert("ఈరోజుకి మీ 5 ట్రాన్సాక్షన్ల లిమిట్ ముగిసింది.");
+
+    // 2. Logic Validations
+    if (amountINR < 100) return alert("కనీసం ₹100 విత్‌డ్రా చేయాలి.");
+    if (currentCoins - coinsNeeded < 50000) {
+        return alert("విత్‌డ్రా తర్వాత మీ అకౌంట్‌లో కనీసం 50,000 కాయిన్స్ ఉండాలి.");
+    }
+    if (!upiId.includes('@')) return alert("సరైన UPI ID ఎంటర్ చేయండి.");
+
+    // 3. Process Request
+    const batch = db.batch();
+    const withdrawRef = db.collection("Withdrawals").doc();
+    
+    batch.set(withdrawRef, {
+        userId: auth.currentUser.uid,
+        userName: userData.name,
+        amountINR: amountINR,
+        coinsRedeemed: coinsNeeded,
+        upiId: upiId,
+        status: "Pending",
+        date: today,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    batch.update(db.collection("Users").doc(auth.currentUser.uid), {
+        coins: firebase.firestore.FieldValue.increment(-coinsNeeded)
+    });
+
+    await batch.commit();
+    alert("విత్‌డ్రాయల్ రిక్వెస్ట్ పంపబడింది! 24 గంటల్లో మీ ఖాతాలో జమ అవుతుంది.");
+}
+    
 function loadAdminData() { /* Intentionally left same */ }
 function adminManageCoins(uid, type) { /* Intentionally left same */ }
 
