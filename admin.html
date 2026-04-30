@@ -22,7 +22,7 @@
         .btn-action { background: #0277bd; color: white; border: none; margin-right: 5px; }
         .scroll-box { overflow-x: auto; }
         .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .stat-card { background: #222; padding: 5px; text-align: center; border-radius: 10px; border-top: 4px solid var(--admin-red); }
+        .stat-card { background: #333; padding: 15px; text-align: center; border-radius: 10px; border-top: 4px solid var(--admin-red); }
     </style>
 </head>
 <body>
@@ -38,7 +38,7 @@
 </div>
 
 <div id="admin-content" style="display:none;">
-    
+    <button onclick="auth.signOut()" style="background:#666; margin-top:20px;">Logout</button>  
     <div class="stat-grid">
         <div class="stat-card"><h3>Admin Balance</h3><h2 id="adminCoins">0</h2></div>
         <div class="stat-card"><h3>Total Users</h3><h2 id="totalUsers">0</h2></div>
