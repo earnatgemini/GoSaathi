@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://gosathiindia.netlify.app/sitemap.xml
+Sitemap: https://earnatgemini.github.io/GoSaathi/sitemap.xml
