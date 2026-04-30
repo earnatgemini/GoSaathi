@@ -30,9 +30,9 @@
     </url>
 
     <url>
-        <loc>https://earnatgemini.github.io/GoSaathi/features</loc>
+        <loc>https://earnatgemini.github.io/GoSaathi/terms</loc>
         <lastmod>2026-04-20</lastmod>
-        <changefreq>weekly</changefreq>
+        <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
 
@@ -44,7 +44,7 @@
     </url>
 
     <url>
-        <loc>https://earnatgemini.github.io/GoSaathi/privacy-policy</loc>
+        <loc>https://earnatgemini.github.io/GoSaathi/privacy</loc>
         <lastmod>2026-04-20</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>
