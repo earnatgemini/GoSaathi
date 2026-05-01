@@ -90,6 +90,11 @@
         }
     </style>
 </head>
+    <div class="container">
+    <h2>Go Sathi - Live Tracking</h2>
+    <button id="post-ride-btn" class="btn btn-primary">Check GPS & Post Ride</button>
+    <div id="map"></div>
+</div>
 <body>
 
 <div id="main-ui" style="display:none;">
@@ -182,11 +187,8 @@
             <a href="about.html">About Us !</a>
             <a href="contact.html">! Contact Us !</a>
             <a href="privacy.html">! privacy policy</a>
-        
     </div>
     
-    
-
     <div id="ride" style="display:none;">
         <div class="card">
             <h3>Post a New Ride</h3>
@@ -211,6 +213,7 @@
             <p style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):</p>
             <input type="datetime-local" id="rideTime">
             <button onclick="postRide()">Post Ride</button>
+            <div id="map"></div>
         </div>
     </div>
     
@@ -300,11 +303,7 @@
         </div>
     </div>
 </div>
-    <div class="container">
-    <h2>Go Sathi - Live Tracking</h2>
-    <button id="post-ride-btn" class="btn btn-primary">Check GPS & Post Ride</button>
-    <div id="map"></div>
-</div>
+    
 
 
 <script>
@@ -993,5 +992,9 @@ function filterRides() {
 }
     
 </script>
+    <script src="maps.js"></script> 
+</body>
+</html>
+
 </body>
 </html>
