@@ -14,7 +14,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
-
+   
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
     
     <style>
           
@@ -75,7 +77,17 @@
         .chat-time { font-size: 9px; color: gray; display: block; text-align: right; margin-top: 4px; }
         .chat-sender { font-size: 10px; font-weight: bold; margin-bottom: 2px; display: block; }
    
-    
+    /* మ్యాప్ ఫుల్ స్క్రీన్ లేదా ఒక బాక్స్ లా కనిపించడానికి */
+        #map { width: 100%; height: 500px; border-radius: 15px; margin-top: 10px; border:  2px solid #ddd; }
+        
+        /* కస్టమ్ మార్కర్ స్టైల్స్ (అడ్వాన్స్డ్ లుక్ కోసం) */
+         .marker {
+            background-image: url('https://cdn-icons-png.flaticon.com/512/3082/3082383.png'); /* ఒక మంచి కార్ ఐకాన్ */
+            background-size: cover;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;  
+        }
     </style>
 </head>
 <body>
@@ -288,6 +300,12 @@
         </div>
     </div>
 </div>
+    <div class="container">
+    <h2>Go Sathi - Live Tracking</h2>
+    <button id="post-ride-btn" class="btn btn-primary">Check GPS & Post Ride</button>
+    <div id="map"></div>
+</div>
+
 
 <script>
 const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", authDomain: "gemini-spinning-wheel-game.firebaseapp.com", projectId: "gemini-spinning-wheel-game" };
