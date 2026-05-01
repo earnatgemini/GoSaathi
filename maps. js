@@ -1,0 +1,73 @@
+// Mapbox టోకెన్ (ఇక్కడ నీ అసలైన టోకెన్ పెట్టు)
+mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+
+let map;
+let hostMarker;
+
+// 1. GPS చెక్ చేసే అడ్వాన్స్డ్ ఫంక్షన్
+async function checkGPSAndInitMap() {
+    if (!navigator.geolocation) {
+        alert("నీ బ్రౌజర్ లో GPS సపోర్ట్ చేయడం లేదు!");
+        return;
+    }
+
+    // లొకేషన్ పర్మిషన్ అడగడం
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { longitude, latitude } = position.coords;
+            initMap(longitude, latitude);
+        },
+        (error) => {
+            alert("దయచేసి GPS ఆన్ చేయి! లేదంటే 'Go Sathi' లో రైడ్ పోస్ట్ చేయలేవు.");
+            console.error("GPS Error:", error);
+        },
+        { enableHighAccuracy: true } // అక్యూరసీ కోసం ఇది వాడాలి
+    );
+}
+
+// 2. మ్యాప్ ఇనిషియలైజేషన్ (Advanced Structure)
+function initMap(lng, lat) {
+    map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/navigation-night-v1', // నైట్ మోడ్ లో ఇంకా బాగుంటుంది
+        center: [lng, lat],
+        zoom: 14
+    });
+
+    // జూమ్ కంట్రోల్స్
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // Host లొకేషన్ దగ్గర మార్కర్
+    const el = document.createElement('div');
+    el.className = 'marker'; // పైన మనం రాసిన CSS క్లాస్
+
+    hostMarker = new mapboxgl.Marker(el)
+        .setLngLat([lng, lat])
+        .setPopup(new mapboxgl.Popup().setHTML("<h5>నువ్వు ఇక్కడ ఉన్నావు (Host)</h5>"))
+        .addTo(map);
+
+    // మ్యాప్ లోడ్ అయ్యాక దగ్గర్లో ఉన్న రైడ్స్ చూపించడం
+    map.on('load', () => {
+        showNearbyRides(lng, lat);
+    });
+}
+
+// 3. దగ్గర్లో ఉన్న రైడ్స్ (Nearby Rides) చూపించడం
+function showNearbyRides(hostLng, hostLat) {
+    // ఇది Firebase నుండి డేటా తెచ్చుకునే ప్లేస్. 
+    // ప్రస్తుతానికి డమ్మీ డేటా ఇస్తున్నాను (Advanced Array)
+    const nearbyUsers = [
+        { name: "రమేష్", lng: hostLng + 0.003, lat: hostLat + 0.002 },
+        { name: "వంశీ", lng: hostLng - 0.002, lat: hostLat - 0.003 }
+    ];
+
+    nearbyUsers.forEach(user => {
+        new mapboxgl.Marker({ color: 'blue' }) // Co-sathi కి బ్లూ కలర్
+            .setLngLat([user.lng, user.lat])
+            .setPopup(new mapboxgl.Popup().setHTML(`<h6>Co-sathi: ${user.name}</h6>`))
+            .addTo(map);
+    });
+}
+
+// బటన్ కి ఈ ఫంక్షన్ ని కనెక్ట్ చేయడం
+document.getElementById('post-ride-btn').addEventListener('click', checkGPSAndInitMap);
