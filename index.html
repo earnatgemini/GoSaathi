@@ -598,9 +598,34 @@ async function postRide() {
 
     await batch.commit();
     alert(" రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!");
-    clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
+   
+   // Ride పోస్ట్ అయ్యాక, డైలీ గిఫ్ట్ లో మించి 1000 సంతకం
+  const today = new Date();
+  const start = new Date(2026, 4, 3);   // మే 3, 2026 (మాసం = 4)
+  const end = new Date(2026, 10, 3);    // నవం 3, 2026 (మాసం = 10)
+  if (today >= start && today <= end) {
+    const dateKey = today.toISOString().split('T')[0];
+    const giftDoc = await db.collection("DailyGifts").doc(dateKey).get();
+    if (!giftDoc.exists) {
+      // ముందే 1000 గిఫ్ట్ ఇవ్వలేదు - ఇప్పుడు ఇవ్వండి
+      await db.collection("Users").doc(hostUid).update({
+        treasureCoins: firebase.firestore.FieldValue.increment(1000)
+      });
+      await db.collection("DailyGifts").doc(dateKey).set({
+        given: true,
+        userId: hostUid,
+        timestamp: Date.now()
+      });
+      alert("Congratulations! మీరు ఈరోజు గోల్డ్ ట్రెజర్‌కి 1000 Coins పొందారు.");
+    }
+  }
+
+  await batch.commit()
+  // ...
+     clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
     showPage('home');
 }
+
 // 1. UI ని అప్డేట్ చేసే ఫంక్షన్
 function updateTreasureUI(currentBalance, targetGoldCoins) {
     // కాయిన్స్ కౌంట్ అప్డేట్
@@ -1307,9 +1332,5 @@ function showNearbyRides(centerLocation) {
     });
 }
 </script>
-    
-</body>
-</html>
-
 </body>
 </html>
