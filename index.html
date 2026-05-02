@@ -75,62 +75,96 @@
     border-radius: 10px;
 }
 
-.treasure-display {
-    position: absolute;
-    bottom: 10px;   /* క్రింద అంచు నుండి కొద్దిగా పైకి */
-    right: 10px;    /* కుడి పక్క అంచు నుండి కొద్దిగా లోపలికి */
-    background-color: rgba(0, 0, 0, 0.7); /* వెనుక కొద్దిగా నలుపు రంగు */
-    color: #FFD700; /* బంగారం (Gold) రంగు */
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: bold;
-    box-shadow: 0px 2px 5px rgba(0,0,0,0.5);
-}
-.treasure-panel {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    width: 150px;
-    text-align: right;
-}
-.progress-container {
+/* హెడర్ కంటైనర్ */
+.go-sathi-header {
+    position: relative;
     width: 100%;
-    height: 6-px;
-    background: rgba(255, 255, 255, 0.3);
+    max-width: 450px;
+    margin: auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.header-img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+/* గ్లాస్మోర్ఫిజం (Glassmorphism) కార్డ్ డిజైన్ */
+.gold-treasure-card {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    width: 180px;
+    background: rgba(20, 20, 20, 0.65);
+    backdrop-filter: blur(10px); /* వెనుక ఇమేజ్ ని బ్లర్ చేస్తుంది */
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 14px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.gold-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.gold-title {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.gold-balance {
+    color: #FFD700; /* Gold Color */
+    font-size: 16px;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5); /* కాయిన్స్ కి మెరుపు */
+}
+
+/* స్మూత్ ప్రోగ్రెస్ బార్ */
+.progress-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 10px;
-    margin-top: 5px;
     overflow: hidden;
 }
 
-.progress-bar {
-    width: 0%; /* ఇది కాయిన్స్ ని బట్టి పెరుగుతుంది */
+.progress-fill {
+    width: 0%;
     height: 100%;
-    background: linear-gradient(90deg, #FFD700, #FFA500);
-    transition: width 0.5s ease-in-out;
+    background: linear-gradient(90deg, #FFA500, #FFDF00);
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 8px #FFDF00;
 }
 
-.progress-text { color: white; font-size: 10px; }
+.progress-hint {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 10px;
+    margin-top: 6px;
+    text-align: center;
+}
 
-/* కాయిన్ ఆనిమేషన్ స్టైల్ */
-.coin-fly {
+/* ఆనిమేషన్ కాయిన్ */
+.flying-coin {
     position: absolute;
-    width: 30px;
-    height: 30px;
-    background: gold;
-    border-radius: 50%;
-    border: 2px solid orange;
+    font-size: 28px;
     z-index: 100;
-    animation: flyToTreasure 1s forwards ease-in;
+    animation: flyIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-@keyframes flyToTreasure {
-    0% { transform: scale(1) translate(0, 0); opacity: 1; }
-    100% { transform: scale(0.5) translate(100px, 100px); opacity: 0; } /* మీ ట్రెజర్ బాక్స్ లోకేషన్ కి మార్చుకోండి */
-}
-
-
-        
+@keyframes flyIn {
+    0% { transform: scale(0) translate(-100px, 100px); opacity: 0; }
+    50% { transform: scale(1.5) translate(-20px, -20px); opacity: 1; }
+    100% { transform: scale(0.5) translate(120px, 80px); opacity: 0; } /* ఇది కార్డ్ వైపు వెళ్ళేలా అడ్జస్ట్ చేయబడింది */
+}        
         input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; font-size: 16px; }
         button { background: var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; }
         .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
@@ -156,23 +190,29 @@
 <body>
 
 <div id="main-ui" style="display:none;">
-    <div class="header-container">
-    <img src="your-header-image.jpg" alt="Header" class="header-img">
+   <div class="go-sathi-header">
+    <!-- బ్యాక్ గ్రౌండ్ ఇమేజ్ -->
+    <img src="your-header-image.jpg" alt="Go Saathi Header" class="header-img">
     
-    <div id="coin-animation-container"></div>
+    <!-- కాయిన్ ఆనిమేషన్ కోసం -->
+    <div id="coin-fly-zone"></div>
 
-    <div class="treasure-panel">
-        <div class="treasure-display">
-            మీ బంగారం: <span id="treasureCoins">0</span> coins
+    <!-- గోల్డ్ ట్రెజర్ కార్డ్ (Glassmorphism UI) -->
+    <div class="gold-treasure-card">
+        <div class="gold-header">
+            <span class="gold-title">మీ బంగారం</span>
+            <div class="gold-balance">
+                <span id="treasureCoins">0</span> <span class="coin-icon">🪙</span>
+            </div>
         </div>
-        <div class="progress-container">
-            <div id="goldProgress" class="progress-bar"></div>
+        
+        <!-- ప్రోగ్రెస్ బార్ -->
+        <div class="progress-track">
+            <div id="goldProgressBar" class="progress-fill"></div>
         </div>
-        <small class="progress-text">2 గ్రాముల బంగారానికి చేరువలో..</small>
+        <div class="progress-hint">2 గ్రాముల బంగారానికి చేరువలో...</div>
     </div>
 </div>
-
-
     
     <div class="nav" id="bottomNav">
         <button onclick="showPage('home')">Home🏠</button>
@@ -561,7 +601,140 @@ async function postRide() {
     clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
     showPage('home');
 }
+// 1. UI ని అప్డేట్ చేసే ఫంక్షన్
+function updateTreasureUI(currentBalance, targetGoldCoins) {
+    // కాయిన్స్ కౌంట్ అప్డేట్
+    document.getElementById('treasureCoins').innerText = currentBalance.toLocaleString();
+    
+    // ప్రోగ్రెస్ బార్ శాతం లెక్కింపు
+    let percentage = (currentBalance / targetGoldCoins) * 100;
+    if (percentage > 100) percentage = 100;
+    
+    document.getElementById('goldProgressBar').style.width = `${percentage}%`;
+}
 
+// 2. కాయిన్ ఎగిరి పడే ఆనిమేషన్
+function triggerCoinAnimation() {
+    const zone = document.getElementById('coin-fly-zone');
+    const coin = document.createElement('div');
+    coin.innerText = '🪙';
+    coin.classList.add('flying-coin');
+    
+    zone.appendChild(coin);
+    
+    // ఆనిమేషన్ పూర్తయిన తర్వాత ఎలిమెంట్ ని రిమూవ్ చేయడం
+    setTimeout(() => {
+        coin.remove();
+    }, 1000);
+}
+
+    // ఫైర్‌బేస్ లాజిక్ క్లాస్ లాగా వ్రాసాను (క్లీన్ గా ఉండటానికి)
+const GoldTreasureSystem = {
+    
+    // ఆఫర్ ఇంకా ఉందో లేదో చెక్ చేస్తుంది (03-05-2026 నుండి 6 Months)
+    isOfferValid: function() {
+        const today = new Date();
+        const offerStart = new Date('2026-05-03');
+        const offerEnd = new Date('2026-11-03');
+        return (today >= offerStart && today <= offerEnd);
+    },
+
+    // 1. రోజువారీ ఫ్రీ 100 కాయిన్స్
+    addDailyFreeCoins: async function(userId) {
+        if (!this.isOfferValid()) return alert("బంగారం ఆఫర్ ముగిసింది.");
+
+        const userRef = db.collection('users').doc(userId);
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(userRef);
+                const treasure = doc.data().specialTreasure || {};
+
+                if (treasure.lastFreeCoinDate !== todayStr) {
+                    transaction.update(userRef, {
+                        'specialTreasure.balance': firebase.firestore.FieldValue.increment(100),
+                        'specialTreasure.lastFreeCoinDate': todayStr
+                    });
+                } else {
+                    throw "ఈరోజు ఇప్పటికే ఫ్రీ కాయిన్స్ తీసుకున్నారు.";
+                }
+            });
+            triggerCoinAnimation();
+            alert("100 కాయిన్స్ యాడ్ అయ్యాయి!");
+        } catch (error) {
+            console.log(error);
+        }
+    },
+
+    // 2. వాలెట్ నుండి ట్రెజర్ కి మార్చడం (1000 - 10000 లిమిట్)
+    transferFromWallet: async function(userId, amount) {
+        if (!this.isOfferValid()) return alert("బంగారం ఆఫర్ ముగిసింది.");
+        if (amount < 1000 || amount > 10000) return alert("కనీసం 1000 నుండి గరిష్టంగా 10000 మాత్రమే మార్చగలరు.");
+
+        const userRef = db.collection('users').doc(userId);
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(userRef);
+                const data = doc.data();
+                const treasure = data.specialTreasure || {};
+                
+                let manualTotalToday = (treasure.lastManualAddDate === todayStr) ? (treasure.manualAddedToday || 0) : 0;
+
+                if (manualTotalToday + amount > 10000) {
+                    throw `లిమిట్ దాటింది! ఇంకా ${10000 - manualTotalToday} మాత్రమే యాడ్ చేయగలరు.`;
+                }
+
+                if (data.mainWalletBalance < amount) {
+                    throw "మెయిన్ వాలెట్ లో బ్యాలెన్స్ లేదు.";
+                }
+
+                transaction.update(userRef, {
+                    mainWalletBalance: firebase.firestore.FieldValue.increment(-amount),
+                    'specialTreasure.balance': firebase.firestore.FieldValue.increment(amount),
+                    'specialTreasure.manualAddedToday': manualTotalToday + amount,
+                    'specialTreasure.lastManualAddDate': todayStr
+                });
+            });
+            triggerCoinAnimation();
+            alert(`${amount} కాయిన్స్ ట్రెజర్ కి మారాయి!`);
+        } catch (error) {
+            alert(error);
+        }
+    },
+
+    // 3. గోల్డ్ క్లెయిమ్ రిక్వెస్ట్ (Admin కి పంపడం)
+    requestGoldClaim: async function(userId) {
+        const userRef = db.collection('users').doc(userId);
+        const settingsRef = db.collection('settings').doc('gold_rate');
+
+        try {
+            const [userDoc, settingsDoc] = await Promise.all([userRef.get(), settingsRef.get()]);
+            const balance = userDoc.data().specialTreasure.balance;
+            const targetCoins = settingsDoc.data().targetCoinsFor2Grams; // అడ్మిన్ సెట్ చేసిన వాల్యూ
+
+            if (balance >= targetCoins) {
+                // ప్యూర్‌గా అడ్మిన్ అప్రూవల్ కోసం రిక్వెస్ట్ సేవ్ చేయడం
+                await db.collection('gold_claims').add({
+                    userId: userId,
+                    userName: userDoc.data().name,
+                    claimedCoins: balance,
+                    targetCoinsAtTimeOfClaim: targetCoins,
+                    status: 'PENDING',
+                    requestDate: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("అభినందనలు! మీ క్లెయిమ్ అడ్మిన్ కి చేరింది. వెరిఫికేషన్ తర్వాత ప్రాసెస్ అవుతుంది.");
+            } else {
+                alert(`ఇంకా ${targetCoins - balance} కాయిన్స్ కావాలి.`);
+            }
+        } catch (error) {
+            console.error("Claim error:", error);
+        }
+    }
+};
+    
 // -------------------------------------------------------------
 // RIDES & BOOKING FLOW SECTION (MODIFIED AS PER NEW INSTRUCTIONS)
 // -------------------------------------------------------------
