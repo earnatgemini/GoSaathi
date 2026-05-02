@@ -102,6 +102,7 @@
     <div class="nav" id="bottomNav">
         <button onclick="showPage('home')">Home🏠</button>
         <button onclick="showPage('ride')">Post🚗</button>
+        <button onclick="showPage('myride')">MyPosts💰🚗</button>
         <button onclick="showPage('wallet')">Wallet💰</button>
         <button onclick="showPage('profile')">Profile👥</button>
     </div>
@@ -255,6 +256,40 @@
             <button onclick="requestWithdrawal()" style="background: #2e7d32; color: white;">Withdraw Now</button>
             <p style="font-size: 12px; color: #aaa;">* Min. Balance 50,000 coins required.<br>* Min. Withdrawal ₹100.</p>
          </div>
+    </div>
+    
+    <div id="myrides" style="display:none;">
+        
+        <div id="active-chats-section" style="display:none; margin-bottom: 20px;">
+            <h3 style="color:var(--dark); border-bottom: 2px solid var(--primary); padding-bottom: 5px;">💬 Active Rides & Chats</h3>
+            <div id="activeChatsContainer"></div>
+        </div>
+        <div style="text-align:center; margin: 10px 0;">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+         data-ad-slot="YOUR_AD_SLOT_ID"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+</div>
+
+<script>
+     // యాడ్ ని లోడ్ చేయడానికి ఇనిషియలైజ్ ఫంక్షన్
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+        <h3>Available Rides (Live)</h3>
+        <div id="requests-section" class="card" style="display:none; border-top: 5px solid var(--gold);">
+        <h3>📩 ప్రయాణ రిక్వెస్ట్‌లు (Requests)</h3>
+        <div id="incomingRequests">రిక్వెస్ట్‌లు ఏమీ లేవు...</div>
+        </div>
+        
+        <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
+
+        </br></br>
+            <a href="about.html">About Us !</a>
+            <a href="contact.html">! Contact Us !</a>
+            <a href="privacy.html">! privacy policy</a>
     </div>
     
     <div id="profile" style="display:none;">
