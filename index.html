@@ -76,18 +76,12 @@
         .chat-other { align-self: flex-start; background: #ffffff; border-bottom-left-radius: 2px; }
         .chat-time { font-size: 9px; color: gray; display: block; text-align: right; margin-top: 4px; }
         .chat-sender { font-size: 10px; font-weight: bold; margin-bottom: 2px; display: block; }
-   
-    /* మ్యాప్ ఫుల్ స్క్రీన్ లేదా ఒక బాక్స్ లా కనిపించడానికి */
-        #map { width: 100%; height: 500px; border-radius: 15px; margin-top: 10px; border:  2px solid #ddd; }
-        
-        /* కస్టమ్ మార్కర్ స్టైల్స్ (అడ్వాన్స్డ్ లుక్ కోసం) */
-         .marker {
-            background-image: url('https://cdn-icons-png.flaticon.com/512/3082/3082383.png'); /* ఒక మంచి కార్ ఐకాన్ */
-            background-size: cover;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;  
-        }
+   <style>
+  /* మ్యాప్ సైజ్ సెట్ చేయడానికి CSS */
+  #map { width: 100%; height: 400px; border-radius: 10px; display: none; } /* లొకేషన్ ఆన్ చేస్తేనే మ్యాప్ కనిపిస్తుంది */
+  .btn-post-ride { padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+</style>
+    
     </style>
 </head>
     
@@ -209,25 +203,15 @@
             <p> ___________________ </p>
             <p style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):</p>
             <input type="datetime-local" id="rideTime">
-            <button onclick="postRide()">Post Ride</button>
-            
-            <nav>
-        <h1>Go Sathi</h1>
-    </nav>
-
-    <div class="container">
-        <h2>Go Sathi - Live Tracking</h2>
-        
-        <div class="ride-form">
-            <input type="text" placeholder="ఎక్కడికి వెళ్లాలి?">
-            <button id="post-ride-btn" class="btn btn-primary">Check GPS & Post Ride</button>
-        </div>
-
-        <div id="map"></div>
+            <button onclick="postRide()">Post Ride</button>              
     </div>
+        <div id="map-section">
+  <h3>Go Sathi - Live Map</h3>
+  <button class="btn-post-ride" onclick="checkGpsAndInitMap()">Post a Ride</button>
+  <div id="map"></div>
+</div>
         </div>
-    </div>
-    
+       
         <div id="wallet" style="display:none;">
         <div class="card wallet-card">
             <h3>Balance:</h3>
@@ -999,9 +983,78 @@ function filterRides() {
         }
     }
 }
-    
+
+    // Mapbox Access Token ఇక్కడ ఇవ్వండి
+mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+
+let map;
+
+// 1. User(host) Ride post చేయాలి అంటే location 'ON' చెక్ చేయడం
+function checkGpsAndInitMap() {
+    if (navigator.geolocation) {
+        // లొకేషన్ పర్మిషన్ అడుగుతుంది
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLon = position.coords.longitude;
+                const userLat = position.coords.latitude;
+                const centerLocation = [userLon, userLat];
+                
+                // లొకేషన్ వస్తే మ్యాప్ ని డిస్ప్లే చేయడం
+                document.getElementById('map').style.display = 'block';
+                setupMapbox(centerLocation);
+            },
+            (error) => {
+                // యూజర్ లొకేషన్ డినై చేస్తే లేదా GPS ఆఫ్ లో ఉంటే
+                alert("Go Sathi లో Ride post చేయాలంటే దయచేసి మీ ఫోన్ లో లొకేషన్ (GPS) 'ON' చేయండి.");
+            }
+        );
+    } else {
+        alert("మీ బ్రౌజర్ లొకేషన్ ని సపోర్ట్ చేయడం లేదు.");
+    }
+}
+
+// 2. Map enable అవ్వడం మరియు Host లొకేషన్ మార్క్ చేయడం
+function setupMapbox(centerLocation) {
+    // మ్యాప్ ఇనిషియలైజేషన్
+    map = new mapboxgl.Map({
+        container: 'map', // index.html లోని div id
+        style: 'mapbox://styles/mapbox/streets-v12', // మ్యాప్ స్టైల్
+        center: centerLocation, // మ్యాప్ సెంటర్ పాయింట్ (యూజర్ లొకేషన్)
+        zoom: 14 // జూమ్ లెవెల్
+    });
+
+    // మ్యాప్ లోడ్ అవ్వగానే నావిగేషన్ కంట్రోల్స్ (జూమ్ ఇన్/అవుట్) యాడ్ చేయడం
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // Host (యూజర్) లొకేషన్ దగ్గర ఎరుపు రంగు మార్కర్ పెట్టడం
+    new mapboxgl.Marker({ color: 'red' })
+        .setLngLat(centerLocation)
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML("<h4>మీరు (Host)</h4>"))
+        .addTo(map);
+
+    // 3. చుట్టుపక్కల ఉన్న Co-sathi రైడ్స్ చూపించడం
+    showNearbyRides(centerLocation);
+}
+
+// 3. వీలైతే near location rides show చేయడం
+function showNearbyRides(centerLocation) {
+    // ప్రస్తుతానికి మీ చుట్టుపక్కల ఉన్నట్లుగా డమ్మీ డేటా క్రియేట్ చేస్తున్నాను. 
+    // భవిష్యత్తులో ఈ డేటాని Firebase డేటాబేస్ నుండి తెచ్చుకోవాలి.
+    const nearbyRides = [
+        { lng: centerLocation[0] + 0.005, lat: centerLocation[1] + 0.005, name: "Co-sathi: రమేష్", type: "Bike" },
+        { lng: centerLocation[0] - 0.004, lat: centerLocation[1] - 0.006, name: "Co-sathi: సురేష్", type: "Car" }
+    ];
+
+    // ప్రతి రైడ్ కి మ్యాప్ లో బ్లూ కలర్ మార్కర్ యాడ్ చేయడం
+    nearbyRides.forEach(ride => {
+        new mapboxgl.Marker({ color: 'blue' })
+            .setLngLat([ride.lng, ride.lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<h4>${ride.name}</h4><p>వాహనం: ${ride.type}</p>`))
+            .addTo(map);
+    });
+}
 </script>
-    <script src="maps.js"></script> 
+    
 </body>
 </html>
 
