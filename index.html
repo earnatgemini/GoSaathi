@@ -87,6 +87,48 @@
     font-weight: bold;
     box-shadow: 0px 2px 5px rgba(0,0,0,0.5);
 }
+.treasure-panel {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 150px;
+    text-align: right;
+}
+.progress-container {
+    width: 100%;
+    height: 6-px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0%; /* ఇది కాయిన్స్ ని బట్టి పెరుగుతుంది */
+    height: 100%;
+    background: linear-gradient(90deg, #FFD700, #FFA500);
+    transition: width 0.5s ease-in-out;
+}
+
+.progress-text { color: white; font-size: 10px; }
+
+/* కాయిన్ ఆనిమేషన్ స్టైల్ */
+.coin-fly {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: gold;
+    border-radius: 50%;
+    border: 2px solid orange;
+    z-index: 100;
+    animation: flyToTreasure 1s forwards ease-in;
+}
+
+@keyframes flyToTreasure {
+    0% { transform: scale(1) translate(0, 0); opacity: 1; }
+    100% { transform: scale(0.5) translate(100px, 100px); opacity: 0; } /* మీ ట్రెజర్ బాక్స్ లోకేషన్ కి మార్చుకోండి */
+}
+
 
         
         input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; font-size: 16px; }
@@ -114,19 +156,22 @@
 <body>
 
 <div id="main-ui" style="display:none;">
-    <div class="header">
-       <!-- హెడర్ కంటైనర్ -->
-<div class="header-container">
-    <!-- మీ హెడర్ ఇమేజ్ -->
-    <img src="banner_header.webp" alt="Go Sathi Header" class="header-img">
+    <div class="header-container">
+    <img src="your-header-image.jpg" alt="Header" class="header-img">
     
-    <!-- కుడి పక్క క్రింద కనిపించే టెక్స్ట్ -->
-    <div class="treasure-display">
-        మీ బంగారం : <span id="treasureCoins">0</span> coins
+    <div id="coin-animation-container"></div>
+
+    <div class="treasure-panel">
+        <div class="treasure-display">
+            మీ బంగారం: <span id="treasureCoins">0</span> coins
+        </div>
+        <div class="progress-container">
+            <div id="goldProgress" class="progress-bar"></div>
+        </div>
+        <small class="progress-text">2 గ్రాముల బంగారానికి చేరువలో..</small>
     </div>
 </div>
-     
-    </div>
+
 
     
     <div class="nav" id="bottomNav">
