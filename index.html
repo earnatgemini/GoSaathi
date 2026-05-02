@@ -61,6 +61,32 @@
     color: var(--gold); /* Balance హైలైట్ అవ్వడానికి */
     font-size: 24px;
 }
+.header-container {
+    position: relative; /* ఇమేజ్ పైన టెక్స్ట్ పెట్టడానికి ఇది ముఖ్యం */
+    width: 100%;
+    max-width: 400px; /* మొబైల్ స్క్రీన్ సైజుకి తగ్గట్టు */
+    height: 200px;
+}
+
+.header-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.treasure-display {
+    position: absolute;
+    bottom: 10px;   /* క్రింద అంచు నుండి కొద్దిగా పైకి */
+    right: 10px;    /* కుడి పక్క అంచు నుండి కొద్దిగా లోపలికి */
+    background-color: rgba(0, 0, 0, 0.7); /* వెనుక కొద్దిగా నలుపు రంగు */
+    color: #FFD700; /* బంగారం (Gold) రంగు */
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.5);
+}
 
         
         input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; font-size: 16px; }
