@@ -1,5 +1,5 @@
 // Mapbox టోకెన్ (ఇక్కడ నీ అసలైన టోకెన్ పెట్టు)
-mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+mapboxgl.accessToken = 'pk.eyJ1IjoiZ29zYWF0aGkiLCJhIjoiY21vbng4ZmYxMTZ6NzJxc2FzamRpbG8ydCJ9.IEgjmmR4tQNGlsK9w2y9eg';
 
 let map;
 let hostMarker;
