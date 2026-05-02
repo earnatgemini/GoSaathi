@@ -209,7 +209,21 @@
             <p style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):</p>
             <input type="datetime-local" id="rideTime">
             <button onclick="postRide()">Post Ride</button>
-            <div id="map"></div>
+            
+            <nav>
+        <h1>Go Sathi</h1>
+    </nav>
+
+    <div class="container">
+        <h2>Go Sathi - Live Tracking</h2>
+        
+        <div class="ride-form">
+            <input type="text" placeholder="ఎక్కడికి వెళ్లాలి?">
+            <button id="post-ride-btn" class="btn btn-primary">Check GPS & Post Ride</button>
+        </div>
+
+        <div id="map"></div>
+    </div>
         </div>
     </div>
     
