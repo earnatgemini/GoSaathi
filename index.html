@@ -616,6 +616,8 @@ async function postRide() {
         userId: hostUid,
         timestamp: Date.now()
       });
+        triggerCoinAnimation(); 
+    updateTreasureUI((hostDoc.data().treasureCoins || 0) + 1000, 3000000);
       alert("Congratulations! మీరు ఈరోజు గోల్డ్ ట్రెజర్‌కి 1000 Coins పొందారు.");
     }
   }
@@ -1267,19 +1269,19 @@ let map;
 // 1. User(host) Ride post చేయాలి అంటే location 'ON' చెక్ చేయడం
 function checkGpsAndInitMap() {
     if (navigator.geolocation) {
-        // లొకేషన్ పర్మిషన్ అడుగుతుంది
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const userLon = position.coords.longitude;
                 const userLat = position.coords.latitude;
                 const centerLocation = [userLon, userLat];
                 
-                // లొకేషన్ వస్తే మ్యాప్ ని డిస్ప్లే చేయడం
                 document.getElementById('map').style.display = 'block';
                 setupMapbox(centerLocation);
+                
+                // కొత్తగా యాడ్ చేయాల్సిన లైన్ (మ్యాప్ రెండర్ అవ్వడానికి కొద్దిగా టైమ్ ఇచ్చి రీసైజ్ చేయడం)
+                setTimeout(() => { map.resize(); }, 300);
             },
             (error) => {
-                // యూజర్ లొకేషన్ డినై చేస్తే లేదా GPS ఆఫ్ లో ఉంటే
                 alert("Go Sathi లో Ride post చేయాలంటే దయచేసి మీ ఫోన్ లో లొకేషన్ (GPS) 'ON' చేయండి.");
             }
         );
