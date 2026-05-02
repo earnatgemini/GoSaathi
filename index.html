@@ -102,8 +102,7 @@
     
     <div class="nav" id="bottomNav">
         <button onclick="showPage('home')">Home🏠</button>
-        <button onclick="showPage('ride')">New Post🚗</button>
-        <button onclick="showPage('myride')">MyPosts💰🚗</button>
+        <button onclick="showPage('ride')">Add Post🚗</button>
         <button onclick="showPage('wallet')">Wallet💰</button>
         <button onclick="showPage('profile')">Profile👥</button>
     </div>
@@ -258,48 +257,7 @@
             <p style="font-size: 12px; color: #aaa;">* Min. Balance 50,000 coins required.<br>* Min. Withdrawal ₹100.</p>
          </div>
     </div>
-    
-    <div id="myride" style="display:none;">
-      <div class="card">
-            <h3>Post a New Ride</h3>
-            <input id="from" placeholder="From">
-            <input id="to" placeholder="To">
-            <input id="route" placeholder="Via / Route">
-            <input type="number" id="distanceKm" placeholder="Distance in KM">
-            <select id="ridePref">
-                <option value="Any">Anyone</option>
-                <option value="Male">Men Only</option>
-                <option value="Female">Women Only</option>
-            </select>
-           <input type="number" id="seats" placeholder="Seats Available">
-            <select id="rideType">
-                <option value="Free">Free Ride</option>
-                <option value="Paid">Paid Ride</option>
-            </select>
-            <div id="paidExtraFields" style="display:none;">
-                <input type="number" id="demandPrice" placeholder="అడిగే కాయిన్స్ (Price in Coins)">
-            </div>
-            <p> ___________________ </p>
-            <p style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):</p>
-            <input type="datetime-local" id="rideTime">
-            <button onclick="postRide()">Post Ride</button>
-            
-            <nav>
-        <h1>Go Sathi</h1>
-    </nav>
-
-    <div class="container">
-        <h2>Go Sathi - Live Tracking</h2>
-        
-        <div class="ride-form">
-            <input type="text" placeholder="ఎక్కడికి వెళ్లాలి?">
-            <button id="post-ride-btn" class="btn btn-primary">Check GPS & Post Ride</button>
-        </div>
-
-        <div id="map"></div>
-    </div>
-        </div>
-    </div>    
+  
     <div id="profile" style="display:none;">
         <div class="card">
             <h3>Profile & Invite</h3>
