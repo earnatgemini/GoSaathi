@@ -667,7 +667,7 @@ const GoldTreasureSystem = {
     addDailyFreeCoins: async function(userId) {
         if (!this.isOfferValid()) return alert("బంగారం ఆఫర్ ముగిసింది.");
 
-        const userRef = db.collection('users').doc(userId);
+        const userRef = db.collection('Users').doc(userId);
         const todayStr = new Date().toISOString().split('T')[0];
 
         try {
@@ -696,7 +696,7 @@ const GoldTreasureSystem = {
         if (!this.isOfferValid()) return alert("బంగారం ఆఫర్ ముగిసింది.");
         if (amount < 1000 || amount > 10000) return alert("కనీసం 1000 నుండి గరిష్టంగా 10000 మాత్రమే మార్చగలరు.");
 
-        const userRef = db.collection('users').doc(userId);
+        const userRef = db.collection('Users').doc(userId);
         const todayStr = new Date().toISOString().split('T')[0];
 
         try {
@@ -731,7 +731,7 @@ const GoldTreasureSystem = {
 
     // 3. గోల్డ్ క్లెయిమ్ రిక్వెస్ట్ (Admin కి పంపడం)
     requestGoldClaim: async function(userId) {
-        const userRef = db.collection('users').doc(userId);
+        const userRef = db.collection('Users').doc(userId);
         const settingsRef = db.collection('settings').doc('gold_rate');
 
         try {
