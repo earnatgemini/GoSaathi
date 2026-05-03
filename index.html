@@ -428,6 +428,11 @@ const db = firebase.firestore();
 const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1"; 
 
 function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+    const TREASURE_TARGET_COINS = 3000000; // 2 grams gold target example
+const DAILY_RIDE_GIFT_COINS = 1000;
+const RIDE_POST_COST = 50;
+const OFFER_START = new Date('2026-05-03');
+const OFFER_END = new Date('2026-11-03');
 
 auth.onAuthStateChanged(user => {
     if (user) {
@@ -438,6 +443,14 @@ auth.onAuthStateChanged(user => {
         if(user.uid === ADMIN_UID) {
             document.getElementById('admin-panel').style.display = 'block';
             loadAdminData();
+            // Login అయిన వెంటనే invoke చేయాలి
+function initTreasureWatcher(userId) {
+  db.collection("Users").doc(userId).onSnapshot(doc => {
+    const data = doc.data() || {};
+    const balance = (data.specialTreasure && data.specialTreasure.balance) ? data.specialTreasure.balance : 0;
+    updateTreasureUI(balance, TREASURE_TARGET_COINS);
+  });
+}
         }
     } else {
         document.getElementById('main-ui').style.display = 'none';
@@ -445,6 +458,54 @@ auth.onAuthStateChanged(user => {
     }
 });
 
+ function updateTreasureUI(currentBalance, targetGoldCoins) {
+  document.getElementById('treasureCoins').innerText = Number(currentBalance || 0).toLocaleString();
+
+  let percentage = targetGoldCoins > 0 ? (currentBalance / targetGoldCoins) * 100 : 0;
+  if (percentage > 100) percentage = 100;
+  if (percentage < 0) percentage = 0;
+
+  document.getElementById('goldProgressBar').style.width = `${percentage}%`;
+}
+
+function triggerCoinAnimation() {
+  const zone = document.getElementById('coin-fly-zone');
+  if (!zone) return;
+
+  const coin = document.createElement('div');
+  coin.innerText = '🪙';
+  coin.classList.add('flying-coin');
+  zone.appendChild(coin);
+
+  setTimeout(() => coin.remove(), 1000);
+}
+
+function isOfferValid() {
+  const today = new Date();
+  return today >= OFFER_START && today <= OFFER_END;
+}
+
+async function giveDailyRideGift(hostUid) {
+  if (!isOfferValid()) return;
+
+  const todayKey = new Date().toISOString().split('T')[0];
+  const giftDocRef = db.collection("DailyGifts").doc(`${hostUid}_${todayKey}`);
+  const giftDoc = await giftDocRef.get();
+
+  // Same user కి same day లో only once
+  if (giftDoc.exists) return;
+
+  await db.collection("Users").doc(hostUid).update({
+    'specialTreasure.balance': firebase.firestore.FieldValue.increment(DAILY_RIDE_GIFT_COINS)
+  });
+
+  await giftDocRef.set({
+    given: true,
+    userId: hostUid,
+    coins: DAILY_RIDE_GIFT_COINS,
+    type: "daily_ride_post_gift",
+    timestamp: Date.now()
+  });   
 function checkUserStatus(user) {
     db.collection("Users").doc(user.uid).onSnapshot(doc => {
         if (doc.exists) {
@@ -598,34 +659,10 @@ async function postRide() {
 
     await batch.commit();
     alert(" రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!");
-   
-   // Ride పోస్ట్ అయ్యాక, డైలీ గిఫ్ట్ లో మించి 1000 సంతకం
-  const today = new Date();
-  const start = new Date(2026, 4, 3);   // మే 3, 2026 (మాసం = 4)
-  const end = new Date(2026, 10, 3);    // నవం 3, 2026 (మాసం = 10)
-  if (today >= start && today <= end) {
-    const dateKey = today.toISOString().split('T')[0];
-    const giftDoc = await db.collection("DailyGifts").doc(uId + "_" + dateKey).get();
-    if (!giftDoc.exists) {
-      // ముందే 1000 గిఫ్ట్ ఇవ్వలేదు - ఇప్పుడు ఇవ్వండి
-      await db.collection("Users").doc(hostUid).update({
-        'specialTreasure.balance': firebase.firestore.FieldValue.increment(1000)
-      });
-      await db.collection("DailyGifts").doc(uid + "_" + dateKey).set({
-        given: true,
-        userId: hostUid,
-        timestamp: Date.now()
-      });
-        triggerCoinAnimation(); 
-    db.collection("Users").doc(user.uid)
-.onSnapshot(doc=>{
-  const data = doc.data();
+    
+   // Daily ride post bonus
+  await giveDailyRideGift(hostUid);
 
-  updateTreasureUI(data.specialTreasure?.balance || 0, 3000000);
-});
-      alert("Congratulations! మీరు ఈరోజు గోల్డ్ ట్రెజర్‌కి 1000 Coins పొందారు.");
-    }
-  }
      clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
     showPage('home');
 }
@@ -1208,6 +1245,7 @@ async function requestWithdrawal() {
 
     await batch.commit();
     alert("విత్‌డ్రాయల్ రిక్వెస్ట్ పంపబడింది! 24 గంటల్లో మీ ఖాతాలో జమ అవుతుంది.");
+    clearForm(['amountINR','upiId']);
 }
     
 function loadAdminData() { /* Intentionally left same */ }
