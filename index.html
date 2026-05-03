@@ -611,13 +611,18 @@ async function postRide() {
       await db.collection("Users").doc(hostUid).update({
         treasureCoins: firebase.firestore.FieldValue.increment(1000)
       });
-      await db.collection("DailyGifts").doc(dateKey).set({
+      await db.collection("DailyGifts").doc(userId + "_" + dateKey).set({
         given: true,
         userId: hostUid,
         timestamp: Date.now()
       });
         triggerCoinAnimation(); 
-    updateTreasureUI((hostDoc.data().treasureCoins || 0) + 1000, 3000000);
+    db.collection("Users").doc(user.uid)
+.onSnapshot(doc=>{
+  const data = doc.data();
+
+  updateTreasureUI(data.treasureCoins || 0, 3000000);
+});
       alert("Congratulations! మీరు ఈరోజు గోల్డ్ ట్రెజర్‌కి 1000 Coins పొందారు.");
     }
   }
