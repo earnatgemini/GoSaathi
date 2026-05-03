@@ -605,13 +605,13 @@ async function postRide() {
   const end = new Date(2026, 10, 3);    // నవం 3, 2026 (మాసం = 10)
   if (today >= start && today <= end) {
     const dateKey = today.toISOString().split('T')[0];
-    const giftDoc = await db.collection("DailyGifts").doc(userId + "_" + dateKey).get();
+    const giftDoc = await db.collection("DailyGifts").doc(uId + "_" + dateKey).get();
     if (!giftDoc.exists) {
       // ముందే 1000 గిఫ్ట్ ఇవ్వలేదు - ఇప్పుడు ఇవ్వండి
       await db.collection("Users").doc(hostUid).update({
         'specialTreasure.balance': firebase.firestore.FieldValue.increment(1000)
       });
-      await db.collection("DailyGifts").doc(userId + "_" + dateKey).set({
+      await db.collection("DailyGifts").doc(uid + "_" + dateKey).set({
         given: true,
         userId: hostUid,
         timestamp: Date.now()
@@ -621,7 +621,7 @@ async function postRide() {
 .onSnapshot(doc=>{
   const data = doc.data();
 
-  updateTreasureUI(data.specialTreasure.balance || 0, 3000000);
+  updateTreasureUI(data.specialTreasure?.balance || 0, 3000000);
 });
       alert("Congratulations! మీరు ఈరోజు గోల్డ్ ట్రెజర్‌కి 1000 Coins పొందారు.");
     }
