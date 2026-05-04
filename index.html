@@ -462,7 +462,7 @@ function checkUserStatus(user) {
                 document.getElementById('main-ui').style.display = 'block';
                 document.getElementById('coinBalance').innerText = data.coins || 0;
                 document.getElementById('inviteCount').innerText = data.invites || 0;
-                updateTreasureUI(data.specialTreasure?.balance || 0, 3000000);
+                updateTreasureUI(data.specialTreasure?.balance || 0, 30000);
                 document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
                 showPage('home');
             } else showPage('activation-screen');
@@ -634,9 +634,9 @@ async function postRide() {
       
       // మార్పు 3: మళ్లీ డేటాబేస్ ని పిలవకుండా డైరెక్ట్ గా UI అప్డేట్ చేయడం
       const currentTreasure = hostDoc.data().specialTreasure?.balance || 0;
-      updateTreasureUI(currentTreasure + 1000, 3000000); 
+      updateTreasureUI(currentTreasure + 1000, 30000); 
 
-      alert("Congratulations! మీరు ఈరోజు గోల్డ్ ట్రెజర్‌కి 1000 Coins పొందారు.");
+      alert("🎉Congratulations!🎊🎈 ఈరోజు " గో-సాతి " మీకు 🪙గోల్డ్ కోసం ఉచితంగా 1000 Coins ఇచ్చారు.");
     }
   }
   
