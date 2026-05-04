@@ -226,7 +226,7 @@
     <div id="login-screen" style="text-align:center; margin-top:100px;">
         <h2>Welcome</h2>
         <img src="banner_header.webp" style="height:80px; margin-bottom:20px;"><br>
-        <button onclick="googleLogin()" style="background:#db3437; padding:15px;">Google తో hmm లాగిన్ అవ్వండి</button>
+        <button onclick="googleLogin()" style="background:#db3437; padding:15px;">Google</button>
     </div>
 
     <div id="basic-info-screen" style="display:none;">
@@ -449,7 +449,10 @@ auth.onAuthStateChanged(user => {
         document.getElementById('main-ui').style.display = 'none';
         showPage('login-screen');
     }
-    // Login అయిన వెంటనే invoke చేయాలి
+    
+});
+    
+// Login అయిన వెంటనే invoke చేయాలి
 function initTreasureWatcher(userId) {
   db.collection("Users").doc(userId).onSnapshot(doc => {
     const data = doc.data() || {};
@@ -457,8 +460,6 @@ function initTreasureWatcher(userId) {
     updateTreasureUI(balance, TREASURE_TARGET_COINS);
   });
 }
-});
-
  function updateTreasureUI(currentBalance, targetGoldCoins) {
   document.getElementById('treasureCoins').innerText = Number(currentBalance || 0).toLocaleString();
 
