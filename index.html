@@ -226,7 +226,7 @@
     <div id="login-screen" style="text-align:center; margin-top:100px;">
         <h2>Welcome</h2>
         <img src="banner_header.webp" style="height:80px; margin-bottom:20px;"><br>
-        <button onclick="googleLogin()" style="background:#db3437; padding:15px;">Google</button>
+        <button onclick="googleLogin()" style="background:#db3437; padding:15px; ">Google</button>
     </div>
 
     <div id="basic-info-screen" style="display:none;">
@@ -436,18 +436,15 @@ auth.onAuthStateChanged(user => {
     if (user) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('myUidDisplay').innerText = user.uid;
-        document.getElementById('myTransferIdDisplay').innerText = "Loading...";
         checkUserStatus(user);
         if(user.uid === ADMIN_UID) {
             document.getElementById('admin-panel').style.display = 'block';
             loadAdminData();
         }
-        
     } else {
         document.getElementById('main-ui').style.display = 'none';
         showPage('login-screen');
     }
-    
 });
     
 // Login అయిన వెంటనే invoke చేయాలి
