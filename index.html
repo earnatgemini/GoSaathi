@@ -360,8 +360,14 @@
             <input type="text" id="utrId" placeholder="UTR Number">
             <button onclick="requestCoins()" style="background:var(--secondary);">Submit Payment</button>
           </div>
-    </div>
-  
+            <!-- ఈ కొత్త కార్డ్ ని Wallet డివ్ లో ఎక్కడైనా (ఉదాహరణకు Withdraw card కి పైన) పెట్టండి -->
+          <div class="card">
+            <h3>🪙 Gold Treasure కి పంపండి</h3>
+            <p>మెయిన్ వాలెట్ నుండి Gold ట్రెజర్ కి మార్చండి.</p>
+            <input type="number" id="goldTransferAmount" placeholder="కాయిన్స్ ఎంటర్ చేయండి (Min 1000)">
+            <button onclick="GoldTreasureSystem.transferFromWallet(auth.currentUser.uid, Number(document.getElementById('goldTransferAmount').value))" style="background:var(--gold); color:black;">Transfer to Gold</button>
+          </div>
+ </div>
     <div id="profile" style="display:none;">
         <div class="card">
             <h3>Profile & Invite</h3>
@@ -599,35 +605,42 @@ async function postRide() {
     await batch.commit();
     alert(" రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!");
    
-   // Ride పోస్ట్ అయ్యాక, డైలీ గిఫ్ట్ లో మించి 1000 సంతకం
+   // Ride పోస్ట్ అయ్యాక, డైలీ గిఫ్ట్ లాజిక్
   const today = new Date();
   const start = new Date(2026, 4, 3);   // మే 3, 2026 (మాసం = 4)
   const end = new Date(2026, 10, 3);    // నవం 3, 2026 (మాసం = 10)
+  
   if (today >= start && today <= end) {
     const dateKey = today.toISOString().split('T')[0];
-    const giftDoc = await db.collection("DailyGifts").doc(uId + "_" + dateKey).get();
+    
+    // మార్పు 1: uId బదులు hostUid
+    const giftDoc = await db.collection("DailyGifts").doc(hostUid + "_" + dateKey).get(); 
+    
     if (!giftDoc.exists) {
-      // ముందే 1000 గిఫ్ట్ ఇవ్వలేదు - ఇప్పుడు ఇవ్వండి
+      // ముందే గిఫ్ట్ ఇవ్వలేదు - ఇప్పుడు ఇవ్వండి
       await db.collection("Users").doc(hostUid).update({
         'specialTreasure.balance': firebase.firestore.FieldValue.increment(1000)
       });
-      await db.collection("DailyGifts").doc(uid + "_" + dateKey).set({
+      
+      // మార్పు 2: uid బదులు hostUid
+      await db.collection("DailyGifts").doc(hostUid + "_" + dateKey).set({ 
         given: true,
         userId: hostUid,
         timestamp: Date.now()
       });
-        triggerCoinAnimation(); 
-    db.collection("Users").doc(user.uid)
-.onSnapshot(doc=>{
-  const data = doc.data();
+      
+      triggerCoinAnimation(); 
+      
+      // మార్పు 3: మళ్లీ డేటాబేస్ ని పిలవకుండా డైరెక్ట్ గా UI అప్డేట్ చేయడం
+      const currentTreasure = hostDoc.data().specialTreasure?.balance || 0;
+      updateTreasureUI(currentTreasure + 1000, 3000000); 
 
-  updateTreasureUI(data.specialTreasure?.balance || 0, 3000000);
-});
       alert("Congratulations! మీరు ఈరోజు గోల్డ్ ట్రెజర్‌కి 1000 Coins పొందారు.");
     }
   }
-     clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
-    showPage('home');
+  
+  clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
+  showPage('home');
 }
 
 // 1. UI ని అప్డేట్ చేసే ఫంక్షన్
