@@ -443,7 +443,8 @@ auth.onAuthStateChanged(user => {
         if(user.uid === ADMIN_UID) {
             document.getElementById('admin-panel').style.display = 'block';
             loadAdminData();
-            // Login అయిన వెంటనే invoke చేయాలి
+        }
+        // Login అయిన వెంటనే invoke చేయాలి
 function initTreasureWatcher(userId) {
   db.collection("Users").doc(userId).onSnapshot(doc => {
     const data = doc.data() || {};
@@ -451,7 +452,6 @@ function initTreasureWatcher(userId) {
     updateTreasureUI(balance, TREASURE_TARGET_COINS);
   });
 }
-        }
     } else {
         document.getElementById('main-ui').style.display = 'none';
         showPage('login-screen');
