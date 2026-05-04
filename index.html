@@ -348,8 +348,8 @@
           </div>
           <div class="card">
             <h3>మీ స్నేహితునికి Coins పంపండి:</h3>
-            <p>10 అంకెల Transfer ID Profile లో ఉంటుంది. </p>            
-            <input type="text" id="transferTargetUid" maxlength="10" inputmode="numeric" placeholder="స్నేహితుని 10-digit Transfer ID ఇవ్వండి.">
+            <p>8 అంకెల Transfer ID Profile లో ఉంటుంది. </p>            
+            <input type="text" id="transferTargetUid" maxlength="10" inputmode="numeric" placeholder="స్నేహితుని 8-digit Transfer ID ఇవ్వండి.">
             <input type="number" id="transferAmount" placeholder="ఎన్ని Coins పంపాలి.">
             <button onclick="transferCoins()" style="background:var(--dark);">Send Coins</button>
           </div>
@@ -374,7 +374,7 @@
             <p>Invitations Left: <b id="inviteCount">0</b></p>
             <p>Your UID:</p>
             <code id="myUidDisplay" style="display:block; background:#eee; padding:10px;"></code>
-            <p>Transfer ID (10 digits):</p>
+            <p>Transfer ID (8 digits):</p>
             <code id="myTransferIdDisplay" style="display:block; background:#eee; padding:10px;"></code>
             <button onclick="shareInvite()" style="background:#25D366;">WhatsApp Invite</button>
             <button onclick="auth.signOut()" style="background:#666; margin-top:20px;">Logout</button>
@@ -465,7 +465,6 @@ function checkUserStatus(user) {
                 document.getElementById('coinBalance').innerText = data.coins || 0;
                 document.getElementById('inviteCount').innerText = data.invites || 0;
                 document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
-                updateTreasureUI(data.specialTreasure?.balance || 0, 30000);
                 showPage('home');
             } else showPage('activation-screen');
         } else handleNewUser(user);
