@@ -646,7 +646,7 @@ async function postRide() {
 // 1. UI ని అప్డేట్ చేసే ఫంక్షన్
 function updateTreasureUI(currentBalance, targetGoldCoins) {
     // కాయిన్స్ కౌంట్ అప్డేట్
-    document.getElementById('treasureCoins').innerText = currentBalance.toLocaleString();
+    document.getElementById('specialTreasure').innerText = currentBalance.toLocaleString();
     
     // ప్రోగ్రెస్ బార్ శాతం లెక్కింపు
     let percentage = (currentBalance / targetGoldCoins) * 100;
@@ -667,7 +667,7 @@ function triggerCoinAnimation() {
     // ఆనిమేషన్ పూర్తయిన తర్వాత ఎలిమెంట్ ని రిమూవ్ చేయడం
     setTimeout(() => {
         coin.remove();
-    }, 1000);
+    }, 2000);
 }
 
     // ఫైర్‌బేస్ లాజిక్ క్లాస్ లాగా వ్రాసాను (క్లీన్ గా ఉండటానికి)
@@ -703,7 +703,7 @@ const GoldTreasureSystem = {
                 }
             });
             triggerCoinAnimation();
-            alert("100 కాయిన్స్ యాడ్ అయ్యాయి!");
+            alert("1000 కాయిన్స్ యాడ్ అయ్యాయి!");
         } catch (error) {
             console.log(error);
         }
