@@ -465,6 +465,7 @@ function checkUserStatus(user) {
                 document.getElementById('coinBalance').innerText = data.coins || 0;
                 document.getElementById('inviteCount').innerText = data.invites || 0;
                 document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
+                updateTreasureUI(data.specialTreasure?.balance || 0, 30000);
                 showPage('home');
             } else showPage('activation-screen');
         } else handleNewUser(user);
