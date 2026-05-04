@@ -729,12 +729,12 @@ const GoldTreasureSystem = {
                     throw `లిమిట్ దాటింది! ఇంకా ${10000 - manualTotalToday} మాత్రమే యాడ్ చేయగలరు.`;
                 }
 
-                if (data.mainWalletBalance < amount) {
+                if (data.coins < amount) {
                     throw "మెయిన్ వాలెట్ లో బ్యాలెన్స్ లేదు.";
                 }
 
                 transaction.update(userRef, {
-                    mainWalletBalance: firebase.firestore.FieldValue.increment(-amount),
+                    coins: firebase.firestore.FieldValue.increment(-amount),
                     'specialTreasure.balance': firebase.firestore.FieldValue.increment(amount),
                     'specialTreasure.manualAddedToday': manualTotalToday + amount,
                     'specialTreasure.lastManualAddDate': todayStr
