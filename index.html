@@ -435,11 +435,12 @@ const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1";
 
 function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
+function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+
 auth.onAuthStateChanged(user => {
     if (user) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('myUidDisplay').innerText = user.uid;
-        document.getElementById('myTransferIdDisplay').innerText = "Loading...";
         checkUserStatus(user);
         if(user.uid === ADMIN_UID) {
             document.getElementById('admin-panel').style.display = 'block';
@@ -450,6 +451,7 @@ auth.onAuthStateChanged(user => {
         showPage('login-screen');
     }
 });
+
 
 function checkUserStatus(user) {
     db.collection("Users").doc(user.uid).onSnapshot(doc => {
@@ -462,8 +464,8 @@ function checkUserStatus(user) {
                 document.getElementById('main-ui').style.display = 'block';
                 document.getElementById('coinBalance').innerText = data.coins || 0;
                 document.getElementById('inviteCount').innerText = data.invites || 0;
-                updateTreasureUI(data.specialTreasure?.balance || 0, 30000);
                 document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
+                updateTreasureUI(data.specialTreasure?.balance || 0, 30000);
                 showPage('home');
             } else showPage('activation-screen');
         } else handleNewUser(user);
@@ -476,11 +478,11 @@ function checkUserStatus(user) {
 
 async function generateUniqueTransferId() {
     for (let attempt = 0; attempt < 20; attempt++) {
-        const candidate = String(Math.floor(1000000000 + Math.random() * 9000000000));
+        const candidate = String(Math.floor(10000000 + Math.random() * 90000000));
         const exists = await db.collection("Users").where("transferId", "==", candidate).limit(1).get();
         if (exists.empty) return candidate;
     }
-    throw new Error("Unique 10-digit Transfer ID generate చేయలేకపోయాం. మళ్లీ ప్రయత్నించండి.");
+    throw new Error("Unique 8-digit Transfer ID generate చేయలేకపోయాం. మళ్లీ ప్రయత్నించండి.");
 }
 
 async function ensureTransferId(userId) {
