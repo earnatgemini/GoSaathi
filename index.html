@@ -424,16 +424,14 @@ const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", auth
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-
-const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1"; 
-
-function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-    const TREASURE_TARGET_COINS = 3000000; // 2 grams gold target example
+const TREASURE_TARGET_COINS = 3000000; // 2 grams gold target example
 const DAILY_RIDE_GIFT_COINS = 1000;
 const RIDE_POST_COST = 50;
 const OFFER_START = new Date('2026-05-03');
 const OFFER_END = new Date('2026-11-03');
+const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1"; 
 
+function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 auth.onAuthStateChanged(user => {
     if (user) {
         document.getElementById('login-screen').style.display = 'none';
