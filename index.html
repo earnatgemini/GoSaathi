@@ -16,6 +16,7 @@
    
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
           
@@ -351,8 +352,19 @@
             <input type="text" id="transferTargetUid" maxlength="10" inputmode="numeric" placeholder="స్నేహితుని 8-digit Transfer ID ఇవ్వండి.">
             <input type="number" id="transferAmount" placeholder="ఎన్ని Coins పంపాలి.">
             <button onclick="transferCoins()" style="background:var(--dark);">Send Coins</button>
+            <button onclick="openQRModal()">Create QR Code</button> 
           </div>
-          <div class="card">
+          
+<div id="qrModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); border:1px solid #ccc; padding:20px; background:#fff; z-index:1000; text-align:center; border-radius:10px; box-shadow: 0px 4px 15px rgba(0,0,0,0.2);">
+    <h3>మీ QR కోడ్</h3>
+    <div id="qrcode" style="margin:15px auto; display: inline-block;"></div>
+    <br>
+    <button onclick="downloadQR()" style="background-color: #28a745; color: white; padding: 10px; border: none; border-radius: 5px;">Download QR Code</button>
+    <button onclick="closeQRModal()" style="background-color: #dc3545; color: white; padding: 10px; border: none; border-radius: 5px;">Close</button>
+</div>
+     
+     
+     <div class="card">
             <h3>Add Coins (Scan & Pay)</h3>
             <img src="qr.png" style="width:150px; display:block; margin:auto;">
             <input type="number" id="payAmount" placeholder="Amount (₹)">
@@ -1135,8 +1147,8 @@ async function transferCoins() {
     const amount = Number(document.getElementById('transferAmount').value);
     const userRef = db.collection("Users").doc(auth.currentUser.uid);
 
-    if (!/^[0-9]{10}$/.test(targetTransferId)) {
-        return alert("10 అంకెల Transfer ID మాత్రమే ఎంటర్ చేయండి.");
+    if (!/^[0-7]{8}$/.test(targetTransferId)) {
+        return alert("8 అంకెల Transfer ID మాత్రమే ఎంటర్ చేయండి.");
     }
     if (!amount || amount <= 0) return alert("సరైన coin amount ఇవ్వండి.");
 
@@ -1162,6 +1174,25 @@ async function transferCoins() {
     alert("Coins పంపించబడినవి!");
     clearForm(['transferTargetUid', 'transferAmount']);
 }
+    function openQRModal() {
+    document.getElementById("qrModal").style.display = "block";
+    let transferId = "transferId"; // ఇక్కడ మీ డేటాబేస్ నుండి వచ్చే 8 అంకెల ID ని ఇవ్వండి
+    document.getElementById("qrcode").innerHTML = "";
+    new QRCode(document.getElementById("qrcode"), transferId);
+}
+
+function closeQRModal() {
+    document.getElementById("qrModal").style.display = "none";
+}
+
+function downloadQR() {
+    let canvas = document.querySelector("#qrcode canvas");
+    let image = canvas.toDataURL("image/png");
+    let link = document.createElement('a');
+    link.download = 'Gosathi-transfer-qr.png';
+    link.href = image;
+    link.click();
+    }
 
 async function requestCoins() {
     const utr = document.getElementById('utrId').value.trim();
