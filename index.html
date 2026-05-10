@@ -16,8 +16,9 @@
    
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
           
         :root { --primary: #007bff; --secondary: #28a745; --dark: #1e3c72; --gold: #ffcc00; }
@@ -347,13 +348,25 @@
             <p style="font-size: 12px; color: #aaa;">* Min. Balance 50,000 coins required.<br>* Min. Withdrawal ₹100.</p>
           </div>
           <div class="card">
-            <h3>మీ స్నేహితునికి Coins పంపండి:</h3>
-            <p>8 అంకెల Transfer ID Profile లో ఉంటుంది. </p>            
-            <input type="text" id="transferTargetUid" maxlength="10" inputmode="numeric" placeholder="స్నేహితుని 8-digit Transfer ID ఇవ్వండి.">
-            <input type="number" id="transferAmount" placeholder="ఎన్ని Coins పంపాలి.">
-            <button onclick="transferCoins()" style="background:var(--dark);">Send Coins</button>
-            <button onclick="openQRModal()">Create QR Code</button> 
-          </div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0;">మీ స్నేహితునికి Coins పంపండి:</h3>
+        <button onclick="openQRModal()" style="width: auto; padding: 5px 10px; background: #ffcc00; color: black; font-size: 12px; border-radius: 5px;">QR Code</button>
+    </div>
+    
+    <p>8 అంకెల Transfer ID Profile లో ఉంటుంది.</p>
+    
+    <button onclick="startScanner()" style="margin-bottom: 15px; padding: 10px; background: var(--dark); color: white; border-radius: 8px;">📷 Scan QR Code</button>
+    <div id="reader" style="width: 100%; display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden;"></div>
+
+    <input type="text" id="transferTargetUid" maxlength="8" inputmode="numeric" placeholder="స్నేహితుని 8-digit Transfer ID ఇవ్వండి" oninput="fetchUserName()">
+    
+    <p id="receiverNameDisplay" style="color: green; font-weight: bold; display: none; margin-top: 5px; font-size: 14px;"></p>
+
+    <input type="number" id="transferCoinsInput" placeholder="ఎన్ని Coins పంపాలి.">
+    
+    <button onclick="processTransfer()" style="background:var(--secondary); margin-top: 15px;">Send Coins</button>
+</div>
+
           
 <div id="qrModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); border:1px solid #ccc; padding:20px; background:#fff; z-index:1000; text-align:center; border-radius:10px; box-shadow: 0px 4px 15px rgba(0,0,0,0.2);">
     <h3>మీ QR కోడ్</h3>
@@ -420,6 +433,22 @@
     </div>
 </div>
 
+<div id="qrModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center;">
+    <div class="card" style="width:90%; max-width:350px; padding:20px; text-align:center; position: relative;">
+        <h2 style="color: var(--dark); margin-bottom: 5px;">Go Saathi</h2>
+        <p style="margin-top: 0; color: #555; font-weight: bold;">Scan and Pay Coins</p>
+        
+        <div id="qrcode" style="margin:15px auto; padding: 15px; border: 3px solid var(--dark); border-radius: 15px; display: inline-block; background: #fff;"></div>
+        
+        <h3 id="displayTransferId" style="letter-spacing: 2px; color: #333; margin-top: 5px;"></h3>
+        
+        <div style="display:flex; justify-content:space-between; gap: 10px; margin-top: 15px;">
+            <button onclick="downloadQRSticker()" style="background-color: var(--secondary); color: white;">Download QR</button>
+            <button onclick="closeQRModal()" style="background-color: #dc3545; color: white;">Close</button>
+        </div>
+    </div>
+</div>
+    
 <div id="joinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
     <div class="card" style="width:90%; max-width:400px; padding:20px; text-align:center;">
         <h3 id="modalTitle">Ride Request</h3>
@@ -1174,25 +1203,216 @@ async function transferCoins() {
     alert("Coins పంపించబడినవి!");
     clearForm(['transferTargetUid', 'transferAmount']);
 }
-    function openQRModal() {
-    document.getElementById("qrModal").style.display = "block";
-    let transferId = "transferId"; // ఇక్కడ మీ డేటాబేస్ నుండి వచ్చే 8 అంకెల ID ని ఇవ్వండి
-    document.getElementById("qrcode").innerHTML = "";
-    new QRCode(document.getElementById("qrcode"), transferId);
+    
+// ==========================================
+// 1. RECEIVER SIDE: QR CODE & STICKER LOGIC
+// ==========================================
+let currentUserIdForQR = "";
+
+async function openQRModal() {
+    // ఫైర్‌బేస్ నుండి యూజర్ Transfer ID తీసుకురావడం
+    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    currentUserIdForQR = userDoc.data().transferId;
+    
+    if(!currentUserIdForQR) return alert("మీ Transfer ID ఇంకా జనరేట్ కాలేదు. దయచేసి మళ్ళీ ప్రయత్నించండి.");
+
+    document.getElementById("qrModal").style.display = "flex";
+    document.getElementById("displayTransferId").innerText = "ID: " + currentUserIdForQR;
+    
+    document.getElementById("qrcode").innerHTML = ""; // పాతది క్లియర్ చేయడం
+    new QRCode(document.getElementById("qrcode"), {
+        text: currentUserIdForQR,
+        width: 180,
+        height: 180,
+        colorDark : "#1e3c72", // Dark Blue color for QR
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
 }
 
 function closeQRModal() {
     document.getElementById("qrModal").style.display = "none";
 }
 
-function downloadQR() {
-    let canvas = document.querySelector("#qrcode canvas");
-    let image = canvas.toDataURL("image/png");
-    let link = document.createElement('a');
-    link.download = 'Gosathi-transfer-qr.png';
-    link.href = image;
-    link.click();
+function downloadQRSticker() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 380;
+    canvas.height = 480;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. Border
+    ctx.strokeStyle = '#1e3c72'; // Your --dark color
+    ctx.lineWidth = 12;
+    ctx.strokeRect(6, 6, canvas.width - 12, canvas.height - 12);
+
+    // 3. Title
+    ctx.fillStyle = '#1e3c72';
+    ctx.font = 'bold 36px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('Go Saathi', canvas.width / 2, 70);
+
+    // 4. Subtitle
+    ctx.fillStyle = '#28a745'; // Green color
+    ctx.font = 'bold 20px Segoe UI';
+    ctx.fillText('Scan and Pay Coins', canvas.width / 2, 110);
+
+    // 5. Add QR Image
+    const qrCanvas = document.querySelector("#qrcode canvas");
+    if(qrCanvas) {
+        ctx.drawImage(qrCanvas, 90, 140, 200, 200); 
     }
+
+    // 6. Transfer ID Text
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 24px Courier New';
+    ctx.fillText('Transfer ID: ' + currentUserIdForQR, canvas.width / 2, 390);
+    
+    // 7. Footer text
+    ctx.fillStyle = '#888888';
+    ctx.font = '14px Arial';
+    ctx.fillText('Accepted Here', canvas.width / 2, 430);
+
+    // Download Action
+    const link = document.createElement('a');
+    link.download = `GoSaathi_QR_${currentUserIdForQR}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
+
+// ==========================================
+// 2. SENDER SIDE: SCANNER & TRANSFER LOGIC
+// ==========================================
+let html5QrcodeScanner;
+
+function startScanner() {
+    document.getElementById("reader").style.display = "block";
+    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} });
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+}
+
+function onScanSuccess(decodedText) {
+    document.getElementById('transferTargetUid').value = decodedText;
+    
+    // స్కాన్ పూర్తవ్వగానే కెమెరా క్లోజ్ అవుతుంది
+    html5QrcodeScanner.clear();
+    document.getElementById("reader").style.display = "none";
+    
+    // పేరు ఆటోమేటిక్ గా వస్తుంది
+    fetchUserName();
+}
+
+function onScanFailure(error) {
+    // స్కానింగ్ జరుగుతున్నప్పుడు వచ్చే ఎర్రర్స్ ఇగ్నోర్ చేయవచ్చు
+}
+
+// Firebase నుండి పేరు తెచ్చే ఫంక్షన్
+async function fetchUserName() {
+    let tId = document.getElementById('transferTargetUid').value.trim();
+    let nameDisplay = document.getElementById("receiverNameDisplay");
+    
+    // 10 అంకెలు ఎంటర్ చేయగానే డేటాబేస్ చెక్ చేస్తుంది
+    if(tId.length === 8) {
+        nameDisplay.style.display = "block";
+        nameDisplay.style.color = "#ffcc00"; // Loading color
+        nameDisplay.innerText = "వెతుకుతోంది...";
+        
+        try {
+            const userQuery = await db.collection("Users").where("transferId", "==", tId).limit(1).get();
+            if(!userQuery.empty) {
+                let userData = userQuery.docs[0].data();
+                nameDisplay.style.color = "green";
+                nameDisplay.innerText = "Receiver: " + userData.name + " ✅";
+            } else {
+                nameDisplay.style.color = "red";
+                nameDisplay.innerText = "ఈ ID తో ఎవరూ లేరు ❌";
+            }
+        } catch(error) {
+            console.error(error);
+            nameDisplay.style.color = "red";
+            nameDisplay.innerText = "ఎర్రర్ వచ్చింది. మళ్లీ ట్రై చేయండి.";
+        }
+    } else {
+        nameDisplay.style.display = "none";
+    }
+}
+
+// Coins Transfer Firebase Logic
+async function processTransfer() {
+    const targetTransferId = document.getElementById('transferTargetUid').value.trim();
+    const amount = Number(document.getElementById('transferCoinsInput').value);
+    const userRef = db.collection("Users").doc(auth.currentUser.uid);
+
+    if (targetTransferId.length !== 8) {
+        return alert("8 అంకెల Transfer ID మాత్రమే ఎంటర్ చేయండి.");
+    }
+    if (!amount || amount <= 0) return alert("దయచేసి సరైన Coins ఎంటర్ చేయండి.");
+
+    // Loading / Processing alert
+    document.getElementById("receiverNameDisplay").innerText = "Processing Transfer...";
+
+    try {
+        const userDoc = await userRef.get();
+        const senderData = userDoc.data() || {};
+        
+        // పంపేవారి దగ్గర కాయిన్స్ ఉన్నాయో లేదో చెక్
+        if ((senderData.coins || 0) < amount) {
+            document.getElementById("receiverNameDisplay").style.display = "none";
+            return alert("మీ ఖాతాలో సరిపడా Coins లేవు!");
+        }
+
+        // రిసీవర్ ని ఫైండ్ చేయడం
+        const recipientSnap = await db.collection("Users").where("transferId", "==", targetTransferId).limit(1).get();
+
+        if (recipientSnap.empty) {
+            document.getElementById("receiverNameDisplay").innerText = "ఈ ID తో ఎవరూ లేరు ❌";
+            return alert("ఈ Transfer ID కి user దొరకలేదు.");
+        }
+
+        const recipientDoc = recipientSnap.docs[0];
+        
+        // తనకు తాను పంపుకోకుండా లాక్ చేయడం
+        if (recipientDoc.id === auth.currentUser.uid) {
+            document.getElementById("receiverNameDisplay").style.display = "none";
+            return alert("మీకు మీరే Coins పంపుకోలేరు!");
+        }
+
+        let recipientName = recipientDoc.data().name;
+
+        // Firebase Transaction (సురక్షితమైన ట్రాన్స్ఫర్ కోసం batch బదులు transaction వాడటం మంచిది)
+        await db.runTransaction(async (transaction) => {
+            const freshSenderDoc = await transaction.get(userRef);
+            if ((freshSenderDoc.data().coins || 0) < amount) {
+                throw "సరిపడా కాయిన్స్ లేవు.";
+            }
+            
+            transaction.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
+            transaction.update(recipientDoc.ref, { coins: firebase.firestore.FieldValue.increment(amount) });
+        });
+
+        // సక్సెస్ అయ్యాక Transaction ID క్రియేట్ చేయడం
+        let transactionId = "TXN" + Math.floor(Math.random() * 9000000000);
+
+        // మీరు అడిగినట్లుగా Transaction ID మరియు పేరుతో Success Window
+        alert(`✅ ట్రాన్స్‌ఫర్ సక్సెస్!\n\nరిసీవర్ పేరు: ${recipientName}\nTransfer ID: ${targetTransferId}\nTransaction ID: ${transactionId}\n\n${amount} Coins విజయవంతంగా పంపబడ్డాయి!`);
+
+        // ఫామ్ క్లియర్ చేయడం
+        document.getElementById('transferTargetUid').value = "";
+        document.getElementById('transferCoinsInput').value = "";
+        document.getElementById("receiverNameDisplay").style.display = "none";
+
+    } catch (error) {
+        console.error("Transfer Error: ", error);
+        alert("ట్రాన్స్‌ఫర్ విఫలమైంది: " + error);
+        document.getElementById("receiverNameDisplay").style.display = "none";
+    }
+}
+
+
+
 
 async function requestCoins() {
     const utr = document.getElementById('utrId').value.trim();
