@@ -372,8 +372,8 @@
     <h3>మీ QR కోడ్</h3>
     <div id="qrcode" style="margin:15px auto; display: inline-block;"></div>
     <br>
-    <button onclick="downloadQR()" style="background-color: #28a745; color: white; padding: 10px; border: none; border-radius: 5px;">Download QR Code</button>
-    <button onclick="closeQRModal()" style="background-color: #dc3545; color: white; padding: 10px; border: none; border-radius: 5px;">Close</button>
+    <button onclick="downloadQR()" style="background-color: #28a745; color: white; padding: 5px; border: none; border-radius: 5px;">Download QR Code</button>
+    <button onclick="closeQRModal()" style="background-color: #dc3545; color: white; padding: 5px; border: none; border-radius: 5px;">Close</button>
 </div>
      
      
@@ -1234,53 +1234,86 @@ function closeQRModal() {
     document.getElementById("qrModal").style.display = "none";
 }
 
+    // అప్‌డేట్ చేయబడిన QR స్టిక్కర్ డౌన్‌లోడ్ ఫంక్షన్
 function downloadQRSticker() {
     const canvas = document.createElement('canvas');
     canvas.width = 380;
     canvas.height = 480;
     const ctx = canvas.getContext('2d');
 
-    // 1. Background
+    // 1. Background (White)
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // 2. Border
-    ctx.strokeStyle = '#1e3c72'; // Your --dark color
+    ctx.strokeStyle = '#1e3c72'; // Dark Blue Border
     ctx.lineWidth = 12;
     ctx.strokeRect(6, 6, canvas.width - 12, canvas.height - 12);
 
     // 3. Title
     ctx.fillStyle = '#1e3c72';
-    ctx.font = 'bold 36px Segoe UI';
+    ctx.font = 'bold 36px Arial'; 
     ctx.textAlign = 'center';
     ctx.fillText('Go Saathi', canvas.width / 2, 70);
 
     // 4. Subtitle
-    ctx.fillStyle = '#28a745'; // Green color
-    ctx.font = 'bold 20px Segoe UI';
+    ctx.fillStyle = '#28a745';
+    ctx.font = 'bold 20px Arial';
     ctx.fillText('Scan and Pay Coins', canvas.width / 2, 110);
 
-    // 5. Add QR Image
-    const qrCanvas = document.querySelector("#qrcode canvas");
-    if(qrCanvas) {
-        ctx.drawImage(qrCanvas, 90, 140, 200, 200); 
+    // మిగిలిన టెక్స్ట్ డ్రా చేసి, ఇమేజ్ డౌన్‌లోడ్ చేసే ఫంక్షన్
+    const drawTextAndDownload = () => {
+        // 6. Transfer ID Text
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 24px Courier New';
+        ctx.fillText('Transfer ID: ' + currentUserIdForQR, canvas.width / 2, 390);
+        
+        // 7. Footer text
+        ctx.fillStyle = '#888888';
+        ctx.font = '14px Arial';
+        ctx.fillText('Accepted Here', canvas.width / 2, 430);
+
+        // Download Action (మొబైల్ బ్రౌజర్ల సపోర్ట్ కోసం)
+        try {
+            const imageURI = canvas.toDataURL("image/png");
+            const link = document.createElement('a');
+            link.download = `GoSaathi_QR_${currentUserIdForQR}.png`;
+            link.href = imageURI;
+            
+            // లింక్ ని బాడీ కి యాడ్ చేసి క్లిక్ చేయాలి (Firefox & Mobile Safari fix)
+            document.body.appendChild(link); 
+            link.click();
+            document.body.removeChild(link); // డౌన్‌లోడ్ అయ్యాక లింక్ ని రిమూవ్ చేయడం
+        } catch (err) {
+            console.error("డౌన్‌లోడ్ ఎర్రర్:", err);
+            alert("డౌన్‌లోడ్ చేయడంలో సమస్య వచ్చింది. దయచేసి స్క్రీన్ షాట్ తీసుకోండి.");
+        }
+    };
+
+    // 5. Add QR Image (రెండరింగ్ చెక్)
+    const qrContainer = document.getElementById("qrcode");
+    const qrImage = qrContainer.querySelector("img");
+    const qrCanvas = qrContainer.querySelector("canvas");
+
+    // బ్రౌజర్ <img> ట్యాగ్ ని జనరేట్ చేసి ఉంటే...
+    if (qrImage && qrImage.getAttribute("src")) {
+        let tempImg = new Image();
+        tempImg.onload = function() {
+            ctx.drawImage(tempImg, 90, 140, 200, 200);
+            drawTextAndDownload(); // ఇమేజ్ డ్రా అయ్యాక డౌన్‌లోడ్ కాల్ చేయాలి
+        };
+        tempImg.src = qrImage.getAttribute("src");
+    } 
+    // ఒకవేళ బ్రౌజర్ <canvas> ని జనరేట్ చేసి ఉంటే...
+    else if (qrCanvas) {
+        ctx.drawImage(qrCanvas, 90, 140, 200, 200);
+        drawTextAndDownload();
+    } 
+    else {
+        drawTextAndDownload();
     }
+}
 
-    // 6. Transfer ID Text
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 24px Courier New';
-    ctx.fillText('Transfer ID: ' + currentUserIdForQR, canvas.width / 2, 390);
-    
-    // 7. Footer text
-    ctx.fillStyle = '#888888';
-    ctx.font = '14px Arial';
-    ctx.fillText('Accepted Here', canvas.width / 2, 430);
-
-    // Download Action
-    const link = document.createElement('a');
-    link.download = `GoSaathi_QR_${currentUserIdForQR}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
 }
 
 // ==========================================
