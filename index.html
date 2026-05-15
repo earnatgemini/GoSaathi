@@ -358,14 +358,14 @@
     <button onclick="startScanner()" style="margin-bottom: 15px; padding: 10px; background: var(--dark); color: white; border-radius: 8px;">📷 Scan QR Code</button>
     <div id="reader" style="width: 100%; display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden;"></div>
 
-    <input type="text" id="transferTargetUid" maxlength="8" inputmode="numeric" placeholder="స్నేహితుని 8-digit Transfer ID ఇవ్వండి" oninput="fetchUserName()">
+    <input type="text" id="transferTargetUid" maxlength="8" inputmode="numeric" placeholder="8-digit Transfer ID ఇవ్వండి" oninput="fetchUserName()">
     
     <p id="receiverNameDisplay" style="color: green; font-weight: bold; display: none; margin-top: 5px; font-size: 14px;"></p>
 
-    <input type="number" id="transferCoinsInput" placeholder="ఎన్ని Coins పంపాలి.">
+    <input type="number" id="transferCoinsInput" placeholder=" Enter Coins">
     
     <button onclick="processTransfer()" style="background:var(--secondary); margin-top: 15px;">Send Coins</button>
-    <p style="font-size: 12px; color: #aaa;">* Min. Balance 50,000 coins required.<br>* Min. Withdrawal ₹100.</p>
+    <p style="font-size: 12px; color: #aaa;">*  5,000 coins ఎక్కువ ఉంటే Transfer అవుతాయి.<br>* Min. Transfer 100 Coins.</p>
 </div>
 
           
