@@ -353,12 +353,12 @@
         <button onclick="openQRModal()" style="width: auto; padding: 5px 10px; background: #ffcc00; color: black; font-size: 12px; border-radius: 5px;">Show QR Code</button>
     </div>
     
-    <p>8 అంకెల Transfer ID Profile లో ఉంటుంది.</p>
+    <p>8 అంకెల Account Number Profile లో ఉంటుంది.</p>
     
     <button onclick="startScanner()" style="margin-bottom: 15px; padding: 10px; background: var(--dark); color: white; border-radius: 8px;">📷 Scan QR Code</button>
     <div id="reader" style="width: 100%; display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden;"></div>
 
-    <input type="text" id="transferTargetUid" maxlength="8" inputmode="numeric" placeholder="8-digit Transfer ID ఇవ్వండి" oninput="fetchUserName()">
+    <input type="text" id="transferTargetUid" maxlength="8" inputmode="numeric" placeholder="8-digit Account Number ఇవ్వండి" oninput="fetchUserName()">
     
     <p id="receiverNameDisplay" style="color: green; font-weight: bold; display: none; margin-top: 5px; font-size: 14px;"></p>
 
@@ -399,7 +399,7 @@
             <p>Invitations Left: <b id="inviteCount">0</b></p>
             <p>Your UID:</p>
             <code id="myUidDisplay" style="display:block; background:#eee; padding:10px;"></code>
-            <p>Transfer ID (8 digits):</p>
+            <p>Account Number (8 digits):</p>
             <code id="myTransferIdDisplay" style="display:block; background:#eee; padding:10px;"></code>
             <button onclick="shareInvite()" style="background:#25D366;">WhatsApp Invite</button>
             <button onclick="auth.signOut()" style="background:#666; margin-top:20px;">Logout</button>
@@ -1178,7 +1178,7 @@ async function transferCoins() {
     const userRef = db.collection("Users").doc(auth.currentUser.uid);
 
     if (!/^[0-7]{8}$/.test(targetTransferId)) {
-        return alert("8 అంకెల Transfer ID మాత్రమే ఎంటర్ చేయండి.");
+        return alert("8 అంకెల Account Number మాత్రమే ఎంటర్ చేయండి.");
     }
     if (!amount || amount <= 0) return alert("సరైన coin amount ఇవ్వండి.");
 
@@ -1191,7 +1191,7 @@ async function transferCoins() {
         .limit(1)
         .get();
 
-    if (recipientSnap.empty) return alert("ఈ Transfer ID కి user దొరకలేదు.");
+    if (recipientSnap.empty) return alert("ఈ Account Number కి user దొరకలేదు.");
 
     const recipientDoc = recipientSnap.docs[0];
     if (recipientDoc.id === auth.currentUser.uid) return alert("మీకు మీరు coins పంపుకోలేరు.");
@@ -1215,7 +1215,7 @@ async function openQRModal() {
     const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
     currentUserIdForQR = userDoc.data().transferId;
     
-    if(!currentUserIdForQR) return alert("మీ Transfer ID ఇంకా జనరేట్ కాలేదు. దయచేసి మళ్ళీ ప్రయత్నించండి.");
+    if(!currentUserIdForQR) return alert("మీ Account Number ఇంకా జనరేట్ కాలేదు. దయచేసి మళ్ళీ ప్రయత్నించండి.");
 
     document.getElementById("qrModal").style.display = "flex";
     document.getElementById("displayTransferId").innerText = "ID: " + currentUserIdForQR;
@@ -1360,7 +1360,7 @@ async function fetchUserName() {
                 nameDisplay.innerText = "Receiver: " + userData.name + " ✅";
             } else {
                 nameDisplay.style.color = "red";
-                nameDisplay.innerText = "ఈ ID తో ఎవరూ లేరు ❌";
+                nameDisplay.innerText = "ఈ Account Number తో ఎవరూ లేరు ❌";
             }
         } catch(error) {
             console.error(error);
@@ -1379,9 +1379,9 @@ async function processTransfer() {
     const userRef = db.collection("Users").doc(auth.currentUser.uid);
 
     if (targetTransferId.length !== 8) {
-        return alert("8 అంకెల Transfer ID మాత్రమే ఎంటర్ చేయండి.");
+        return alert("8 అంకెల Account Number మాత్రమే ఎంటర్ చేయండి.");
     }
-    if (!amount || amount <= 0) return alert("దయచేసి సరైన Coins ఎంటర్ చేయండి.");
+    if (!amount || amount <=99) return alert("దయచేసి సరైన (100 లేదా ఆపైన) Coins ఎంటర్ చేయండి.");
 
     // Loading / Processing alert
     document.getElementById("receiverNameDisplay").innerText = "Processing Transfer...";
@@ -1391,7 +1391,7 @@ async function processTransfer() {
         const senderData = userDoc.data() || {};
         
         // పంపేవారి దగ్గర కాయిన్స్ ఉన్నాయో లేదో చెక్
-        if ((senderData.coins || 0) < amount) {
+        if ((senderData.coins || 5100) < amount) {
             document.getElementById("receiverNameDisplay").style.display = "none";
             return alert("మీ ఖాతాలో సరిపడా Coins లేవు!");
         }
@@ -1401,7 +1401,7 @@ async function processTransfer() {
 
         if (recipientSnap.empty) {
             document.getElementById("receiverNameDisplay").innerText = "ఈ ID తో ఎవరూ లేరు ❌";
-            return alert("ఈ Transfer ID కి user దొరకలేదు.");
+            return alert("ఈ Account Number కి user దొరకలేదు.");
         }
 
         const recipientDoc = recipientSnap.docs[0];
@@ -1417,7 +1417,7 @@ async function processTransfer() {
         // Firebase Transaction (సురక్షితమైన ట్రాన్స్ఫర్ కోసం batch బదులు transaction వాడటం మంచిది)
         await db.runTransaction(async (transaction) => {
             const freshSenderDoc = await transaction.get(userRef);
-            if ((freshSenderDoc.data().coins || 0) < amount) {
+            if ((freshSenderDoc.data().coins || 5100) < amount) {
                 throw "సరిపడా కాయిన్స్ లేవు.";
             }
             
@@ -1429,7 +1429,7 @@ async function processTransfer() {
         let transactionId = "TXN" + Math.floor(Math.random() * 9000000000);
 
         // మీరు అడిగినట్లుగా Transaction ID మరియు పేరుతో Success Window
-        alert(`✅ ట్రాన్స్‌ఫర్ సక్సెస్!\n\nరిసీవర్ పేరు: ${recipientName}\nTransfer ID: ${targetTransferId}\nTransaction ID: ${transactionId}\n\n${amount} Coins విజయవంతంగా పంపబడ్డాయి!`);
+        alert(`✅ ట్రాన్స్‌ఫర్ సక్సెస్!\n\nరిసీవర్ పేరు: ${recipientName}\nAccount Number: ${targetTransferId}\nTransaction ID: ${transactionId}\n\n${amount} Coins విజయవంతంగా పంపబడ్డాయి!`);
 
         // ఫామ్ క్లియర్ చేయడం
         document.getElementById('transferTargetUid').value = "";
