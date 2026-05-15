@@ -1389,9 +1389,15 @@ async function processTransfer() {
     try {
         const userDoc = await userRef.get();
         const senderData = userDoc.data() || {};
-        
+        // క్రింది 5 line లు నా సొంత ప్రయోగం
+        const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    const userData = userDoc.data();
+    const currentCoins = userData.coins || 0;
+    if (currentCoins - amount < 5100) {
+    return alert("మీ అకౌంట్‌లో కనీసం 5000 కంటే ఎక్కువ Coins ఉంటే మాత్రమే విత్‌డ్రా చేయగలరు.");
+    }
         // పంపేవారి దగ్గర కాయిన్స్ ఉన్నాయో లేదో చెక్
-        if ((senderData.coins || 5100) < amount) {
+        if ((senderData.coins || 0) < amount) {
             document.getElementById("receiverNameDisplay").style.display = "none";
             return alert("మీ ఖాతాలో సరిపడా Coins లేవు!");
         }
@@ -1417,7 +1423,8 @@ async function processTransfer() {
         // Firebase Transaction (సురక్షితమైన ట్రాన్స్ఫర్ కోసం batch బదులు transaction వాడటం మంచిది)
         await db.runTransaction(async (transaction) => {
             const freshSenderDoc = await transaction.get(userRef);
-            if ((freshSenderDoc.data().coins || 5100) < amount) {
+   
+            if ((freshSenderDoc.data().coins || 0) < amount) {
                 throw "సరిపడా కాయిన్స్ లేవు.";
             }
             
@@ -1442,10 +1449,6 @@ async function processTransfer() {
         document.getElementById("receiverNameDisplay").style.display = "none";
     }
 }
-
-
-
-
 async function requestCoins() {
     const utr = document.getElementById('utrId').value.trim();
     const amount = Number(document.getElementById('payAmount').value);
