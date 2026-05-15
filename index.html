@@ -1172,44 +1172,6 @@ function rejectRequest(reqId) {
     if(confirm("ఈ రిక్వెస్ట్ ని రిజెక్ట్ చేయాలా?")) db.collection("Requests").doc(reqId).update({ status: "Rejected" });
 }
 
-async function transferCoins() {
-    const targetTransferId = document.getElementById('transferTargetUid').value.trim();
-    const amount = Number(document.getElementById('transferAmount').value);
-    const userRef = db.collection("Users").doc(auth.currentUser.uid);
-
-    if (!/^[0-7]{8}$/.test(targetTransferId)) {
-        return alert("8 అంకెల Account Number మాత్రమే ఎంటర్ చేయండి.");
-    }
-    if (!amount || amount <= 0) return alert("సరైన coin amount ఇవ్వండి.");
-
-    const userDoc = await userRef.get();
-    const senderData = userDoc.data() || {};
-    if ((senderData.coins || 0) < amount) return alert("సరిపడిన Coins మీకు లేవు!");
-    // నేను add చేసిన lines
-    const remainingBalance = (senderData.coins || 0) - amount;
-
-    if (remainingBalance < 5000) {
-    return alert("Transfer తరువాత minimum 5000 Coins balance ఉండాలి.");
-   }
-// పై వరకు నేను add చేశాన.
-    const recipientSnap = await db.collection("Users")
-        .where("transferId", "==", targetTransferId)
-        .limit(1)
-        .get();
-
-    if (recipientSnap.empty) return alert("ఈ Account Number కి user దొరకలేదు.");
-
-    const recipientDoc = recipientSnap.docs[0];
-    if (recipientDoc.id === auth.currentUser.uid) return alert("మీకు మీరు coins పంపుకోలేరు.");
-
-    const batch = db.batch();
-    batch.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
-    batch.update(recipientDoc.ref, { coins: firebase.firestore.FieldValue.increment(amount) });
-
-    await batch.commit();
-    alert("Coins పంపించబడినవి!");
-    clearForm(['transferTargetUid', 'transferAmount']);
-}
     
 // ==========================================
 // 1. RECEIVER SIDE: QR CODE & STICKER LOGIC
