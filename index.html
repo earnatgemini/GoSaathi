@@ -365,7 +365,7 @@
     <input type="number" id="transferCoinsInput" placeholder=" Enter Coins">
     
     <button onclick="processTransfer()" style="background:var(--secondary); margin-top: 15px;">Send Coins</button>
-    <p style="font-size: 12px; color: #aaa;">*  5,000 coins ఎక్కువ ఉంటే Transfer అవుతాయి.<br>* Min. Transfer 100 Coins.</p>
+    <p style="font-size: 12px; color: #aaa;">*  5,000 coins కంటే ఎక్కువ ఉంటే Transfer అవుతాయి.<br>* Min. 100 కంటే ఎక్కువ Coins పంపాలి.</p>
 </div>
 
           
@@ -1185,7 +1185,13 @@ async function transferCoins() {
     const userDoc = await userRef.get();
     const senderData = userDoc.data() || {};
     if ((senderData.coins || 0) < amount) return alert("సరిపడిన Coins మీకు లేవు!");
+    // నేను add చేసిన lines
+    const remainingBalance = (senderData.coins || 0) - amount;
 
+    if (remainingBalance < 5000) {
+    return alert("Transfer తరువాత minimum 5000 Coins balance ఉండాలి.");
+   }
+// పై వరకు నేను add చేశాన.
     const recipientSnap = await db.collection("Users")
         .where("transferId", "==", targetTransferId)
         .limit(1)
@@ -1389,12 +1395,7 @@ async function processTransfer() {
     try {
         const userDoc = await userRef.get();
         const senderData = userDoc.data() || {};
-        // క్రింది 5 line లు నా సొంత ప్రయోగం
         
-    const currentCoins = userData.coins || 0;
-    if (currentCoins - amount < 5100) {
-    return alert("మీ అకౌంట్‌లో కనీసం 5100 కంటే ఎక్కువ Coins ఉంటే మాత్రమే విత్‌డ్రా చేయగలరు.");
-    }
         // పంపేవారి దగ్గర కాయిన్స్ ఉన్నాయో లేదో చెక్
         if ((senderData.coins || 0) < amount) {
             document.getElementById("receiverNameDisplay").style.display = "none";
@@ -1405,7 +1406,7 @@ async function processTransfer() {
         const recipientSnap = await db.collection("Users").where("transferId", "==", targetTransferId).limit(1).get();
 
         if (recipientSnap.empty) {
-            document.getElementById("receiverNameDisplay").innerText = "ఈ ID తో ఎవరూ లేరు ❌";
+            document.getElementById("receiverNameDisplay").innerText = "ఈ Account Number తో ఎవరూ లేరు ❌";
             return alert("ఈ Account Number కి user దొరకలేదు.");
         }
 
@@ -1414,7 +1415,7 @@ async function processTransfer() {
         // తనకు తాను పంపుకోకుండా లాక్ చేయడం
         if (recipientDoc.id === auth.currentUser.uid) {
             document.getElementById("receiverNameDisplay").style.display = "none";
-            return alert("మీకు మీరే Coins పంపుకోలేరు!");
+            return alert("hmm.. మీకు మీరే Coins పంపుకోలేరు!");
         }
 
         let recipientName = recipientDoc.data().name;
