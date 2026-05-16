@@ -1362,13 +1362,14 @@ async function processTransfer() {
     try {
         const userDoc = await userRef.get();
         const senderData = userDoc.data() || {};
+        const currentBalance = senderData.coins || 0;
         
-        // పంపేవారి దగ్గర కాయిన్స్ ఉన్నాయో లేదో చెక్
-        if ((senderData.coins || 0) < amount) {
+        // వాలిడేషన్ 2: 5000 కాయిన్స్ మినిమం బ్యాలెన్స్ మెయింటైన్ చేయాలి
+        if (currentBalance - amount < 5000) {
             document.getElementById("receiverNameDisplay").style.display = "none";
-            return alert("మీ ఖాతాలో సరిపడా Coins లేవు!");
+            return alert(`మీ ఖాతాలో కనీసం 5000 Coins బ్యాలెన్స్ ఉండాలి! (మీ ప్రస్తుత బ్యాలెన్స్: ${currentBalance} Coins)`);
         }
-
+      
         // రిసీవర్ ని ఫైండ్ చేయడం
         const recipientSnap = await db.collection("Users").where("transferId", "==", targetTransferId).limit(1).get();
 
