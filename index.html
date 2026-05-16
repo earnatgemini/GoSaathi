@@ -338,7 +338,7 @@
             <h3>Balance:</h3>
             <h2 id="coinBalance">0</h2>
             <p>Coins</p> 
-            <p style="font-size: 12px; color: #aaa;">*100 coins(పైసాలు) అంటే 1 రూపాయి.<br>* Rs. 1 = 100 coins.</p>
+            <p style="font-size: 12px; color: #aaa;">*100 Coins = Rs. 1.</p>
 </div>
 
          </div>
@@ -1352,6 +1352,12 @@ async function processTransfer() {
     if (targetTransferId.length !== 8) {
         return alert("8 అంకెల Account Number మాత్రమే ఎంటర్ చేయండి.");
     }
+    // 5100 చెకింగ్
+    if ((senderData.coins || 0) <= 5100) {
+    document.getElementById("receiverNameDisplay").style.display = "none";
+    return alert("5100 Coins కంటే ఎక్కువ balance ఉంటే మాత్రమే transfer చేయవచ్చు.");
+            }
+    // 5100 ceking
     if (!amount || amount <=99) return alert("దయచేసి సరైన (100 లేదా ఆపైన) Coins ఎంటర్ చేయండి.");
 
     // Loading / Processing alert
@@ -1391,11 +1397,6 @@ async function processTransfer() {
    
             if ((freshSenderDoc.data().coins || 0) < amount) {
                 throw "సరిపడా కాయిన్స్ లేవు.";
-            }
-
-            if ((senderData.coins || 0) <= 5100) {
-    document.getElementById("receiverNameDisplay").style.display = "none";
-    return alert("5100 Coins కంటే ఎక్కువ balance ఉంటే మాత్రమే transfer చేయవచ్చు.");
             }
             transaction.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
             transaction.update(recipientDoc.ref, { coins: firebase.firestore.FieldValue.increment(amount) });
