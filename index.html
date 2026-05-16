@@ -1392,7 +1392,6 @@ async function processTransfer() {
             const freshSenderDoc = await transaction.get(userRef);
    
             if ((freshSenderDoc.data().coins || 0) < amount) {
-                throw "సరిపడా కాయిన్స్ లేవు.";
                 // 5100 చెకింగ్
                 const remainingBalance = (senderData.coins || 0) - amount;
 
@@ -1401,6 +1400,7 @@ async function processTransfer() {
                      return alert("Transfer తరువాత minimum 5100 Coins ఉండాలి.");
                  }
                 // 5100 ceking
+                throw "సరిపడా కాయిన్స్ లేవు.";
             }
             transaction.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
             transaction.update(recipientDoc.ref, { coins: firebase.firestore.FieldValue.increment(amount) });
