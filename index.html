@@ -1401,15 +1401,21 @@ async function processTransfer() {
 
         // సక్సెస్ అయ్యాక Transaction ID క్రియేట్ చేయడం
         let transactionId = "TXN" + Math.floor(Math.random() * 9000000000);
+        // 🎵 సక్సెస్ సౌండ్ ప్లే చేయడానికి కోడ్
+        let paymentAudio = new Audio('Payment_sound.mp3');
+        paymentAudio.play().catch(error => console.log("Sound play error:", error));
+
+        // సౌండ్ ముందు ప్లే అయ్యి, వెంటనే (100ms గ్యాప్ తో) Alert వస్తుంది
+        setTimeout(() => {
 
         // మీరు అడిగినట్లుగా Transaction ID మరియు పేరుతో Success Window
         alert(`✅ ట్రాన్స్‌ఫర్ సక్సెస్!\n\nరిసీవర్ పేరు: ${recipientName}\nAccount Number: ${targetTransferId}\nTransaction ID: ${transactionId}\n\n${amount} Coins విజయవంతంగా పంపబడ్డాయి!`);
-
+        
         // ఫామ్ క్లియర్ చేయడం
         document.getElementById('transferTargetUid').value = "";
         document.getElementById('transferCoinsInput').value = "";
         document.getElementById("receiverNameDisplay").style.display = "none";
-
+         }, 100);
     } catch (error) {
         console.error("Transfer Error: ", error);
         alert("ట్రాన్స్‌ఫర్ విఫలమైంది: " + error);
