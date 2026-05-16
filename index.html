@@ -1390,21 +1390,10 @@ async function processTransfer() {
         // Firebase Transaction (సురక్షితమైన ట్రాన్స్ఫర్ కోసం batch బదులు transaction వాడటం మంచిది)
         await db.runTransaction(async (transaction) => {
             const freshSenderDoc = await transaction.get(userRef);
-    // 5100 చెకింగ్
-                const remainingBalance = (senderData.coins || 0) - amount;
-
-                if (remainingBalance < 5100) {
-                    document.getElementById("receiverNameDisplay").style.display = "none";
-    // 5100 చెకింగ్
+            
             if ((freshSenderDoc.data().coins || 0) < amount) {
                 throw "సరిపడా కాయిన్స్ లేవు.";
                 }
-                   // 5100 ceking
-                     return alert("Transfer తరువాత minimum 5100 Coins ఉండాలి.");
-                 
-                
-                // 5100 ceking
-            }
             transaction.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
             transaction.update(recipientDoc.ref, { coins: firebase.firestore.FieldValue.increment(amount) });
         });
