@@ -682,7 +682,7 @@ async function postRide() {
       const currentTreasure = hostDoc.data().specialTreasure?.balance || 0;
       updateTreasureUI(currentTreasure + 1000, 30000); 
 
-      alert("🎉Congratulations!🎊🎈 ఈరోజు గో-సాతి మీకు 🪙గోల్డ్ కోసం ఉచితంగా 1000 Coins ఇచ్చారు.");
+      alert("🎉Congratulations!🎈 ఈరోజు గో-సాతి మీకు గోల్డ్🪙 కోసం ఉచితంగా 1000 Coins ఇచ్చారు.");
     }
   }
   
@@ -1415,7 +1415,7 @@ async function processTransfer() {
         document.getElementById('transferTargetUid').value = "";
         document.getElementById('transferCoinsInput').value = "";
         document.getElementById("receiverNameDisplay").style.display = "none";
-         }, 100);
+         }, 200);
     } catch (error) {
         console.error("Transfer Error: ", error);
         alert("ట్రాన్స్‌ఫర్ విఫలమైంది: " + error);
