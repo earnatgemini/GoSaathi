@@ -1354,11 +1354,7 @@ async function processTransfer() {
     }
     
     if (!amount || amount <=99) return alert("దయచేసి సరైన (100 లేదా ఆపైన) Coins ఎంటర్ చేయండి.");
-    // 5100 చెకింగ్
-    if ((senderData.coins || 0) <= 5100) {
-    return alert("5100 Coins కంటే ఎక్కువ balance ఉంటే మాత్రమే transfer చేయవచ్చు.");
-    }
-    // 5100 ceking
+    
 
     // Loading / Processing alert
     document.getElementById("receiverNameDisplay").innerText = "Processing Transfer...";
@@ -1397,6 +1393,14 @@ async function processTransfer() {
    
             if ((freshSenderDoc.data().coins || 0) < amount) {
                 throw "సరిపడా కాయిన్స్ లేవు.";
+                // 5100 చెకింగ్
+                const remainingBalance = (senderData.coins || 0) - amount;
+
+                if (remainingBalance < 5100) {
+                     document.getElementById("receiverNameDisplay").style.display = "none";
+                     return alert("Transfer తరువాత minimum 5100 Coins ఉండాలి.");
+                 }
+                // 5100 ceking
             }
             transaction.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
             transaction.update(recipientDoc.ref, { coins: firebase.firestore.FieldValue.increment(amount) });
