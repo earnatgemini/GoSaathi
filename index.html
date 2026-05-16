@@ -338,10 +338,10 @@
             <h3>Balance:</h3>
             <h2 id="coinBalance">0</h2>
             <p>Coins</p> 
+        <div class="card">
             <p style="font-size: 12px; color: #aaa;">*100 Coins = Rs. 1.</p>
-</div>
-
-         </div>
+        </div>
+        </div>
          <div class="card">
             <h3>💰 Withdraw Money</h3>
             <p>Current Coins: <span id="userCoinsDisplay">0</span></p>
@@ -1352,13 +1352,13 @@ async function processTransfer() {
     if (targetTransferId.length !== 8) {
         return alert("8 అంకెల Account Number మాత్రమే ఎంటర్ చేయండి.");
     }
+    
+    if (!amount || amount <=99) return alert("దయచేసి సరైన (100 లేదా ఆపైన) Coins ఎంటర్ చేయండి.");
     // 5100 చెకింగ్
     if ((senderData.coins || 0) <= 5100) {
-    document.getElementById("receiverNameDisplay").style.display = "none";
     return alert("5100 Coins కంటే ఎక్కువ balance ఉంటే మాత్రమే transfer చేయవచ్చు.");
-            }
+    }
     // 5100 ceking
-    if (!amount || amount <=99) return alert("దయచేసి సరైన (100 లేదా ఆపైన) Coins ఎంటర్ చేయండి.");
 
     // Loading / Processing alert
     document.getElementById("receiverNameDisplay").innerText = "Processing Transfer...";
