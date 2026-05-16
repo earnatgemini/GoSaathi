@@ -342,15 +342,7 @@
             <p style="font-size: 12px; color: #aaa;">*100 Coins = Rs. 1.</p>
         </div>
         </div>
-         <div class="card">
-            <h3>💰 Withdraw Money</h3>
-            <p>Current Coins: <span id="userCoinsDisplay">0</span></p>
-            <input type="number" id="withdrawAmount" placeholder="Enter Amount (₹)">
-            <input type="text" id="upiId" placeholder="Enter UPI ID (e.g., name@upi)">
-            <button onclick="requestWithdrawal()" style="background: #2e7d32; color: white;">Withdraw Now</button>
-            <p style="font-size: 12px; color: #aaa;">* Min. Balance 50,000 coins required.<br>* Min. Withdrawal ₹100.</p>
-          </div>
-          <div class="card">
+     <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3 style="margin: 0;">మీ స్నేహితునికి Coins పంపండి:</h3>
         <button onclick="openQRModal()" style="width: auto; padding: 5px 10px; background: #ffcc00; color: black; font-size: 12px; border-radius: 5px;">Show QR Code</button>
@@ -370,7 +362,14 @@
     <button onclick="processTransfer()" style="background:var(--secondary); margin-top: 15px;">Send Coins</button>
     <p style="font-size: 12px; color: #aaa;">*  5,000 coins కంటే ఎక్కువ ఉంటే Transfer అవుతాయి.<br>* Min. 100 కంటే ఎక్కువ Coins పంపాలి.</p>
 </div>
-
+         <div class="card">
+            <h3>💰 Withdraw Money</h3>
+            <p>Current Coins: <span id="userCoinsDisplay">0</span></p>
+            <input type="number" id="withdrawAmount" placeholder="Enter Amount (₹)">
+            <input type="text" id="upiId" placeholder="Enter UPI ID (e.g., name@upi)">
+            <button onclick="requestWithdrawal()" style="background: #2e7d32; color: white;">Withdraw Now</button>
+            <p style="font-size: 12px; color: #aaa;">* Min. Balance 50,000 coins required.<br>* Min. Withdrawal ₹100.</p>
+          </div>
           
 <div id="qrModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); border:1px solid #ccc; padding:20px; background:#fff; z-index:1000; text-align:center; border-radius:10px; box-shadow: 0px 4px 15px rgba(0,0,0,0.2);">
     <h3>మీ QR కోడ్</h3>
@@ -379,7 +378,6 @@
     <button onclick="downloadQRSticker()" style="background-color: #28a745; color: white; padding: 5px; border: none; border-radius: 5px;">Download QR Code</button>
     <button onclick="closeQRModal()" style="background-color: #dc3545; color: white; padding: 5px; border: none; border-radius: 5px;">Close</button>
 </div>
-     
      
      <div class="card">
             <h3>Add Coins (Scan & Pay)</h3>
