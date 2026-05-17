@@ -520,6 +520,10 @@ function checkUserStatus(user) {
                 document.getElementById('inviteCount').innerText = data.invites || 0;
                 document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
                 updateTreasureUI(data.specialTreasure?.balance || 0, 30000);
+                if(user.uid === ADMIN_UID) {
+                    document.getElementById('admin-panel').style.display = 'block';
+                    loadAdminData();
+                }
                 showPage('home');
             } else showPage('activation-screen');
         } else handleNewUser(user);
@@ -621,14 +625,97 @@ async function activateByCode() {
     }
 }
 
+let confirmationResult = null; // OTP వెరిఫికేషన్ స్టేట్ దాచడానికి
+
+// 1. పేజీ లోడ్ అవ్వగానే బ్యాక్‌గ్రౌండ్‌లో ReCaptcha ని రన్ చేయాలి
+window.onload = function() {
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+        'size': 'invisible', // యూజర్‌కి ఇబ్బంది లేకుండా invisible గా ఉంటుంది
+        'callback': (response) => { /* ReCaptcha solved */ }
+    });
+};
+
+// 2. ఫోన్ నంబర్ ఆల్రెడీ ఉందో లేదో చెక్ చేసి OTP పంపే ఫంక్షన్
+async function checkAndSendOtp() {
+    let phone = document.getElementById('userPhone').value.trim();
+    
+    // ఒకవేళ +91 ఇవ్వకపోతే ఆటోమేటిక్‌గా యాడ్ చేయడం కోసం
+    if(!phone.startsWith("+91")) {
+        phone = "+91" + phone;
+    }
+
+    if(phone.length < 13) return alert("దయచేసి సరైన ఫోన్ నంబర్ ఎంటర్ చేయండి!");
+
+    try {
+        // --- వాలిడేషన్ చెక్: నంబర్ ఆల్రెడీ వేరేవాళ్లు వాడారా? ---
+        const snapshot = await db.collection("Users").where("phone", "==", phone).get();
+        if(!snapshot.empty) {
+            return alert("ఈ ఫోన్ నంబర్ ఆల్రెడీ వేరే అకౌంట్‌కి లింక్ అయి ఉంది! దయచేసి వేరే నంబర్ ఇవ్వండి.");
+        }
+
+        // --- నంబర్ యూనిక్ అయితే OTP పంపడం ---
+        alert("OTP పంపుతున్నాము, దయచేసి వేచి ఉండండి...");
+        
+        const appVerifier = window.recaptchaVerifier;
+        const confirmation = await auth.signInWithPhoneNumber(phone, appVerifier);
+        
+        confirmationResult = confirmation; // స్టేట్ సేవ్ చేసాం
+        
+        // UI మార్పులు
+        document.getElementById('otpArea').style.display = 'block';
+        document.getElementById('btnSendOtp').style.display = 'none';
+        alert("మీ మొబైల్ నంబర్‌కి OTP పంపబడింది!");
+
+    } catch (error) {
+        console.error("SMS Error:", error);
+        alert("OTP పంపడంలో సమస్య వచ్చింది: " + error.message);
+    }
+}
+
+// 3. యూజర్ ఎంటర్ చేసిన OTP ని వెరిఫై చేసే ఫంక్షన్
+async function verifyOtpCode() {
+    const code = document.getElementById('otpCode').value.trim();
+    if(!code) return alert("OTP ఎంటర్ చేయండి!");
+
+    try {
+        // OTP ని వెరిఫై చేస్తున్నాం
+        await confirmationResult.confirm(code);
+        
+        alert("ఫోన్ నంబర్ విజయవంతంగా వెరిఫై చేయబడింది! ఇప్పుడు మీరు వివరాలు సేవ్ చేయవచ్చు.");
+        
+        // UI అప్‌డేట్
+        document.getElementById('otpArea').style.display = 'none';
+        document.getElementById('btnSaveInfo').style.display = 'block'; // సేవ్ బటన్ చూపిస్తాం
+        document.getElementById('userPhone').disabled = true; // నంబర్ మార్చకుండా లాక్ చేస్తాం
+        
+    } catch (error) {
+        console.error("OTP Verification Failed:", error);
+        alert("తప్పుడు OTP! దయచేసి మళ్ళీ చెక్ చేయండి.");
+    }
+}
+
+// 4. వివరాలను Firestore లో సేవ్ చేసే ఫంక్షన్ (మీ పాత ఫంక్షన్‌లో చిన్న మార్పు)
 function submitBasicInfo() {
-    const phone = document.getElementById('userPhone').value;
+    let phone = document.getElementById('userPhone').value.trim();
+    if(!phone.startsWith("+91")) phone = "+91" + phone;
+
     const village = document.getElementById('userVillage').value;
     const gender = document.getElementById('userGender').value;
     const tc = document.getElementById('tcCheck').checked;
-    if(!phone || !gender || !tc) return alert("పూర్తి వివరాలు నింపండి.(Fill all details!)");
-    db.collection("Users").doc(auth.currentUser.uid).update({ phone, village, gender })
-    .then(() => clearForm(['userPhone', 'userVillage', 'userGender', 'tcCheck']));
+
+    if(!phone || !gender || !tc) return alert("అన్ని వివరాలు పూర్తి చేయండి!");
+
+    db.collection("Users").doc(auth.currentUser.uid).update({ 
+        phone: phone, 
+        village: village, 
+        gender: gender 
+    })
+    .then(() => {
+        alert("వివరాలు సేవ్ చేయబడ్డాయి!");
+        clearForm(['userPhone', 'userVillage', 'userGender', 'tcCheck', 'otpCode']);
+        // ఇక్కడ ఆటోమేటిక్‌గా 'activation-screen' కి వెళ్తుంది, ఎందుకంటే membership ఇంకా 'Pending' లోనే ఉంది.
+    })
+    .catch(err => alert("Error saving data: " + err.message));
 }
 
 async function postRide() {
