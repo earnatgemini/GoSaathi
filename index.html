@@ -497,7 +497,6 @@ auth.onAuthStateChanged(user => {
     if (user) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('myUidDisplay').innerText = user.uid;
-        document.getElementById('myNameDisplay').innerText = user.name;
         checkUserStatus(user);
         if(user.uid === ADMIN_UID) {
             document.getElementById('admin-panel').style.display = 'block';
@@ -521,6 +520,7 @@ function checkUserStatus(user) {
                 document.getElementById('main-ui').style.display = 'block';
                 document.getElementById('coinBalance').innerText = data.coins || 0;
                 document.getElementById('inviteCount').innerText = data.invites || 0;
+                document.getElementById('myNameDisplay').innerText = data.name|| "Update Kyc";
                 document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
                 updateTreasureUI(data.specialTreasure?.balance || 0, 30000);
                 if(user.uid === ADMIN_UID) {
