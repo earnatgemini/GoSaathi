@@ -515,8 +515,8 @@ function checkUserStatus(user) {
             const data = doc.data();
             if (!data.transferId) ensureTransferId(user.uid).catch(err => console.error("Transfer ID assign error:", err));
             document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
-            if (!data.phone) showPage('basic-info-screen');
-            else if (data.membership === "Active") {
+            if (!data.phone){ showPage('basic-info-screen');
+        }else if (data.membership === "Active") {
                 document.getElementById('main-ui').style.display = 'block';
                 document.getElementById('coinBalance').innerText = data.coins || 0;
                 document.getElementById('inviteCount').innerText = data.invites || 0;
@@ -528,8 +528,9 @@ function checkUserStatus(user) {
                     loadAdminData();
                 }
                 showPage('home');
-            } else showPage('activation-screen');
-        } else handleNewUser(user);
+            } else {showPage('activation-screen');
+                   }
+        } else {handleNewUser(user);}
     });
 }
 
@@ -682,10 +683,11 @@ async function verifyOtpCode() {
 
     try {
         // OTP ని వెరిఫై చేస్తున్నాం
-        await confirmationResult.confirm(code);
-        
-        alert("ఫోన్ నంబర్ విజయవంతంగా వెరిఫై చేయబడింది! ఇప్పుడు మీరు వివరాలు సేవ్ చేయవచ్చు.");
-        
+       
+        const credential = firebase.auth.PhoneAuthProvider.credential(confirmationResult.verificationId, code);
+       // ప్రస్తుత గూగుల్ యూజర్ అకౌంట్‌కే ఈ ఫోన్ నంబర్ లింక్ అవుతుంది (కొత్త యూజర్ క్రియేట్ అవ్వదు)
+        await auth.currentUser.linkWithCredential(credential);
+        alert("ఫోన్ నంబర్ విజయవంతంగా వెరిఫై చేయబడింది!");
         // UI అప్‌డేట్
         document.getElementById('otpArea').style.display = 'none';
         document.getElementById('btnSaveInfo').style.display = 'block'; // సేవ్ బటన్ చూపిస్తాం
@@ -693,7 +695,11 @@ async function verifyOtpCode() {
         
     } catch (error) {
         console.error("OTP Verification Failed:", error);
-        alert("తప్పుడు OTP! దయచేసి మళ్ళీ చెక్ చేయండి.");
+        if (error.code === "auth/provider-already-linked" || error.code === "auth/credential-already-in-use") {
+            alert("ఈ ఫోన్ నంబర్ ఆల్రెడీ మీతో లేదా వేరే అకౌంట్‌తో లింక్ అయి ఉంది!");
+            } else {
+            alert("తప్పు OTP! దయచేసి మళ్ళీ చెక్ చేయండి.");
+        }
     }
 }
 
@@ -706,7 +712,7 @@ function submitBasicInfo() {
     const gender = document.getElementById('userGender').value;
     const tc = document.getElementById('tcCheck').checked;
 
-    if(!phone || !gender || !tc) return alert("అన్ని వివరాలు పూర్తి చేయండి!");
+    if(!village || !gender || !tc) return alert("అన్ని వివరాలు పూర్తి చేయండి!");
 
     db.collection("Users").doc(auth.currentUser.uid).update({ 
         phone: phone, 
@@ -714,11 +720,14 @@ function submitBasicInfo() {
         gender: gender 
     })
     .then(() => {
-        alert("వివరాలు సేవ్ చేయబడ్డాయి!");
+        alert("మీ వివరాలు విజయవంతంగా సేవ్ చేయబడ్డాయి!");
         clearForm(['userPhone', 'userVillage', 'userGender', 'tcCheck', 'otpCode']);
         // ఇక్కడ ఆటోమేటిక్‌గా 'activation-screen' కి వెళ్తుంది, ఎందుకంటే membership ఇంకా 'Pending' లోనే ఉంది.
     })
-    .catch(err => alert("Error saving data: " + err.message));
+    .catch(err =>{ 
+        console.error("Error saving data:", err);
+        alert("డేటా సేవ్ చేయడంలో సమస్య వచ్చింది: " + err.message);
+        });
 }
 
 async function postRide() {
