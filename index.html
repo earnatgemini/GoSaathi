@@ -508,6 +508,7 @@ function checkUserStatus(user) {
                 document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
                 document.getElementById('myNameDisplay').innerText = data.name || "Update KYC";
                 updateTreasureUI(data.specialTreasure?.balance || 0, 30000);
+                listenToHostRequests();
                 showPage('home');
             } else showPage('activation-screen');
         } else handleNewUser(user);
@@ -991,17 +992,21 @@ async function processCompleteRide(reqId) {
             const hostRef = db.collection("Users").doc(reqData.hostId);
             const rideRef = db.collection("Rides").doc(reqData.rideId);
 
-            // Host కి కట్ అయిన కాయిన్స్ యాడ్ చేయడం
-            transaction.update(hostRef, { coins: firebase.firestore.FieldValue.increment(reqData.offerPrice) });
+            // Paid ride అయితే మాత్రమే ఇక్కడ కాయిన్స్ ట్రాన్స్‌ఫర్ అవుతాయి
+            if (reqData.rideType === "Paid") {
+                transaction.update(hostRef, { coins: firebase.firestore.FieldValue.increment(reqData.offerPrice) });
+            }
 
-            // Status -> 'Completed' (దీనివల్ల Active Rides నుండి పూర్తిగా డిసప్పియర్ అవుతుంది)
+            // Status -> 'Completed' గా మార్చడం
             transaction.update(reqRef, { status: "Completed" });
             transaction.update(rideRef, { status: "Completed" });
         });
-        alert("Ride Completed Successfully! కాయిన్స్ హోస్ట్ కి బదిలీ అయ్యాయి.");
+        
+        alert("Ride Completed Successfully!");
         showPage('home'); 
     } catch (error) {
         console.error("Transaction failed: ", error);
+        alert("రైడ్ కంప్లీట్ చేయడంలో సమస్య వచ్చింది.");
     }
 }
     function initiateScratchCard(hostId, coinsAmount) {
@@ -1690,6 +1695,40 @@ function showNearbyRides(centerLocation) {
             .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<h4>${ride.name}</h4><p>వాహనం: ${ride.type}</p>`))
             .addTo(map);
     });
+}
+    // హోస్ట్ కోసం లైవ్ లిజనర్: రైడ్ కంప్లీట్ అవ్వగానే నోటిఫికేషన్ లేదా స్క్రాచ్ కార్డ్ చూపిస్తుంది
+function listenToHostRequests() {
+    db.collection("Requests")
+      .where("hostId", "==", auth.currentUser.uid)
+      .onSnapshot(snapshot => {
+          snapshot.docChanges().forEach(change => {
+              // కేవలం డేటాబేస్ మోడిఫై (అప్‌డేట్) అయినప్పుడు మాత్రమే
+              if (change.type === "modified") {
+                  const reqData = change.doc.data();
+                  const reqId = change.doc.id;
+                  
+                  // రైడ్ స్టేటస్ 'Completed' గా మారి, హోస్ట్‌కి ఇంకా అలర్ట్ వెళ్ళనప్పుడు
+                  if (reqData.status === "Completed" && !reqData.hostNotified) {
+                      
+                      // మళ్ళీ మళ్ళీ అలర్ట్ రాకుండా డేటాబేస్ లో ఒక ఫ్లాగ్ (hostNotified: true) అప్‌డేట్ చేస్తాం
+                      db.collection("Requests").doc(reqId).update({ hostNotified: true });
+
+                      // 1. ఒకవేళ ఇది PAID RIDE అయితే హోస్ట్ కి ఈ మెసేజ్ వస్తుంది
+                      if (reqData.rideType === "Paid") {
+                          alert(`🎉 Coins Received From Your Saathi! (${reqData.offerPrice} Coins మీ వాలెట్ కి యాడ్ అయ్యాయి)`);
+                      } 
+                      // 2. ఒకవేళ ఇది FREE RIDE అయితే హోస్ట్ కి స్క్రాచ్ కార్డ్ ఓపెన్ అవుతుంది
+                      else if (reqData.rideType === "Free") {
+                          // 50 నుండి 200 మధ్యలో రాండమ్ కాయిన్స్ గిఫ్ట్
+                          const wonCoins = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
+                          
+                          // మీ స్క్రాచ్ కార్డ్ ఫంక్షన్ ని ఇక్కడ ట్రిగ్గర్ చేస్తున్నాం
+                          initiateScratchCard(reqData.hostId, wonCoins);
+                      }
+                  }
+              }
+          });
+      });
 }
 </script>
 </body>
