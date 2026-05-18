@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <title>Go Saathi PWA Logo Generator</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 40px; background: #f4f4f9; }
+        .box { background: white; padding: 30px; border-radius: 15px; max-width: 400px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        button { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 20px; font-weight: bold; }
+        button:hover { background: #218838; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>Go Saathi PWA Logo Maker</h2>
+        <p>మీ లోగో ఇమేజ్‌ని ఇక్కడ అప్‌లోడ్ చేయండి:</p>
+        <input type="file" id="imageInput" accept="image/*"><br>
+        <button id="generateBtn" style="display:none;">Generate & Download Logos</button>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const generateBtn = document.getElementById('generateBtn');
+        let userImage = new Image();
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    userImage.src = event.target.result;
+                    userImage.onload = () => { generateBtn.style.display = 'inline-block'; };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        generateBtn.addEventListener('click', () => {
+            createLogo(192, 'logo192.png');
+            createLogo(512, 'logo512.png');
+            alert('రెండు లోగోలు (192px & 512px) డౌన్‌లోడ్ అయ్యాయి!');
+        });
+
+        function createLogo(size, filename) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // ఒరిజినల్ ఇమేజ్ డ్రా చేయడం
+            ctx.drawImage(userImage, 0, 0, size, size);
+
+            // "Go Saathi" టెక్స్ట్ సెట్టింగ్స్
+            ctx.fillStyle = "#ffffff";
+            ctx.shadowColor = "#000000";
+            ctx.shadowBlur = Math.max(2, size * 0.01);
+            ctx.font = `bold ${Math.floor(size * 0.09)}px sans-serif`;
+            ctx.textAlign = "center";
+            
+            // టెక్స్ట్‌ని ఇమేజ్ కింద భాగంలో ప్రింట్ చేయడం
+            ctx.fillText("Go Saathi", size / 2, size * 0.88);
+
+            // ఆటోమేటిక్ డౌన్‌లోడ్ ట్రిగ్గర్
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>
