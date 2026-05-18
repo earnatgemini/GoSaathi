@@ -342,12 +342,10 @@
         </div>
      <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="margin: 0;">మీ స్నేహితునికి Coins పంపండి:</h3>
+        <h3 style="margin: 0;">Coins పంపండి:</h3>
         <button onclick="openQRModal()" style="width: auto; padding: 5px 10px; background: #ffcc00; color: black; font-size: 12px; border-radius: 5px;">Show QR Code</button>
     </div>
-    
-    <p>8 అంకెల Account Number Profile లో ఉంటుంది.</p>
-    
+    <p>Account Number Profile లో ఉంటుంది.</p>
     <button onclick="startScanner()" style="margin-bottom: 15px; padding: 10px; background: var(--dark); color: white; border-radius: 8px;">📷 Scan QR Code</button>
     <div id="reader" style="width: 100%; display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden;"></div>
 
@@ -394,13 +392,15 @@
  </div>
     <div id="profile" style="display:none;">
         <div class="card">
-            <h3>Profile & Invite</h3>
+            <h3>Profile</h3>
+             <h2>Account Number:</h2>
+            <code id="myTransferIdDisplay" style="display:block; font-size:20px; background:#666; padding:10px;"></code>
+            <code id="myNameDisplay" style="display:block; background:#666; padding:10px;"></code>
+            
             <p>Invitations Left: <b id="inviteCount">0</b></p>
-            <p>Your UID:</p>
+            <p>Invitation Code:</p>
             <code id="myUidDisplay"style="display:block; background:#eee; padding:10px;"></code>
-            <p>Account Number (8 digits):</p>
-            <code id="myTransferIdDisplay" style="display:block; background:#eee; padding:10px;"></code>
-            <code id="myNameDisplay" style="display:block; background:#eee; padding:10px;"></code>
+           
             <button onclick="shareInvite()" style="background:#25D366;">WhatsApp Invite</button>
             <button onclick="auth.signOut()" style="background:#666; margin-top:20px;">Logout</button>
         </br></br>
@@ -465,7 +465,25 @@
         </div>
     </div>
 </div>
-    
+  <!-- Scratch Card Modal (ఇది తప్పనిసరిగా ఉండాలి) -->
+<div id="scratchModal" class="scratch-overlay">
+    <div class="scratch-container">
+        <h3 style="color:var(--dark); margin:0;">🎉 బంపర్ గిఫ్ట్ కార్డ్! 🎉</h3>
+        <p style="font-size:14px; color:#666; margin:5px 0;">రైడ్ పూర్తయింది! కింద ఉన్న కార్డ్‌ని స్క్రాచ్ చేయండి.</p>
+        
+        <div class="scratch-card-box">
+            <!-- వెనకాల ఉండే గిఫ్ట్ అమౌంట్ -->
+            <div class="reward-inside">
+                మీరు గెలుచుకున్నారు!
+                <span id="wonCoinsText">0</span> Coins
+            </div>
+            <!-- పైన ఉండే స్క్రాచ్ లేయర్ -->
+            <canvas id="scratchCanvas" class="scratch-canvas" width="200" height="200"></canvas>
+        </div>
+        
+        <button id="btnClaimReward" style="display:none; background:var(--secondary);" onclick="closeScratchModal()">Claim Reward</button>
+    </div>
+</div>  
 <script>
 const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY", authDomain: "gemini-spinning-wheel-game.firebaseapp.com", projectId: "gemini-spinning-wheel-game" };
 firebase.initializeApp(firebaseConfig);
@@ -1232,7 +1250,7 @@ function sendJoinRequest(rideId, rData, rideType, offer, comm) {
     db.collection("Requests").add({
         rideId: rideId, hostId: rData.saathiId, coSaathiId: auth.currentUser.uid, coSaathiName: auth.currentUser.displayName,
         from: rData.from, to: rData.to, rideType: rideType, offerPrice: Number(offer), commToPay: comm, status: "Pending", createdAt: Date.now()
-    }).then(() => alert("రిక్వెస్ట్ పంపబడింది!"));
+    }).then(() => alert("రిక్వెస్ట్ పంపబడింది! Host Accept చేస్తే Status మారుతుంది. "));
 }
 
 function loadIncomingRequests() {
