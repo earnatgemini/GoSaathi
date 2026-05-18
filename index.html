@@ -937,6 +937,7 @@ function getRideButtons(reqId, status, isHost, offerPrice) {
         }
         if (status === 'Joined') {
             return `<button onclick="processCompleteRide('${reqId}')" style="background:orange; color:white; padding:10px; border-radius:8px; border:none; width:100%; font-weight:bold;">✅ Complete Ride</button>`;
+                      
         }
     }
     return '';
@@ -997,11 +998,103 @@ async function processCompleteRide(reqId) {
             transaction.update(reqRef, { status: "Completed" });
             transaction.update(rideRef, { status: "Completed" });
         });
-        alert("Ride Completed Successfully! కాయిన్స్ హోస్ట్ కి బదిలీ అయ్యాయి.");
-        showPage('home'); 
+        if (req.rideType === "Free") {
+            // 50 నుండి 200 మధ్యలో రాండమ్ కాయిన్స్ (Formula: Math.floor(Math.random() * (max - min + 1)) + min)
+            const wonCoins = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
+            
+            // స్క్రాచ్ కార్డ్ సెటప్ ప్రారంభం
+            initiateScratchCard(req.hostId, wonCoins);
+        } else {
+            // Paid ride అయితే డైరెక్ట్ గా హోమ్ కి వెళ్ళిపోతుంది
+         alert("Ride Completed Successfully! కాయిన్స్ హోస్ట్ కి బదిలీ అయ్యాయి.");
+        showPage('home');} 
     } catch (error) {
         console.error("Transaction failed: ", error);
     }
+}
+    function initiateScratchCard(hostId, coinsAmount) {
+    // వెనకాల టెక్స్ట్ అప్‌డేట్ చేయడం
+    document.getElementById('wonCoinsText').innerText = coinsAmount;
+    document.getElementById('scratchModal').style.display = 'flex';
+    document.getElementById('btnClaimReward').style.display = 'none';
+
+    const canvas = document.getElementById('scratchCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // గోల్డ్ కలర్ లేయర్ ని క్యాన్వాస్ పై పూయడం (GPay లాగా)
+    ctx.fillStyle = '#ffcc00'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // కార్డ్ పైన చిన్న టెక్స్ట్ రాయడం
+    ctx.fillStyle = '#1e3c72';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ఇక్కడ స్క్రాచ్ చేయండి', 100, 105);
+
+    let isDrawing = false;
+
+    // స్క్రాచ్ ఈవెంట్స్ (మొబైల్ & డెస్క్‌టాప్ కోసం)
+    function scratch(e) {
+        if (!isDrawing) return;
+        
+        // టచ్ లేదా మౌస్ పొజిషన్ తీసుకోవడం
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+        ctx.globalCompositeOperation = 'destination-out'; // గీసిన చోట కలర్ తుడిచిపెట్టుకుపోతుంది
+        ctx.beginPath();
+        ctx.arc(x, y, 20, 0, Math.PI * 2); // 20px సైజుతో స్క్రాచ్ అవుతుంది
+        ctx.fill();
+        
+        checkScratchPercentage();
+    }
+
+    canvas.addEventListener('mousedown', () => isDrawing = true);
+    canvas.addEventListener('touchstart', () => isDrawing = true);
+    window.addEventListener('mouseup', () => isDrawing = false);
+    window.addEventListener('touchend', () => isDrawing = false);
+    canvas.addEventListener('mousemove', scratch);
+    canvas.addEventListener('touchmove', scratch);
+
+    // ఎంత శాతం స్క్రాచ్ చేశారో చెక్ చేసే లాజిక్
+    function checkScratchPercentage() {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imageData.data;
+        let clearedPixels = 0;
+
+        for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i + 3] === 0) clearedPixels++; // ట్రాన్స్‌పరెంట్ అయిన పిక్సెల్స్ ని లెక్కించడం
+        }
+
+        const percentage = (clearedPixels / (canvas.width * canvas.height)) * 100;
+        
+        // 60% కంటే ఎక్కువ స్క్రాచ్ చేస్తే మొత్తం క్లియర్ చేసి కాయిన్స్ యాడ్ చేసే బటన్ చూపిస్తాం
+        if (percentage > 60) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // క్యాన్వాస్ మొత్తం క్లియర్
+            document.getElementById('btnClaimReward').style.display = 'block';
+            
+            // బటన్ క్లిక్ చేసినప్పుడు డేటాబేస్ లో కాయిన్స్ యాడ్ అవ్వాలి
+            document.getElementById('btnClaimReward').onclick = async () => {
+                document.getElementById('btnClaimReward').disabled = true;
+                try {
+                    // హోస్ట్ అకౌంట్ కి గెలుచుకున్న కాయిన్స్ ని యాడ్ చేయడం
+                    await db.collection("Users").doc(hostId).update({
+                        coins: firebase.firestore.FieldValue.increment(coinsAmount)
+                    });
+                    alert(`🎉 సక్సెస్! మీ వాలెట్‌కి ${coinsAmount} Coins యాడ్ అయ్యాయి.`);
+                    closeScratchModal();
+                } catch (err) {
+                    alert("కాయిన్స్ అప్‌డేట్ చేయడంలో లోపం: " + err.message);
+                }
+            };
+        }
+    }
+}
+
+function closeScratchModal() {
+    document.getElementById('scratchModal').style.display = 'none';
+    showPage('home'); // గిఫ్ట్ తీసుకున్నాక హోమ్ పేజీకి పంపడం
 }
 
 // 5. Initial Accept Logic
