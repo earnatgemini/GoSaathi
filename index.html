@@ -1748,6 +1748,14 @@ function listenToHostRequests() {
       });
 }
     // PWA ఇన్‌స్టాల్ లాజిక్
+// 1. Service Worker Registration (యాప్ లాగా పనిచేయడానికి ఇది తప్పనిసరి)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log("Service Worker Registered"))
+    .catch((err) => console.log("Service Worker Failed", err));
+}
+
+// 2. PWA ఇన్‌స్టాల్ లాజిక్ (మీ రెండు బటన్స్ కోసం)
 let deferredPrompt;
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -1769,7 +1777,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then((choiceResult) => {
                 if (choiceResult.outcome === 'accepted') {
-                    console.log('User installed the GoSaathi app');
+                    console.log('User installed the Go Sathi app');
                     // ఇన్‌స్టాల్ అయ్యాక బటన్స్ హైడ్ చేయడం
                     if(installBtnLogin) installBtnLogin.style.display = 'none';
                     if(installBtnProfile) installBtnProfile.style.display = 'none';
@@ -1783,6 +1791,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     if(installBtnLogin) installBtnLogin.addEventListener('click', installApp);
     if(installBtnProfile) installBtnProfile.addEventListener('click', installApp);
 });
+
 </script>
 </body>
 </html>
