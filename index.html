@@ -228,6 +228,7 @@
         <h2>Welcome</h2>
         <img src="banner_header.webp" style="height:80px; margin-bottom:20px;"><br>
         <button onclick="googleLogin()" style="background:#db3437; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
+        <button id="installBtnLogin" style="display:none; background: var(--dark); margin-top:15px; padding:10px;">📱 Install GoSaathi App</button>
     </div>
 
 <!-- basic-info-screen లోపల ఇలా మార్చండి -->
@@ -402,6 +403,7 @@
             <code id="myUidDisplay"style="display:block; background:#eee; padding:10px;"></code>
            
             <button onclick="shareInvite()" style="background:#25D366;">WhatsApp Invite</button>
+            <button id="installBtnProfile" style="display:none; background: var(--dark); margin-top:10px;">📱 Install App</button>
             <button onclick="auth.signOut()" style="background:#666; margin-top:20px;">Logout</button>
         </br></br>
             <a href="about.html">About Us</a>
@@ -1745,6 +1747,42 @@ function listenToHostRequests() {
           });
       });
 }
+    // PWA ఇన్‌స్టాల్ లాజిక్
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // బ్రౌజర్ ఆటోమేటిక్ ప్రాంప్ట్ ని ఆపడం
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // రెండు బటన్స్ ని వెతకడం
+    const installBtnLogin = document.getElementById('installBtnLogin');
+    const installBtnProfile = document.getElementById('installBtnProfile');
+
+    // బటన్స్ ఉంటే వాటిని కనిపించేలా చేయడం
+    if(installBtnLogin) installBtnLogin.style.display = 'block';
+    if(installBtnProfile) installBtnProfile.style.display = 'block';
+
+    // బటన్ క్లిక్ చేసినప్పుడు జరిగే యాక్షన్ ని ఒక ఫంక్షన్ లో రాయడం
+    const installApp = () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User installed the GoSaathi app');
+                    // ఇన్‌స్టాల్ అయ్యాక బటన్స్ హైడ్ చేయడం
+                    if(installBtnLogin) installBtnLogin.style.display = 'none';
+                    if(installBtnProfile) installBtnProfile.style.display = 'none';
+                }
+                deferredPrompt = null;
+            });
+        }
+    };
+
+    // రెండు బటన్స్ కి క్లిక్ ఈవెంట్ ఇవ్వడం
+    if(installBtnLogin) installBtnLogin.addEventListener('click', installApp);
+    if(installBtnProfile) installBtnProfile.addEventListener('click', installApp);
+});
 </script>
 </body>
 </html>
