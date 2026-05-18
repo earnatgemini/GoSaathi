@@ -233,32 +233,18 @@
 <!-- basic-info-screen లోపల ఇలా మార్చండి -->
 <div id="basic-info-screen" style="display:none;">
     <div class="card">
-        <h3>Basic Information</h3>
-        <input type="text" id="userPhone" placeholder="Mobile Number (with +91)">
-        
-        <!-- ReCaptcha Container (ఇది తప్పనిసరి) -->
-        <div id="recaptcha-container" style="margin-top:10px;"></div>
-        
-        <!-- OTP పంపినప్పుడు మాత్రమే ఈ బాక్స్ కనిపిస్తుంది -->
-        <div id="otpArea" style="display:none;">
-            <input type="text" id="otpCode" placeholder="Enter 6-digit OTP">
-            <button onclick="verifyOtpCode()" style="background:var(--secondary);">Verify OTP</button>
+            <h3>Basic Information</h3>
+            <input type="text" id="userPhone" placeholder="Mobile Number">
+            <input type="text" id="userVillage" placeholder="Village / City">
+            <select id="userGender">
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+                 <p><input type="checkbox" id="tcCheck" style="width:auto;">
+                 I accept <a href="privacy.html" target="_blank" style="color:var(--primary); font-weight:bold;">Terms & Privacy Policy</a></p>
+               <button onclick="submitBasicInfo()">Save & Continue</button>
         </div>
-
-        <input type="text" id="userVillage" placeholder="Village / City">
-        <select id="userGender">
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-        </select>
-        <p><input type="checkbox" id="tcCheck" style="width:auto;"> I accept Terms & Conditions</p>
-        
-        <!-- మొదటి బటన్ కేవలం OTP పంపడానికి మరియు నంబర్ చెక్ చేయడానికి -->
-        <button id="btnSendOtp" onclick="checkAndSendOtp()">Send OTP & Verify Number</button>
-        
-        <!-- సేవ్ బటన్ ని మొదట దాచిపెడతాం, OTP వెరిఫై అయ్యాక చూపిస్తాం -->
-        <button id="btnSaveInfo" onclick="submitBasicInfo()" style="display:none; background:var(--secondary);">Save & Continue</button>
-    </div>
 </div>
 
     <div id="activation-screen" style="display:none;">
@@ -350,9 +336,9 @@
             <h3>Balance:</h3>
             <h2 id="coinBalance">0</h2>
             <p>Coins</p> 
-        <div class="wallet-card">
-            <p style="font-size: 12px; color: #aaa;">*100 Coins = Rs. 1.</p>
-        </div>
+            <div class=" card wallet-card">
+                <p style="font-size: 12px; color: #aaa;">*100 Coins = Rs. 1.</p>
+            </div>
         </div>
      <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
