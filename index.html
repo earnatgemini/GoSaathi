@@ -998,16 +998,8 @@ async function processCompleteRide(reqId) {
             transaction.update(reqRef, { status: "Completed" });
             transaction.update(rideRef, { status: "Completed" });
         });
-        if (req.rideType === "Free") {
-            // 50 నుండి 200 మధ్యలో రాండమ్ కాయిన్స్ (Formula: Math.floor(Math.random() * (max - min + 1)) + min)
-            const wonCoins = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
-            
-            // స్క్రాచ్ కార్డ్ సెటప్ ప్రారంభం
-            initiateScratchCard(req.hostId, wonCoins);
-        } else {
-            // Paid ride అయితే డైరెక్ట్ గా హోమ్ కి వెళ్ళిపోతుంది
-         alert("Ride Completed Successfully! కాయిన్స్ హోస్ట్ కి బదిలీ అయ్యాయి.");
-        showPage('home');} 
+        alert("Ride Completed Successfully! కాయిన్స్ హోస్ట్ కి బదిలీ అయ్యాయి.");
+        showPage('home'); 
     } catch (error) {
         console.error("Transaction failed: ", error);
     }
