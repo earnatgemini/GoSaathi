@@ -1,7 +1,7 @@
 {
   "name": "Go Saathi Ride Sharing",
   "short_name": "Go Saathi",
-  "start_url": "/index.html",
+  "start_url": "https://earnatgemini.github.io/GoSaathi/index.html",
   "display": "standalone",
   "background_color": "#1e3c72",
   "theme_color": "#007bff",
