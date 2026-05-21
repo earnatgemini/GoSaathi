@@ -813,7 +813,7 @@ const GoldTreasureSystem = {
     // 3. గోల్డ్ క్లెయిమ్ రిక్వెస్ట్ (Admin కి పంపడం)
     requestGoldClaim: async function(userId) {
         const userRef = db.collection('Users').doc(userId);
-        const settingsRef = db.collection('settings').doc('gold_rate');
+        const settingsRef = db.collection('Settings').doc('gold_rate');
 
         try {
             const [userDoc, settingsDoc] = await Promise.all([userRef.get(), settingsRef.get()]);
