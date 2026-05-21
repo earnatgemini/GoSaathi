@@ -3,21 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spin & Win India PRO</title>
+<title>Spin & Win India</title>
 
 <style>
-
 body{
-font-family:Arial;
-background:#0d0d0d;
-color:white;
-text-align:center;
-margin:0;
+font-family:Arial; background:#0d0d0d; color:white; text-align:center; margin:0;
 }
 
 header{
-background:#111;
-padding:20px;
+background:#111; padding:20px;
 }
 
 h1{
@@ -29,21 +23,10 @@ margin-top:30px;
 }
 
 #wheel{
-width:280px;
-height:280px;
-border-radius:50%;
-border:10px solid white;
-margin:auto;
-background:conic-gradient(
-#ff5722 0deg 60deg,
-#4caf50 60deg 120deg,
-#2196f3 120deg 180deg,
-#ffeb3b 180deg 240deg,
-#9c27b0 240deg 300deg,
-#00bcd4 300deg 360deg
+width:280px; height:280px; border-radius:50%; border:10px solid white; margin:auto; background:conic-gradient(
+#ff5722 0deg 60deg, #4caf50 60deg 120deg, #2196f3 120deg 180deg, #ffeb3b 180deg 240deg, #9c27b0 240deg 300deg, #00bcd4 300deg 360deg
 );
-transition:transform 4s ease-out;
-box-shadow:0 0 30px #ff9800;
+transition:transform 4s ease-out; box-shadow:0 0 30px #ff9800;
 }
 
 .pointer{
@@ -51,14 +34,7 @@ font-size:35px;
 }
 
 button{
-padding:12px 25px;
-font-size:18px;
-background:#ff9800;
-border:none;
-border-radius:8px;
-color:white;
-cursor:pointer;
-margin:10px;
+padding:12px 25px; font-size:18px; background:#ff9800; border:none; border-radius:8px; color:white; cursor:pointer; margin:10px;
 }
 
 button:hover{
@@ -66,26 +42,15 @@ background:#ff5722;
 }
 
 .coins{
-font-size:22px;
-margin-top:10px;
+font-size:22px; margin-top:10px;
 }
 
 .popup{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.8);
-display:none;
-align-items:center;
-justify-content:center;
+position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; align-items:center; justify-content:center;
 }
 
 .popup-content{
-background:#222;
-padding:30px;
-border-radius:10px;
+background:#222; padding:30px; border-radius:10px;
 }
 
 .menu{
@@ -97,34 +62,18 @@ margin-top:80px;
 }
 
 input{
-padding:10px;
-margin:5px;
-border-radius:5px;
-border:none;
+padding:10px; margin:5px; border-radius:5px; border:none;
 }
 
 </style>
 </head>
-
 <body>
 
 <header>
-<h1>Spin & Win India 🇮🇳 PRO</h1>
+<h1>Spin & Win India 🇮🇳</h1>
 </header>
 
 <!-- LOGIN -->
-
-<div id="login" class="login">
-
-<h2>Login</h2>
-
-<input id="username" placeholder="Enter username">
-
-<br>
-
-<button onclick="login()">Start Playing</button>
-
-</div>
 
 <!-- GAME -->
 
@@ -180,29 +129,12 @@ let rewards=[5,10,20,0,15,50]
 
 let coins=0
 
-let username=""
-
-function login(){
-
-username=document.getElementById("username").value
-
-if(username==""){
-
-alert("Enter username")
-
-return
-
-}
-
-document.getElementById("login").style.display="none"
-
 document.getElementById("game").style.display="block"
 
-coins=parseInt(localStorage.getItem(username+"_coins"))||100
+coins=parseInt(localStorage.getItem("_coins"))||100
 
 updateCoins()
 
-}
 
 function spin(){
 
