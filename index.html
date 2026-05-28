@@ -641,6 +641,8 @@ function submitBasicInfo() {
 }
 
 async function postRide() {
+    const btn = event.target;
+    btn.disabled = true;
     const from = document.getElementById('from').value;
     const to = document.getElementById('to').value;
     const type = document.getElementById('rideType').value;
@@ -706,6 +708,7 @@ async function postRide() {
   
   clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
   showPage('home');
+    btn.disabled = false;
 }
 
 // 1. UI ని అప్డేట్ చేసే ఫంక్షన్
