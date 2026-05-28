@@ -391,6 +391,13 @@
             <input type="number" id="goldTransferAmount" placeholder="కాయిన్స్ ఎంటర్ చేయండి (Min 1000)">
             <button onclick="GoldTreasureSystem.transferFromWallet(auth.currentUser.uid, Number(document.getElementById('goldTransferAmount').value))" style="background:var(--gold); color:black;">Transfer to Gold</button>
           </div>
+          <div class="card">
+             <h3>📜 Transaction History</h3>
+            <div id="transactionList" style="max-height: 300px; overflow-y: auto;">
+                 హిస్టరీ లోడ్ అవుతోంది...
+            </div>
+         </div>
+
  </div>
     <div id="profile" style="display:none;">
         <div class="card">
@@ -639,6 +646,49 @@ function submitBasicInfo() {
     db.collection("Users").doc(auth.currentUser.uid).update({ phone, village, gender })
     .then(() => clearForm(['userPhone', 'userVillage', 'userGender', 'tcCheck']));
 }
+    
+function logTransaction(uid, type, amount, description) {
+    db.collection("Transactions").add({
+        userId: uid,
+        type: type, // 'Credit' or 'Debit'
+        amount: amount,
+        description: description,
+        time: Date.now()
+    });
+}
+function loadTransactionHistory() {
+    const container = document.getElementById('transactionList');
+    if (!container) return;
+
+    db.collection("Transactions")
+        .where("userId", "==", auth.currentUser.uid)
+        .orderBy("time", "desc")
+        .limit(10) // లేటెస్ట్ 10 ట్రాన్సాక్షన్లు
+        .onSnapshot(snap => {
+            container.innerHTML = "";
+            if (snap.empty) {
+                container.innerHTML = "<p style='text-align:center; color:gray;'>No transactions yet.</p>";
+                return;
+            }
+            snap.forEach(doc => {
+                const t = doc.data();
+                const color = t.type === 'Credit' ? 'green' : 'red';
+                const symbol = t.type === 'Credit' ? '+' : '-';
+                const date = new Date(t.time).toLocaleString();
+
+                container.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; background:white; margin-bottom:5px; border-radius:8px;">
+                        <div>
+                            <div style="font-weight:bold; font-size:14px;">${t.description}</div>
+                            <div style="font-size:11px; color:gray;">${date}</div>
+                        </div>
+                        <div style="font-weight:bold; color:${color};">
+                            ${symbol}${t.amount}
+                        </div>
+                    </div>`;
+            });
+        });
+}
 
 async function postRide() {
     const btn = event.target;
@@ -670,6 +720,9 @@ async function postRide() {
     });
 
     await batch.commit();
+    // postRide లో కాయిన్స్ కట్ అయిన తర్వాత ఇలా రాయండి:
+logTransaction(hostUid, 'Debit', 50, 'Ride Post Fee');
+
     alert(" రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!");
    
    // Ride పోస్ట్ అయ్యాక, డైలీ గిఫ్ట్ లాజిక్
