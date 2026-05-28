@@ -281,11 +281,11 @@
         </script>
 
         <h3>Available Rides (Live)</h3>
-        <p>🔍 SEARCH RIDE(రైడ్లు వెతుకు):</p>
+        <p>🔍 SEARCH(రైడ్లు వెతుకు):</p>
         
         <div style="display:flex; gap:5px; margin-bottom:15px; background:white; padding:5px; border-radius:5px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-        <input type="text" id="searchFrom" placeholder="📍 From (ఎక్కడి నుండి)" onkeyup="filterRides()" style="margin-top:0;">
-        <input type="text" id="searchTo" placeholder="📍 To (ఎక్కడికి)" onkeyup="filterRides()" style="margin-top:0;">
+        <input type="text" id="searchFrom" placeholder="📍 From(🔍)" onkeyup="filterRides()" style="margin-top:0;">
+        <input type="text" id="searchTo" placeholder="📍 To (🔎)" onkeyup="filterRides()" style="margin-top:0;">
         </div>
         
         <div id="requests-section" class="card" style="display:none; border-top: 5px solid var(--gold);">
@@ -1053,6 +1053,10 @@ async function processJoinSaathi(reqId, amount) {
             transaction.update(rideRef, { status: "Joined" });
         });
         alert("Ride Joined! కాయిన్స్ బదిలీ అయ్యాయి.");
+        // transations యాడ్ చేయడం.
+logTransaction(coSaathiId, 'Debit', offerPrice, `${hostId} కి పెయిడ్ అమౌంట్`);
+logTransaction(hostId, 'Credit', offerPrice, `${auth.currentUser.displayName} నుండి వచ్చిన అమౌంట్`);
+
     } catch (error) {
         alert("Error: " + error);
     }
@@ -1198,6 +1202,13 @@ async function acceptRequest(reqId) {
 
     try {
         await batch.commit();
+if (req.rideType === "Free") {
+    logTransaction(coUid, 'Debit', 499, 'Free Ride కమీషన్');
+} else {
+    logTransaction(hostUid, 'Debit', 99, 'Paid Ride హోస్ట్ కమీషన్');
+    logTransaction(coUid, 'Debit', 49, 'Paid Ride కో-సాథీ కమీషన్');
+}
+
         alert("డీల్ కన్ఫర్మ్ అయింది! ఇప్పుడు మీరు జాయిన్ నొక్కినచోట చాట్ చేయవచ్చు.");
     } catch (error) {
         console.error("Error accepting request: ", error);
