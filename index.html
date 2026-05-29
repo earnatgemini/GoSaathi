@@ -1674,6 +1674,9 @@ function showPage(pageId) {
         loadIncomingRequests(); 
         loadActiveChats(); 
     }
+    if(pageId === 'wallet') {
+    loadTransactionHistory();
+}
 }
 
 function clearForm(ids) { ids.forEach(id => { 
