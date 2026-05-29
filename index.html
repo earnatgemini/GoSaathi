@@ -647,13 +647,12 @@ function submitBasicInfo() {
     .then(() => clearForm(['userPhone', 'userVillage', 'userGender', 'tcCheck']));
 }
     
-function logTransaction(uid, type, amount, description, remainingBalance) {
+function logTransaction(uid, type, amount, description) {
     db.collection("Transactions").add({
         userId: uid,
         type: type, // 'Credit' or 'Debit'
         amount: amount,
         description: description,
-        remainingBalance: remainingBalance, // ట్రాన్సాక్షన్ తర్వాత మిగిలిన కాయిన్స్
         time: Date.now()
     });
 }
