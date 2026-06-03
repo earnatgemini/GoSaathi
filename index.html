@@ -1240,7 +1240,7 @@ async function initiateJoin(rideId, rideType) {
             closeJoinModal();
         };
     } else {
-        if(confirm("ఈ ఫ్రీ రైడ్ లో జాయిన్ అవ్వాలనుకుంటున్నారా? (5 రూపాయలు కమీషన్ కట్ అవుతుంది)")) {
+        if(confirm("ఈ ఫ్రీ రైడ్ లో జాయిన్ అవ్వాలనుకుంటున్నారా? (500 coins కమీషన్ కట్ అవుతుంది)")) {
             sendJoinRequest(rideId, rData, "Free", 0, comm);
         }
     }
@@ -1255,7 +1255,7 @@ function sendJoinRequest(rideId, rData, rideType, offer, comm) {
     db.collection("Requests").add({
         rideId: rideId, hostId: rData.saathiId, coSaathiId: auth.currentUser.uid, coSaathiName: auth.currentUser.displayName,
         from: rData.from, to: rData.to, rideType: rideType, offerPrice: Number(offer), commToPay: comm, status: "Pending", createdAt: Date.now()
-    }).then(() => alert("రిక్వెస్ట్ పంపబడింది! Host Accept చేస్తే Status మారుతుంది. "));
+    }).then(() => alert("రిక్వెస్ట్ పంపబడింది! Host Accept చేస్తే Chat చెయ్యొచ్చు."));
 }
 
 function loadIncomingRequests() {
