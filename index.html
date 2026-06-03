@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="canonical" href="https://earnatgemini.github.io/GoSaathi/" />
+    <link rel="manifest" href="manifest.json">
+    <title>Go Saathi - సురక్షితమైన ప్రయాణం</title>
+    <meta name="google-site-verification" content="i3q-uexq9KeluldzxEnh2aO6iJ41thOsOsBsIL0R7Dg" />
+    <meta name="description" content="Go Saathi యాప్ ద్వారా మీ ప్రయాణాన్ని సులభంగా పంచుకోండి. తక్కువ ఖర్చుతో సురక్షితమైన ప్రయాణం పొందండి.">
+    <meta name="keywords" content="earn gold, gosathi, go sathi, earn money online, earn online, ride sharing app, travel companion, cab booking, Go Saathi">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
+   
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+          
+        :root { --primary: #007bff; --secondary: #28a745; --dark: #1e3c72; --gold: #ffcc00; }
+        body { margin:0; font-family: 'Segoe UI', sans-serif; background:#f4f7f6; color: #333; padding-bottom: 70px; }
+        /* header { background: linear-gradient(135deg, var(--dark), #2a5298); color:white; padding:20px; text-align:center; } */
+        /* కొత్త హెడర్ స్టైల్ */
+        .header { 
+        padding: 0; 
+        width: 100%; 
+        overflow: hidden; 
+        background: #f4f7f6; /* ఇమేజ్ లోడ్ అయ్యేలోపు కనిపించే రంగు */
+    }
+    
+    .header img { 
+        width: 100%; 
+        max-width: 500px; /* మొబైల్ ఫ్రెండ్లీ విడ్త్ */
+        height: auto; 
+        display: block; 
+        margin: auto; 
+    }
+        .nav { display:flex; justify-content:space-around; background:white; padding:12px; position:fixed; bottom:0; width:100%; z-index:100; border-top:1px solid #ddd; }
+        .nav button { background:none; border:none; font-weight:bold; color: var(--dark); cursor:pointer; }
+        .container { padding:15px; max-width: 500px; margin: auto; }
+        .card { background:white; padding:15px; border-radius:15px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+        /* Updated Wallet Card for Single Line */
+.wallet-card { 
+    background: var(--dark); 
+    color: white; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 10px; /* Text మధ్య దూరం కోసం */
+    padding: 10px !important; /* కార్డ్ ఎత్తు తగ్గించడానికి */
+    margin-bottom: 15px;
+}
+.wallet-card h3, .wallet-card h2, .wallet-card p { 
+    margin: 0; 
+    display: inline-block; 
+}
+.wallet-card h2 { 
+    color: var(--gold); /* Balance హైలైట్ అవ్వడానికి */
+    font-size: 24px;
+}
+.header-container {
+    position: relative; /* ఇమేజ్ పైన టెక్స్ట్ పెట్టడానికి ఇది ముఖ్యం */
+    width: 100%;
+    max-width: 400px; /* మొబైల్ స్క్రీన్ సైజుకి తగ్గట్టు */
+    height: 200px;
+}
+
+.header-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* హెడర్ కంటైనర్ */
+.go-sathi-header {
+    position: relative;
+    width: 100%;
+    max-width: 450px;
+    margin: auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.header-img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+/* గ్లాస్మోర్ఫిజం (Glassmorphism) కార్డ్ డిజైన్ */
+.gold-treasure-card {
+    position: absolute;
+    bottom: 1px;
+    Left: 1px;
+    width: 150px;
+    background: rgba(20, 20, 20, 0.65);
+    backdrop-filter: blur(10px); /* వెనుక ఇమేజ్ ని బ్లర్ చేస్తుంది */
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 14px;
+    padding: 4px 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.gold-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.gold-title {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.gold-balance {
+    color: #FFD700; /* Gold Color */
+    font-size: 16px;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5); /* కాయిన్స్ కి మెరుపు */
+}
+
+/* స్మూత్ ప్రోగ్రెస్ బార్ */
+.progress-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #FFA500, #FFDF00);
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 8px #FFDF00;
+}
+
+.progress-hint {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 10px;
+    margin-top: 6px;
+    text-align: center;
+}
+
+/* ఆనిమేషన్ కాయిన్ */
+.flying-coin {
+    position: absolute;
+    font-size: 28px;
+    z-index: 100;
+    animation: flyIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes flyIn {
+    0% { transform: scale(0) translate(-100px, 100px); opacity: 0; }
+    50% { transform: scale(1.5) translate(-20px, -20px); opacity: 1; }
+    100% { transform: scale(0.5) translate(120px, 80px); opacity: 0; } /* ఇది కార్డ్ వైపు వెళ్ళేలా అడ్జస్ట్ చేయబడింది */
+}        
+        input, select, button { width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+        button { background: var(--primary); color:white; border:none; font-weight:bold; cursor:pointer; }
+        .ride-item { border-left: 5px solid var(--primary); padding: 10px; margin-bottom: 10px; background: #fff; border-radius: 10px; }
+        table { width:100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        #joinModal { display: none; display: flex; }
+        
+        /* Advanced Chat UI Styles */
+        .chat-bubble { padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; max-width: 75%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); position: relative; }
+        .chat-me { align-self: flex-end; background: #dcf8c6; border-bottom-right-radius: 2px; }
+        .chat-other { align-self: flex-start; background: #ffffff; border-bottom-left-radius: 2px; }
+        .chat-time { font-size: 9px; color: gray; display: block; text-align: right; margin-top: 4px; }
+        .chat-sender { font-size: 10px; font-weight: bold; margin-bottom: 2px; display: block; }
+
+  /* మ్యాప్ సైజ్ సెట్ చేయడానికి CSS */
+  #map { width: 100%; height: 400px; border-radius: 10px; display: none; } /* లొకేషన్ ఆన్ చేస్తేనే మ్యాప్ కనిపిస్తుంది */
+  .btn-post-ride { padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+
+    
+    </style>
+</head>
+    
+<body>
+
+<div id="main-ui" style="display:none;">
+   <div class="go-sathi-header">
+    <!-- బ్యాక్ గ్రౌండ్ ఇమేజ్ -->
+    <img src="banner_header.webp" alt="Go Saathi Header" class="header-img">
+    
+    <!-- కాయిన్ ఆనిమేషన్ కోసం -->
+    <div id="coin-fly-zone"></div>
+
+    <!-- గోల్డ్ ట్రెజర్ కార్డ్ (Glassmorphism UI) -->
+    <div class="gold-treasure-card">
+        <div class="gold-header">
+            <span class="gold-title">మీ బంగారం</span>
+            <div class="gold-balance">
+                <span id="specialTreasure">0</span> <span class="coin-icon">🪙</span>
+            </div>
+        </div>
+        
+        <!-- ప్రోగ్రెస్ బార్ -->
+        <div class="progress-track">
+            <div id="goldProgressBar" class="progress-fill"></div>
+        </div>
+        <div class="progress-hint">2 గ్రాముల బంగారానికి చేరువలో...</div>
+    </div>
+</div>
+    
+    <div class="nav" id="bottomNav">
+        <button onclick="showPage('home')">Home🏠</button>
+        <button onclick="showPage('ride')">Post🚗</button>
+        <button onclick="showPage('wallet')">BANK💰</button>
+        <button onclick="showPage('profile')">Profile👥</button>
+    </div>
+</div>
+
+<div class="container">
+    <div id="login-screen" style="text-align:center; margin-top:100px;">
+        <h2>Welcome</h2>
+        <img src="banner_header.webp" style="height:80px; margin-bottom:20px;"><br>
+        <button onclick="googleLogin()" style="background:#4285F4; padding:15px;">Google తో లాగిన్ అవ్వండి</button>
+        <button id="installBtnLogin" style="display:none; background: var(--dark); margin-top:15px; padding:10px;">📱 Install GoSaathi App</button>
+    </div>
+
+<!-- basic-info-screen లోపల ఇలా మార్చండి -->
+<div id="basic-info-screen" style="display:none;">
+    <div class="card">
+            <h3>Basic Information</h3>
+            <input type="text" id="userPhone" placeholder="Mobile Number">
+            <input type="text" id="userVillage" placeholder="Village / City">
+            <select id="userGender">
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+                 <p><input type="checkbox" id="tcCheck" style="width:auto;">
+                 I accept <a href="privacy.html" target="_blank" style="color:var(--primary); font-weight:bold;">Terms & Privacy Policy</a></p>
+               <button onclick="submitBasicInfo()">Save & Continue</button>
+        </div>
+</div>
+
+    <div id="activation-screen" style="display:none;">
+        <div class="card">
+            <h2 style="color:var(--primary);">Account Activation</h2>
+            <p>మీ అకౌంట్ ఇంకా యాక్టివేట్ కాలేదు.</p>
+            <input type="text" id="manualInviteCode" placeholder="Enter Invite Code">
+            <button onclick="activateByCode()" style="background:var(--secondary);">యాక్టివేట్ చేయండి</button>
+            <hr>
+            <button onclick="showPage('wallet')">Option 2: Pay ₹1200 for 1 Lakh Coins</button>
+        </div>
+    </div>
+
+    <div id="home" style="display:none;">
+        <p> Play Game & Earn Coins </p>
+        <div id="active-chats-section" style="display:none; margin-bottom: 20px;">
+            <h3 style="color:var(--dark); border-bottom: 2px solid var(--primary); padding-bottom: 5px;">💬 Active Rides & Chats</h3>
+            <div id="activeChatsContainer"></div>
+        </div>
+        <div style="text-align:center; margin: 10px 0;">
+            <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+             data-ad-slot="YOUR_AD_SLOT_ID"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        </div>
+
+        <script>
+             // యాడ్ ని లోడ్ చేయడానికి ఇనిషియలైజ్ ఫంక్షన్
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+
+        <h3>Available Rides (Live)</h3>
+        <p>🔍 SEARCH RIDE(రైడ్లు వెతుకు):</p>
+        
+        <div style="display:flex; gap:5px; margin-bottom:15px; background:white; padding:5px; border-radius:5px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+        <input type="text" id="searchFrom" placeholder="📍 From (ఎక్కడి నుండి)" onkeyup="filterRides()" style="margin-top:0;">
+        <input type="text" id="searchTo" placeholder="📍 To (ఎక్కడికి)" onkeyup="filterRides()" style="margin-top:0;">
+        </div>
+        
+        <div id="requests-section" class="card" style="display:none; border-top: 5px solid var(--gold);">
+        <h3>📩 ప్రయాణ రిక్వెస్ట్‌లు (Requests)</h3>
+        <div id="incomingRequests">రిక్వెస్ట్‌లు ఏమీ లేవు...</div>
+        </div>
+        
+        <div id="ridesContainer">రైడ్స్ లోడ్ అవుతున్నాయి...</div>
+
+        </br></br>
+            <a href="about.html">About Us !</a>
+            <a href="contact.html">! Contact Us !</a>
+            <a href="privacy.html">! privacy policy</a>
+     </div>
+    
+ <div id="ride" style="display:none;">
+        <div class="card">
+            <h3>Post a New Ride</h3>
+            <input id="from" placeholder="From">
+            <input id="to" placeholder="To">
+            <input id="route" placeholder="Via / Route">
+            <input type="number" id="distanceKm" placeholder="Distance in KM">
+            <select id="ridePref">
+                <option value="Any">Anyone</option>
+                <option value="Male">Men Only</option>
+                <option value="Female">Women Only</option>
+            </select>
+            <input type="number" id="seats" placeholder="Seats Available">
+            <select id="rideType">
+                <option value="Free">Free Ride</option>
+                <option value="Paid">Paid Ride</option>
+            </select>
+            <div id="paidExtraFields" style="display:none;">
+                <input type="number" id="demandPrice" placeholder="అడిగే కాయిన్స్ (Price in Coins)">
+            </div>
+            <p> ___________________ </p>
+            <p style="margin-top:10px; font-weight:bold;">ప్రయాణ సమయం (Ride Time):</p>
+            <input type="datetime-local" id="rideTime">
+            <button onclick="postRide()">Post Ride</button>              
+         </div>
+        <div id="map-section">
+          <h3>Go Sathi - Live Map</h3>
+          <button class="btn-post-ride" onclick="checkGpsAndInitMap()">Search a Ride</button>
+          <div id="map"></div>
+         </div>
+ </div>
+       
+ <div id="wallet" style="display:none;">
+        <div class="card wallet-card">
+            <h3>Balance:</h3>
+            <h2 id="coinBalance">0</h2>
+            <p>Coins</p> 
+            <div class=" card wallet-card">
+                <p style="font-size: 12px; color: #aaa;">*100 Coins = Rs. 1.</p>
+            </div>
+        </div>
+     <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0;">Coins పంపండి:</h3>
+        <button onclick="openQRModal()" style="width: auto; padding: 5px 10px; background: #ffcc00; color: black; font-size: 12px; border-radius: 5px;">Show QR Code</button>
+    </div>
+    <p>Account Number Profile లో ఉంటుంది.</p>
+    <button onclick="startScanner()" style="margin-bottom: 15px; padding: 10px; background: var(--dark); color: white; border-radius: 8px;">📷 Scan QR Code</button>
+    <div id="reader" style="width: 100%; display: none; margin-bottom: 15px; border-radius: 10px; overflow: hidden;"></div>
+
+    <input type="text" id="transferTargetUid" maxlength="8" inputmode="numeric" placeholder="8-digit Account Number ఇవ్వండి" oninput="fetchUserName()">
+    
+    <p id="receiverNameDisplay" style="color: green; font-weight: bold; display: none; margin-top: 5px; font-size: 14px;"></p>
+
+    <input type="number" id="transferCoinsInput" placeholder=" Enter Coins">
+    
+    <button onclick="processTransfer()" style="background:var(--secondary); margin-top: 15px;">Send Coins</button>
+    <p style="font-size: 12px; color: #aaa;">*  5,000 coins కంటే ఎక్కువ ఉంటే Transfer అవుతాయి.<br>* Min. 100 కంటే ఎక్కువ Coins పంపాలి.</p>
+</div>
+         <div class="card">
+            <h3>💰 Withdraw Money</h3>
+            <p>Current Coins: <span id="userCoinsDisplay">0</span></p>
+            <input type="number" id="withdrawAmount" placeholder="Enter Amount (₹)">
+            <input type="text" id="upiId" placeholder="Enter UPI ID (e.g., name@upi)">
+            <button onclick="requestWithdrawal()" style="background: #2e7d32; color: white;">Withdraw Now</button>
+            <p style="font-size: 12px; color: #aaa;">* Min. Balance 50,000 coins required.<br>* Min. Withdrawal ₹100.</p>
+          </div>
+          
+<div id="qrModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); border:1px solid #ccc; padding:20px; background:#fff; z-index:1000; text-align:center; border-radius:10px; box-shadow: 0px 4px 15px rgba(0,0,0,0.2);">
+    <h3>మీ QR కోడ్</h3>
+    <div id="qrcode" style="margin:15px auto; display: inline-block;"></div>
+    <br>
+    <button onclick="downloadQRSticker()" style="background-color: #28a745; color: white; padding: 5px; border: none; border-radius: 5px;">Download QR Code</button>
+    <button onclick="closeQRModal()" style="background-color: #dc3545; color: white; padding: 5px; border: none; border-radius: 5px;">Close</button>
+</div>
+     
+     <div class="card">
+            <h3>Add Coins (Scan & Pay)</h3>
+            <img src="qr.png" style="width:150px; display:block; margin:auto;">
+            <input type="number" id="payAmount" placeholder="Amount (₹)">
+            <input type="text" id="utrId" placeholder="UTR Number">
+            <button onclick="requestCoins()" style="background:var(--secondary);">Submit Payment</button>
+          </div>
+            <!-- ఈ కొత్త కార్డ్ ని Wallet డివ్ లో ఎక్కడైనా (ఉదాహరణకు Withdraw card కి పైన) పెట్టండి -->
+          <div class="card">
+            <h3>🪙 Gold Treasure కి పంపండి</h3>
+            <p>మెయిన్ వాలెట్ నుండి Gold ట్రెజర్ కి మార్చండి.</p>
+            <input type="number" id="goldTransferAmount" placeholder="కాయిన్స్ ఎంటర్ చేయండి (Min 1000)">
+            <button onclick="GoldTreasureSystem.transferFromWallet(auth.currentUser.uid, Number(document.getElementById('goldTransferAmount').value))" style="background:var(--gold); color:black;">Transfer to Gold</button>
+          </div>
+ </div>
+    <div id="profile" style="display:none;">
+        <div class="card">
+            <h3>Profile</h3>
+             <h2>Account Number:</h2>
+            <code id="myTransferIdDisplay" style="display:block; text-align:center; font-size:20px; background:#eee; padding:10px;"></code>
+            <code id="myNameDisplay" style="display:block;text-align:center; background:#eee; padding:10px;"></code>
+            
+            <p>Invitations Left: <b id="inviteCount">0</b></p>
+            <p>Invitation Code:</p>
+            <code id="myUidDisplay"style="display:block; background:#eee; padding:10px;"></code>
+           
+            <button onclick="shareInvite()" style="background:#25D366;">WhatsApp Invite</button>
+            <button id="installBtnProfile" style="display:none; background: var(--dark); margin-top:10px;">📱 Install App</button>
+            <button onclick="auth.signOut()" style="background:#666; margin-top:20px;">Logout</button>
+        </br></br>
+            <a href="about.html">About Us</a>
+            <a href="contact.html">Contact Us</a>
+            <a href="privacy.html">privacy policy</a>
+        </div>
+        
+        <div id="admin-panel" style="display:none; border:2px solid red; padding:10px; border-radius:10px; margin-top:10px;">
+            <h2 style="color:red; text-align:center;">🛡️ Admin Panel</h2>
+            <h4>Users List</h4>
+            <div style="overflow-x:auto;"><table id="userTable"></table></div>
+            <h4>Manage Active Rides</h4>
+            <div id="adminRidesContainer"></div>
+        </div>
+    </div>
+
+    <div id="chat-page" style="display:none; margin-top:-15px;">
+        <div style="background:var(--dark); color:white; padding:15px; border-radius:15px 15px 0 0; display:flex; align-items:center;">
+            <button onclick="showPage('home')" style="width:auto; background:none; color:white; font-size:20px; padding:0; margin-right:15px;">Close ✖</button>
+            <h3 id="chatWith" style="margin:0;">Chat</h3>
+        </div>
+        
+        <div id="chatMessages" style="height:60vh; overflow-y:auto; padding:15px; background:#e5ddd5; display:flex; flex-direction:column;">
+            </div>
+        
+        <div style="display:flex; padding:10px; background:white; border-radius:0 0 15px 15px; border:1px solid #ddd;">
+            <input type="text" id="msgInput" placeholder="Type a message..." style="margin-top:0; flex:1;">
+            <button onclick="sendMessage()" style="width:80px; margin-top:0; margin-left:10px; background:var(--secondary);">Send</button>
+        </div>
+    </div>    
+</div>
+
+<div id="qrModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center;">
+    <div class="card" style="width:90%; max-width:350px; padding:20px; text-align:center; position: relative;">
+        <h2 style="color: var(--dark); margin-bottom: 5px;">Go Saathi</h2>
+        <p style="margin-top: 0; color: #555; font-weight: bold;">Scan and Pay Coins</p>
+        
+        <div id="qrcode" style="margin:15px auto; padding: 15px; border: 3px solid var(--dark); border-radius: 15px; display: inline-block; background: #fff;"></div>
+        
+        <h3 id="displayTransferId" style="letter-spacing: 2px; color: #333; margin-top: 5px;"></h3>
+        
+        <div style="display:flex; justify-content:space-between; gap: 10px; margin-top: 15px;">
+            <button onclick="downloadQRSticker()" style="background-color: var(--secondary); color: white;">Download QR</button>
+            <button onclick="closeQRModal()" style="background-color: #dc3545; color: white;">Close</button>
+        </div>
+    </div>
+</div>
+    
+<div id="joinModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div class="card" style="width:90%; max-width:400px; padding:20px; text-align:center;">
+        <h3 id="modalTitle">Ride Request</h3>
+        <p id="modalBody"></p>
+        <div id="bargainInputArea" style="display:none; margin-bottom:15px;">
+            <input type="number" id="customOffer" placeholder="మీ ఆఫర్ (Coins)">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <button id="btnOk" style="background:var(--secondary);">(అడిగినంత ఇవ్వడానికి) OK</button>
+            <button id="btnBargain" style="background:var(--gold); color:black;">Bargain (బేరం ఆడు)</button>
+            <button id="btnConfirmBargain" style="display:none; background:var(--primary);">Confirm Offer</button>
+            <button onclick="closeJoinModal()" style="background:#666;">Cancel</button>
+        </div>
+    </div>
+</div>
+ <div id="scratchModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 85%; max-width: 320px;">
+        <h3 style="color:#1e3c72; margin:0;">🎉 బంపర్ గిఫ్ట్ కార్డ్! 🎉</h3>
+        <p style="font-size:14px; color:#666; margin:5px 0;">రైడ్ పూర్తయింది! కింద ఉన్న కార్డ్‌ని స్క్రాచ్ చేయండి.</p>
+        
+        <div style="position: relative; width: 200px; height: 200px; margin: 20px auto; background: #fff; border: 2px dashed #ffcc00; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="font-size: 18px; font-weight: bold; color: #333; z-index: 1;">
+                మీరు గెలుచుకున్నారు!
+                <span id="wonCoinsText" style="font-size: 36px; color: #28a745; display: block; margin-top: 5px;">0</span> Coins
+            </div>
+            <canvas id="scratchCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; border-radius: 13px; z-index: 2;" width="200" height="200"></canvas>
+        </div>
+        
+        <button id="btnClaimReward" style="display:none; background:#28a745; color:white; width:100%; padding:12px; border-radius:10px; border:none; font-weight:bold; cursor:pointer; font-size:16px;" onclick="closeScratchModal()">Claim Reward</button>
+    </div>
+</div>
+<script>
+const firebaseConfig = { apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY",
+                         authDomain: "gemini-spinning-wheel-game.firebaseapp.com",
+                        projectId: "gemini-spinning-wheel-game" };
+                        firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const ADMIN_UID = "JiHQO3M0UUdftGqDPUKBwxPqv9q1"; 
+
+function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+
+function googleLogin() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('myUidDisplay').innerText = user.uid;
+        checkUserStatus(user);
+        if(user.uid === ADMIN_UID) {
+            document.getElementById('admin-panel').style.display = 'block';
+            loadAdminData();
+        }
+    } else {
+        document.getElementById('main-ui').style.display = 'none';
+        showPage('login-screen');
+    }
+});
+
+
+function checkUserStatus(user) {
+    db.collection("Users").doc(user.uid).onSnapshot(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            if (!data.transferId) ensureTransferId(user.uid).catch(err => console.error("Transfer ID assign error:", err));
+            document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
+            if (!data.phone) showPage('basic-info-screen');
+            else if (data.membership === "Active") {
+                document.getElementById('main-ui').style.display = 'block';
+                document.getElementById('coinBalance').innerText = data.coins || 0;
+                document.getElementById('inviteCount').innerText = data.invites || 0;
+                document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
+                document.getElementById('myNameDisplay').innerText = data.name || "Update KYC";
+                updateTreasureUI(data.specialTreasure?.balance || 0, 30000);
+                listenToHostRequests();
+                showPage('home');
+            } else showPage('activation-screen');
+        } else handleNewUser(user);
+    });
+}
+
+// -------------------------------------------------------------
+// INVITATION & ACTIVATION SECTION (MODIFIED)
+// -------------------------------------------------------------
+
+async function generateUniqueTransferId() {
+    for (let attempt = 0; attempt < 20; attempt++) {
+        const candidate = String(Math.floor(10000000 + Math.random() * 90000000));
+        const exists = await db.collection("Users").where("transferId", "==", candidate).limit(1).get();
+        if (exists.empty) return candidate;
+    }
+    throw new Error("Unique 8-digit Transfer ID generate చేయలేకపోయాం. మళ్లీ ప్రయత్నించండి.");
+}
+
+async function ensureTransferId(userId) {
+    const userRef = db.collection("Users").doc(userId);
+    const snap = await userRef.get();
+    if (!snap.exists) return null;
+    const data = snap.data();
+    if (data.transferId) return data.transferId;
+
+    const transferId = await generateUniqueTransferId();
+    await userRef.update({ transferId });
+    return transferId;
+}
+
+async function handleNewUser(user) {
+    const userRef = db.collection("Users").doc(user.uid);
+    const doc = await userRef.get();
+    if (doc.exists) return;
+
+    // URL నుండి invite code తీసుకోవడం
+    const inviteCode = new URLSearchParams(window.location.search).get('invite');
+    let isInvited = false;
+    
+    if(inviteCode) {
+        const inviterDoc = await db.collection("Users").doc(inviteCode).get();
+        // Inviter కి ఇంకా invites ఉంటేనే...
+        if(inviterDoc.exists && inviterDoc.data().invites > 0) {
+            isInvited = true;
+            // మార్పు 3: Invite చేసిన వారికి (Inviter) 5000 Coins గిఫ్ట్ గా యాడ్ చేయడం
+            await db.collection("Users").doc(inviteCode).update({ 
+                invites: firebase.firestore.FieldValue.increment(-1),
+                coins: firebase.firestore.FieldValue.increment(5000) 
+            });
+        }
+    }
+    // మార్పు 2: Invite ద్వారా వస్తే డైరెక్ట్ గా "Active" అవుతుంది. 
+    // దీనివల్ల Basic Info సబ్మిట్ చేయగానే onSnapshot ఆటోమేటిక్ గా Home కి తీసుకెళ్తుంది.
+    const transferId = await generateUniqueTransferId();
+
+    return userRef.set({
+        name: user.displayName, 
+        email: user.email, 
+        coins: 5000, 
+        membership: isInvited ? "Active" : "Pending", 
+        invites: 5, 
+        joinDate: Date.now(),
+        transferId: transferId,
+        invitedBy: isInvited ? inviteCode : null // రిఫరెన్స్ కోసం
+    });
+}
+
+// మార్పు 1: HTML లో ఉన్న "activateByCode()" బటన్ పనిచేయడానికి మిస్ అయిన ఫంక్షన్.
+async function activateByCode() {
+    const codeInput = document.getElementById('manualInviteCode').value.trim();
+    if(!codeInput) return alert("దయచేసి Invite Code ఎంటర్ చేయండి.");
+    if(codeInput === auth.currentUser.uid) return alert("మీ కోడ్ మీరే వాడలేరు!");
+
+    const inviterRef = db.collection("Users").doc(codeInput);
+    const inviterDoc = await inviterRef.get();
+
+    if(inviterDoc.exists && inviterDoc.data().invites > 0) {
+        const batch = db.batch();
+        
+        // Invite చేసినవారికి 5000 Coins గిఫ్ట్ గా యాడ్ అవ్వడం
+        batch.update(inviterRef, {
+            invites: firebase.firestore.FieldValue.increment(-1),
+            coins: firebase.firestore.FieldValue.increment(5000)
+        });
+
+        // క్రొత్త యూజర్ ని Active చేయడం
+        batch.update(db.collection("Users").doc(auth.currentUser.uid), {
+            membership: "Active",
+            invitedBy: codeInput
+        });
+
+        await batch.commit();
+        alert("🎉 అభినందనలు! అకౌంట్ సక్సెస్ ఫుల్ గా యాక్టివేట్ అయింది! మీ స్నేహితులకు తెలియజేయండి.5,000 coins లాభపడండి");
+        document.getElementById('manualInviteCode').value = "";
+        // onSnapshot ఆటోమేటిక్ గా Home page కి రీడైరెక్ట్ చేస్తుంది.
+    } else {
+        alert("ఈ ఇన్వైట్ కోడ్ చెల్లదు లేదా ఇన్విటేషన్ లిమిట్ అయిపోయింది.");
+    }
+}
+
+function submitBasicInfo() {
+    const phone = document.getElementById('userPhone').value;
+    const village = document.getElementById('userVillage').value;
+    const gender = document.getElementById('userGender').value;
+    const tc = document.getElementById('tcCheck').checked;
+    if(!phone || !gender || !tc) return alert("పూర్తి వివరాలు నింపండి.(Fill all details!)");
+    db.collection("Users").doc(auth.currentUser.uid).update({ phone, village, gender })
+    .then(() => clearForm(['userPhone', 'userVillage', 'userGender', 'tcCheck']));
+}
+
+async function postRide() {
+    const btn = event.target;
+    btn.disabled = true;
+    const from = document.getElementById('from').value;
+    const to = document.getElementById('to').value;
+    const type = document.getElementById('rideType').value;
+    const time = document.getElementById('rideTime').value;
+    const demand = (type === "Paid") ? Number(document.getElementById('demandPrice').value) : 0;
+
+    if(!from || !to || !time) return alert("దయచేసి ఊరి పేరు మరియు సమయం ఎంటర్ చేయండి!");
+    if(type === "Paid" && !demand) return alert("దయచేసి మీరు కోరుకునే కాయిన్స్ ఎంటర్ చేయండి!");
+
+    const hostUid = auth.currentUser.uid;
+    const hostDoc = await db.collection("Users").doc(hostUid).get();
+
+    if ((hostDoc.data().coins || 0) < 50) return alert("రైడ్ పోస్ట్ చేయడానికి కనీసం 50 కాయిన్స్ ఉండాలి!");
+
+    const batch = db.batch();
+    batch.update(db.collection("Users").doc(hostUid), { coins: firebase.firestore.FieldValue.increment(-50) });
+    batch.update(db.collection("Users").doc(ADMIN_UID), { coins: firebase.firestore.FieldValue.increment(50) });
+
+    const rideRef = db.collection("Rides").doc();
+    batch.set(rideRef, {
+        saathiId: hostUid, saathiName: auth.currentUser.displayName, from, to, type, time, demand,
+        distance: Number(document.getElementById('distanceKm').value), status: "Available",
+        createdAt: Date.now(), route: document.getElementById('route').value,
+        seats: Number(document.getElementById('seats').value), preference: document.getElementById('ridePref').value
+    });
+
+    await batch.commit();
+    alert(" రైడ్ సక్సెస్ ఫుల్ గా పోస్ట్ చేయబడింది!");
+   
+   // Ride పోస్ట్ అయ్యాక, డైలీ గిఫ్ట్ లాజిక్
+  const today = new Date();
+  const start = new Date(2026, 4, 3);   // మే 3, 2026 (మాసం = 4)
+  const end = new Date(2026, 10, 3);    // నవం 3, 2026 (మాసం = 10)
+  
+  if (today >= start && today <= end) {
+    const dateKey = today.toISOString().split('T')[0];
+    
+    // మార్పు 1: uId బదులు hostUid
+    const giftDoc = await db.collection("DailyGifts").doc(hostUid + "_" + dateKey).get(); 
+    
+    if (!giftDoc.exists) {
+      // ముందే గిఫ్ట్ ఇవ్వలేదు - ఇప్పుడు ఇవ్వండి
+      await db.collection("Users").doc(hostUid).update({
+        'specialTreasure.balance': firebase.firestore.FieldValue.increment(1000)
+      });
+      
+      // మార్పు 2: uid బదులు hostUid
+      await db.collection("DailyGifts").doc(hostUid + "_" + dateKey).set({ 
+        given: true,
+        userId: hostUid,
+        timestamp: Date.now()
+      });
+      
+      triggerCoinAnimation(); 
+      
+      // మార్పు 3: మళ్లీ డేటాబేస్ ని పిలవకుండా డైరెక్ట్ గా UI అప్డేట్ చేయడం
+      const currentTreasure = hostDoc.data().specialTreasure?.balance || 0;
+      updateTreasureUI(currentTreasure + 1000, 30000); 
+
+      alert("🎉Congratulations!🎈 ఈరోజు గో-సాతి మీకు గోల్డ్🪙 కోసం ఉచితంగా 1000 Coins ఇచ్చారు.");
+    }
+  }
+  
+  clearForm(['from','to','route','distanceKm','seats','rideTime','demandPrice']);
+  showPage('home');
+    btn.disabled = false;
+}
+
+// 1. UI ని అప్డేట్ చేసే ఫంక్షన్
+function updateTreasureUI(currentBalance, targetGoldCoins) {
+    // కాయిన్స్ కౌంట్ అప్డేట్
+    document.getElementById('specialTreasure').innerText = currentBalance.toLocaleString();
+    
+    // ప్రోగ్రెస్ బార్ శాతం లెక్కింపు
+    let percentage = (currentBalance / targetGoldCoins) * 100;
+    if (percentage > 100) percentage = 100;
+    
+    document.getElementById('goldProgressBar').style.width = `${percentage}%`;
+}
+
+// 2. కాయిన్ ఎగిరి పడే ఆనిమేషన్
+function triggerCoinAnimation() {
+    const zone = document.getElementById('coin-fly-zone');
+    const coin = document.createElement('div');
+    coin.innerText = '🪙';
+    coin.classList.add('flying-coin');
+    
+    zone.appendChild(coin);
+    
+    // ఆనిమేషన్ పూర్తయిన తర్వాత ఎలిమెంట్ ని రిమూవ్ చేయడం
+    setTimeout(() => {
+        coin.remove();
+    }, 2000);
+}
+
+    // ఫైర్‌బేస్ లాజిక్ క్లాస్ లాగా వ్రాసాను (క్లీన్ గా ఉండటానికి)
+const GoldTreasureSystem = {
+    
+    // ఆఫర్ ఇంకా ఉందో లేదో చెక్ చేస్తుంది (03-05-2026 నుండి 6 Months)
+    isOfferValid: function() {
+        const today = new Date();
+        const offerStart = new Date('2026-05-03');
+        const offerEnd = new Date('2026-11-03');
+        return (today >= offerStart && today <= offerEnd);
+    },
+
+    // 1. రోజువారీ ఫ్రీ 100 కాయిన్స్
+    addDailyFreeCoins: async function(userId) {
+        if (!this.isOfferValid()) return alert("బంగారం ఆఫర్ ముగిసింది.");
+
+        const userRef = db.collection('Users').doc(userId);
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(userRef);
+                const treasure = doc.data().specialTreasure || {};
+
+                if (treasure.lastFreeCoinDate !== todayStr) {
+                    transaction.update(userRef, {
+                        'specialTreasure.balance': firebase.firestore.FieldValue.increment(1000),
+                        'specialTreasure.lastFreeCoinDate': todayStr
+                    });
+                } else {
+                    throw "ఈరోజు ఇప్పటికే ఫ్రీ కాయిన్స్ తీసుకున్నారు.";
+                }
+            });
+            triggerCoinAnimation();
+            alert("1000 కాయిన్స్ యాడ్ అయ్యాయి!");
+        } catch (error) {
+            console.log(error);
+        }
+    },
+
+    // 2. వాలెట్ నుండి ట్రెజర్ కి మార్చడం (1000 - 10000 లిమిట్)
+    transferFromWallet: async function(userId, amount) {
+        if (!this.isOfferValid()) return alert("బంగారం ఆఫర్ ముగిసింది.");
+        if (amount < 1000 || amount > 10000) return alert("కనీసం 1000 నుండి గరిష్టంగా 10000 మాత్రమే మార్చగలరు.");
+
+        const userRef = db.collection('Users').doc(userId);
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(userRef);
+                const data = doc.data();
+                const treasure = data.specialTreasure || {};
+                
+                let manualTotalToday = (treasure.lastManualAddDate === todayStr) ? (treasure.manualAddedToday || 0) : 0;
+
+                if (manualTotalToday + amount > 10000) {
+                    throw `లిమిట్ దాటింది! ఇంకా ${10000 - manualTotalToday} మాత్రమే యాడ్ చేయగలరు.`;
+                }
+
+                if (data.coins < amount) {
+                    throw "మెయిన్ వాలెట్ లో బ్యాలెన్స్ లేదు.";
+                }
+
+                transaction.update(userRef, {
+                    coins: firebase.firestore.FieldValue.increment(-amount),
+                    'specialTreasure.balance': firebase.firestore.FieldValue.increment(amount),
+                    'specialTreasure.manualAddedToday': manualTotalToday + amount,
+                    'specialTreasure.lastManualAddDate': todayStr
+                });
+            });
+            triggerCoinAnimation();
+            alert(`${amount} కాయిన్స్ ట్రెజర్ కి మారాయి!`);
+        } catch (error) {
+            alert(error);
+        }
+    },
+
+    // 3. గోల్డ్ క్లెయిమ్ రిక్వెస్ట్ (Admin కి పంపడం)
+    requestGoldClaim: async function(userId) {
+        const userRef = db.collection('Users').doc(userId);
+        const settingsRef = db.collection('Settings').doc('gold_rate');
+
+        try {
+            const [userDoc, settingsDoc] = await Promise.all([userRef.get(), settingsRef.get()]);
+            const balance = userDoc.data().specialTreasure.balance;
+            const targetCoins = settingsDoc.data().targetCoinsFor2Grams; // అడ్మిన్ సెట్ చేసిన వాల్యూ
+
+            if (balance >= targetCoins) {
+                // ప్యూర్‌గా అడ్మిన్ అప్రూవల్ కోసం రిక్వెస్ట్ సేవ్ చేయడం
+                await db.collection('gold_claims').add({
+                    userId: userId,
+                    userName: userDoc.data().name,
+                    claimedCoins: balance,
+                    targetCoinsAtTimeOfClaim: targetCoins,
+                    status: 'PENDING',
+                    requestDate: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("అభినందనలు! మీ క్లెయిమ్ అడ్మిన్ కి చేరింది. వెరిఫికేషన్ తర్వాత ప్రాసెస్ అవుతుంది.");
+            } else {
+                alert(`ఇంకా ${targetCoins - balance} కాయిన్స్ కావాలి.`);
+            }
+        } catch (error) {
+            console.error("Claim error:", error);
+        }
+    }
+};
+    
+// -------------------------------------------------------------
+// RIDES & BOOKING FLOW SECTION (MODIFIED AS PER NEW INSTRUCTIONS)
+// -------------------------------------------------------------
+
+// 1. Load Available Rides (Main List)
+function loadRides() {
+    const container = document.getElementById('ridesContainer');
+    const now = Date.now();
+    // కేవలం "Available" ఉన్నవి మాత్రమే మెయిన్ లిస్ట్ లో కనిపిస్తాయి. 'Accepted' అవ్వగానే ఇక్కడ నుండి మాయం అవుతాయి.
+    db.collection("Rides").where("status", "==", "Available").onSnapshot(snap => {
+        container.innerHTML = "";
+        snap.forEach(doc => {
+            const r = doc.data();
+            const age = (now - r.createdAt) / (1000 * 60 * 60);
+            if (r.distance < 100 && age > 6) { db.collection("Rides").doc(doc.id).delete(); return; }
+            
+            container.innerHTML += `<div class="card ride-item">
+                <b>${r.from} ➔ ${r.to}</b> (${r.type})<br>
+                <small>Host: ${r.saathiName} | Route: ${r.route}</small>
+                <button onclick="initiateJoin('${doc.id}', '${r.type}')" style="margin-top:10px; background:var(--secondary);">Join Ride</button>
+            </div>`;
+        });
+    });
+}
+
+// 2. Active Rides & Chats Loader
+function loadActiveChats() {
+    const uid = auth.currentUser.uid;
+    const container = document.getElementById('activeChatsContainer');
+    const section = document.getElementById('active-chats-section');
+    
+    let activeRides = {};
+
+    const renderChats = () => {
+        const keys = Object.keys(activeRides);
+        if(keys.length === 0) {
+            section.style.display = "none";
+            return;
+        }
+        section.style.display = "block";
+        container.innerHTML = "";
+        
+        keys.forEach(k => {
+            const req = activeRides[k];
+            const isHost = req.hostId === uid;
+            const chatPartner = isHost ? req.coSaathiName : "Host";
+            const rideStatus = req.status; 
+            
+            // బటన్స్ లాజిక్ ఫంక్షన్
+            let actionButtons = getRideButtons(k, rideStatus, isHost, req.offerPrice);
+
+            // "Joined" కాగానే చాట్ బటన్ మాయం అవ్వాలి (Visibility logic)
+            let chatButton = '';
+            if (rideStatus !== 'Joined') {
+                chatButton = `<button onclick="openChat('${req.rideId}', '${chatPartner}')" style="background:var(--primary); width:auto; padding:8px 15px; border-radius:20px; color:white; border:none; margin-left:10px; font-weight:bold;">💬 Chat</button>`;
+            }
+
+            container.innerHTML += `
+                <div class="card" style="border-left: 5px solid var(--secondary); display:flex; flex-direction:column; padding:15px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <b>${req.from} ➔ ${req.to}</b><br>
+                            <small style="color:gray;">With: ${chatPartner} | Status: <b style="color:var(--dark);">${rideStatus}</b></small>
+                        </div>
+                        <div>
+                            ${chatButton}
+                        </div>
+                    </div>
+                    <div style="margin-top:15px;">
+                        ${actionButtons}
+                    </div>
+                </div>
+            `;
+        });
+    };
+
+    // 'Accepted', 'Journey Started', 'Joined' ఉన్నవి మాత్రమే Active Section లోకి వస్తాయి.
+    // 'Completed' అవ్వగానే ఇక్కడ నుండి కూడా మాయం అవుతాయి.
+    db.collection("Requests").where("hostId", "==", uid).where("status", "in", ["Accepted", "Journey Started", "Joined"]).onSnapshot(snap => {
+        snap.docChanges().forEach(change => {
+            if(change.type === "removed") delete activeRides[change.doc.id];
+            else activeRides[change.doc.id] = change.doc.data();
+        });
+        renderChats();
+    });
+
+    db.collection("Requests").where("coSaathiId", "==", uid).where("status", "in", ["Accepted", "Journey Started", "Joined"]).onSnapshot(snap => {
+        snap.docChanges().forEach(change => {
+            if(change.type === "removed") delete activeRides[change.doc.id];
+            else activeRides[change.doc.id] = change.doc.data();
+        });
+        renderChats();
+    });
+}
+
+// 3. Dynamic Buttons Logic (The core flow)
+function getRideButtons(reqId, status, isHost, offerPrice) {
+    if (isHost) {
+        if (status === 'Accepted') {
+            return `<button onclick="updateRequestStatus('${reqId}', 'Journey Started')" style="background:var(--secondary); color:white; padding:10px; border-radius:8px; border:none; width:100%; font-weight:bold;">🚀 Start Journey</button>`;
+        }
+        if (status === 'Journey Started') {
+            return `<p style="color:var(--gold); font-weight:bold; text-align:center; margin:0;">Waiting for Co-Saathi to Join...</p>`;
+        }
+        if (status === 'Joined') {
+            return `<p style="color:var(--primary); font-weight:bold; text-align:center; margin:0;">🚗 Journey in Progress...</p>`;
+        }
+    } else {
+        if (status === 'Accepted') {
+            return `<p style="color:var(--dark); font-weight:bold; text-align:center; margin:0;">Waiting for Host to Start Journey...</p>`;
+        }
+        if (status === 'Journey Started') {
+            return `<button onclick="processJoinSaathi('${reqId}', ${offerPrice})" style="background:var(--primary); color:white; padding:10px; border-radius:8px; border:none; width:100%; font-weight:bold;">🤝 Join Saathi (Pay Coins)</button>`;
+        }
+        if (status === 'Joined') {
+            return `<button onclick="processCompleteRide('${reqId}')" style="background:orange; color:white; padding:10px; border-radius:8px; border:none; width:100%; font-weight:bold;">✅ Complete Ride</button>`;
+                      
+        }
+    }
+    return '';
+}
+
+// 4. Status Update Actions
+async function updateRequestStatus(reqId, newStatus) {
+    const reqDoc = await db.collection("Requests").doc(reqId).get();
+    const rideId = reqDoc.data().rideId;
+    
+    const batch = db.batch();
+    batch.update(db.collection("Requests").doc(reqId), { status: newStatus });
+    batch.update(db.collection("Rides").doc(rideId), { status: newStatus });
+    await batch.commit();
+}
+
+async function processJoinSaathi(reqId, amount) {
+    const reqRef = db.collection("Requests").doc(reqId);
+    const userRef = db.collection("Users").doc(auth.currentUser.uid);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if ((userDoc.data().coins || 0) < amount) {
+                throw "మీ వద్ద సరిపడా కాయిన్స్ లేవు! 💰Wallet లోకి కనీసం 10 రూపాయలు పంపుకోండి";
+            }
+            
+            const reqDoc = await transaction.get(reqRef);
+            const rideRef = db.collection("Rides").doc(reqDoc.data().rideId);
+
+            // Co-Saathi అకౌంట్ నుండి కాయిన్స్ కట్ చేయడం
+            transaction.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
+            
+            // Status -> 'Joined' గా మార్చడం (దీనివల్ల చాట్ సెక్షన్ డిసప్పియర్ అవుతుంది)
+            transaction.update(reqRef, { status: "Joined" });
+            transaction.update(rideRef, { status: "Joined" });
+        });
+        alert("Ride Joined! కాయిన్స్ బదిలీ అయ్యాయి.");
+    } catch (error) {
+        alert("Error: " + error);
+    }
+}
+
+async function processCompleteRide(reqId) {
+    const reqRef = db.collection("Requests").doc(reqId);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const reqDoc = await transaction.get(reqRef);
+            const reqData = reqDoc.data();
+            const hostRef = db.collection("Users").doc(reqData.hostId);
+            const rideRef = db.collection("Rides").doc(reqData.rideId);
+
+            // Paid ride అయితే మాత్రమే ఇక్కడ కాయిన్స్ ట్రాన్స్‌ఫర్ అవుతాయి
+            if (reqData.rideType === "Paid") {
+                transaction.update(hostRef, { coins: firebase.firestore.FieldValue.increment(reqData.offerPrice) });
+            }
+
+            // Status -> 'Completed' గా మార్చడం
+            transaction.update(reqRef, { status: "Completed" });
+            transaction.update(rideRef, { status: "Completed" });
+        });
+        
+        alert("Ride Completed Successfully!");
+        showPage('home'); 
+    } catch (error) {
+        console.error("Transaction failed: ", error);
+        alert("రైడ్ కంప్లీట్ చేయడంలో సమస్య వచ్చింది.");
+    }
+}
+    function initiateScratchCard(hostId, coinsAmount) {
+    // వెనకాల టెక్స్ట్ అప్‌డేట్ చేయడం
+    document.getElementById('wonCoinsText').innerText = coinsAmount;
+    document.getElementById('scratchModal').style.display = 'flex';
+    document.getElementById('btnClaimReward').style.display = 'none';
+
+    const canvas = document.getElementById('scratchCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // గోల్డ్ కలర్ లేయర్ ని క్యాన్వాస్ పై పూయడం (GPay లాగా)
+    ctx.fillStyle = '#ffcc00'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // కార్డ్ పైన చిన్న టెక్స్ట్ రాయడం
+    ctx.fillStyle = '#1e3c72';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ఇక్కడ స్క్రాచ్ చేయండి', 100, 105);
+
+    let isDrawing = false;
+
+    // స్క్రాచ్ ఈవెంట్స్ (మొబైల్ & డెస్క్‌టాప్ కోసం)
+    function scratch(e) {
+        if (!isDrawing) return;
+        
+        // టచ్ లేదా మౌస్ పొజిషన్ తీసుకోవడం
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+        ctx.globalCompositeOperation = 'destination-out'; // గీసిన చోట కలర్ తుడిచిపెట్టుకుపోతుంది
+        ctx.beginPath();
+        ctx.arc(x, y, 20, 0, Math.PI * 2); // 20px సైజుతో స్క్రాచ్ అవుతుంది
+        ctx.fill();
+        
+        checkScratchPercentage();
+    }
+
+    canvas.addEventListener('mousedown', () => isDrawing = true);
+    canvas.addEventListener('touchstart', () => isDrawing = true);
+    window.addEventListener('mouseup', () => isDrawing = false);
+    window.addEventListener('touchend', () => isDrawing = false);
+    canvas.addEventListener('mousemove', scratch);
+    canvas.addEventListener('touchmove', scratch);
+
+    // ఎంత శాతం స్క్రాచ్ చేశారో చెక్ చేసే లాజిక్
+    function checkScratchPercentage() {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imageData.data;
+        let clearedPixels = 0;
+
+        for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i + 3] === 0) clearedPixels++; // ట్రాన్స్‌పరెంట్ అయిన పిక్సెల్స్ ని లెక్కించడం
+        }
+
+        const percentage = (clearedPixels / (canvas.width * canvas.height)) * 100;
+        
+        // 60% కంటే ఎక్కువ స్క్రాచ్ చేస్తే మొత్తం క్లియర్ చేసి కాయిన్స్ యాడ్ చేసే బటన్ చూపిస్తాం
+        if (percentage > 60) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // క్యాన్వాస్ మొత్తం క్లియర్
+            document.getElementById('btnClaimReward').style.display = 'block';
+            
+            // బటన్ క్లిక్ చేసినప్పుడు డేటాబేస్ లో కాయిన్స్ యాడ్ అవ్వాలి
+            document.getElementById('btnClaimReward').onclick = async () => {
+                document.getElementById('btnClaimReward').disabled = true;
+                try {
+                    // హోస్ట్ అకౌంట్ కి గెలుచుకున్న కాయిన్స్ ని యాడ్ చేయడం
+                    await db.collection("Users").doc(hostId).update({
+                        coins: firebase.firestore.FieldValue.increment(coinsAmount)
+                    });
+                    alert(`🎉 సక్సెస్! మీ వాలెట్‌కి ${coinsAmount} Coins యాడ్ అయ్యాయి.`);
+                    closeScratchModal();
+                } catch (err) {
+                    alert("కాయిన్స్ అప్‌డేట్ చేయడంలో లోపం: " + err.message);
+                }
+            };
+        }
+    }
+}
+
+function closeScratchModal() {
+    document.getElementById('scratchModal').style.display = 'none';
+    showPage('home'); // గిఫ్ట్ తీసుకున్నాక హోమ్ పేజీకి పంపడం
+}
+
+// 5. Initial Accept Logic
+async function acceptRequest(reqId) {
+    const reqDoc = await db.collection("Requests").doc(reqId).get();
+    const reqData = reqDoc.data();
+    const rideId = reqData.rideId;
+
+    const batch = db.batch();
+
+    // 1. ప్రస్తుత రిక్వెస్ట్‌ని 'Accepted' గా మార్చడం
+    batch.update(db.collection("Requests").doc(reqId), { status: "Accepted" });
+
+    // 2. రైడ్ స్టేటస్‌ని 'Accepted' గా మార్చడం (తద్వారా మెయిన్ లిస్ట్ నుండి మాయమవుతుంది)
+    batch.update(db.collection("Rides").doc(rideId), { status: "Accepted" });
+
+    // 3. అదే రైడ్‌కి సంబంధించిన మిగిలిన పెండింగ్ రిక్వెస్ట్‌లను రిజెక్ట్ చేయడం
+    const otherRequests = await db.collection("Requests")
+        .where("rideId", "==", rideId)
+        .where("status", "==", "Pending")
+        .get();
+
+    otherRequests.forEach(doc => {
+        if (doc.id !== reqId) { // ఇప్పుడు యాక్సెప్ట్ చేసిన ఐడి కాకుండా మిగిలినవి
+            batch.update(doc.ref, { status: "Rejected" });
+        }
+    });
+
+    try {
+        await batch.commit();
+        alert("డీల్ కన్ఫర్మ్ అయింది! ఇప్పుడు మీరు జాయిన్ నొక్కినచోట చాట్ చేయవచ్చు.");
+    } catch (error) {
+        console.error("Error accepting request: ", error);
+        alert("ఏదో పొరపాటు జరిగింది, మళ్ళీ ప్రయత్నించండి.");
+    }
+}
+
+// -------------------------------------------------------------
+// CHAT & OTHER RETAINED LOGIC
+// -------------------------------------------------------------
+
+let currentChatId = null; 
+function openChat(rideId, otherName) {
+    currentChatId = rideId;
+    document.getElementById('chatWith').innerText = otherName;
+    showPage('chat-page');
+    loadMessages(rideId);
+}
+
+function loadMessages(rideId) {
+    db.collection("Messages").where("chatId", "==", rideId).orderBy("time", "asc").onSnapshot(snap => {
+        const cont = document.getElementById('chatMessages');
+        cont.innerHTML = "";
+        snap.forEach(doc => {
+            const m = doc.data();
+            const isMe = m.senderId === auth.currentUser.uid;
+            const dateObj = new Date(m.time);
+            const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            cont.innerHTML += `
+                <div class="chat-bubble ${isMe ? 'chat-me' : 'chat-other'}">
+                    <span class="chat-sender" style="color:${isMe ? '#075e54' : '#d35400'};">${isMe ? 'You' : m.senderName}</span>
+                    <span style="font-size:15px; display:inline-block; margin-bottom:5px;">${m.text}</span>
+                    <span class="chat-time">${timeStr}</span>
+                </div>`;
+        });
+        cont.scrollTop = cont.scrollHeight; 
+    });
+}
+
+async function sendMessage() {
+    const text = document.getElementById('msgInput').value.trim();
+    if(!text) return;
+
+    await db.collection("Messages").add({
+        chatId: currentChatId, senderId: auth.currentUser.uid, senderName: auth.currentUser.displayName,
+        text: text, time: Date.now()
+    });
+    document.getElementById('msgInput').value = "";
+}
+
+
+let currentRideData = null;
+let currentRideId = null;
+
+async function initiateJoin(rideId, rideType) {
+    const rideDoc = await db.collection("Rides").doc(rideId).get();
+    const rData = rideDoc.data();
+    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    
+    const comm = (rideType === "Paid") ? 40 : 500;
+    if ((userDoc.data().coins || 0) < comm) return alert("సరిపడా కాయిన్స్ లేవు! 💰Wallet లోకి కనీసం 10 రూపాయలు పంపుకోండి");
+
+    currentRideId = rideId;
+    currentRideData = rData;
+
+    if (rideType === "Paid") {
+        document.getElementById('modalBody').innerHTML = `హోస్ట్ ఈ రైడ్ కోసం <b>${rData.demand} Coins</b> అడుగుతున్నారు.`;
+        document.getElementById('joinModal').style.display = 'flex';
+        
+        document.getElementById('bargainInputArea').style.display = 'none';
+        document.getElementById('btnOk').style.display = 'block';
+        document.getElementById('btnBargain').style.display = 'block';
+        document.getElementById('btnConfirmBargain').style.display = 'none';
+
+        document.getElementById('btnOk').onclick = () => {
+            sendJoinRequest(currentRideId, currentRideData, "Paid", rData.demand, comm);
+            closeJoinModal();
+        };
+
+        document.getElementById('btnBargain').onclick = () => {
+            document.getElementById('modalBody').innerText = "మీరు ఎంత ఆఫర్ చేయాలనుకుంటున్నారు?";
+            document.getElementById('bargainInputArea').style.display = 'block';
+            document.getElementById('btnOk').style.display = 'none';
+            document.getElementById('btnBargain').style.display = 'none';
+            document.getElementById('btnConfirmBargain').style.display = 'block';
+        };
+
+        document.getElementById('btnConfirmBargain').onclick = () => {
+            const offer = document.getElementById('customOffer').value;
+            if(!offer) return alert("ఆఫర్ ఎంటర్ చేయండి!");
+            sendJoinRequest(currentRideId, currentRideData, "Paid", Number(offer), comm);
+            closeJoinModal();
+        };
+    } else {
+        if(confirm("ఈ ఫ్రీ రైడ్ లో జాయిన్ అవ్వాలనుకుంటున్నారా? (5 రూపాయలు కమీషన్ కట్ అవుతుంది)")) {
+            sendJoinRequest(rideId, rData, "Free", 0, comm);
+        }
+    }
+}
+
+function closeJoinModal() {
+    document.getElementById('joinModal').style.display = 'none';
+    document.getElementById('customOffer').value = "";
+}
+
+function sendJoinRequest(rideId, rData, rideType, offer, comm) {
+    db.collection("Requests").add({
+        rideId: rideId, hostId: rData.saathiId, coSaathiId: auth.currentUser.uid, coSaathiName: auth.currentUser.displayName,
+        from: rData.from, to: rData.to, rideType: rideType, offerPrice: Number(offer), commToPay: comm, status: "Pending", createdAt: Date.now()
+    }).then(() => alert("రిక్వెస్ట్ పంపబడింది! Host Accept చేస్తే Status మారుతుంది. "));
+}
+
+function loadIncomingRequests() {
+    const container = document.getElementById('incomingRequests');
+    const section = document.getElementById('requests-section');
+
+    db.collection("Requests").where("hostId", "==", auth.currentUser.uid).where("status", "==", "Pending").onSnapshot(snap => {
+        if (snap.empty) { section.style.display = "none"; return; }
+        section.style.display = "block";
+        container.innerHTML = "";
+        snap.forEach(doc => {
+            const req = doc.data();
+            container.innerHTML += `
+                <div class="card" style="border:1px solid #ddd; padding:10px; margin-bottom:10px;">
+                    <p><b>${req.coSaathiName}</b> మీతో కలిసి ${req.from} నుండి ${req.to} ప్రయాణం చేయాలనుకుంటున్నారు.</p>
+                    <p>ఆఫర్ చేసిన ధర: <b style="color:green;">${req.offerPrice} Coins</b></p>
+                    <div style="display:flex; justify-content:space-between;">
+                        <button onclick="acceptRequest('${doc.id}')" style="background:var(--secondary); width:48%;">Accept</button>
+                        <button onclick="rejectRequest('${doc.id}')" style="background:red; width:48%;">Reject</button>
+                    </div>
+                </div>`;
+        });
+    });
+}
+
+function rejectRequest(reqId) {
+    if(confirm("ఈ రిక్వెస్ట్ ని రిజెక్ట్ చేయాలా?")) db.collection("Requests").doc(reqId).update({ status: "Rejected" });
+}
+
+    
+// ==========================================
+// 1. RECEIVER SIDE: QR CODE & STICKER LOGIC
+// ==========================================
+let currentUserIdForQR = "";
+
+async function openQRModal() {
+    // ఫైర్‌బేస్ నుండి యూజర్ Transfer ID తీసుకురావడం
+    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    currentUserIdForQR = userDoc.data().transferId;
+    
+    if(!currentUserIdForQR) return alert("మీ Account Number ఇంకా జనరేట్ కాలేదు. దయచేసి మళ్ళీ ప్రయత్నించండి.");
+
+    document.getElementById("qrModal").style.display = "flex";
+    document.getElementById("displayTransferId").innerText = "ID: " + currentUserIdForQR;
+    
+    document.getElementById("qrcode").innerHTML = ""; // పాతది క్లియర్ చేయడం
+    new QRCode(document.getElementById("qrcode"), {
+        text: currentUserIdForQR,
+        width: 180,
+        height: 180,
+        colorDark : "#1e3c72", // Dark Blue color for QR
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+}
+
+function closeQRModal() {
+    document.getElementById("qrModal").style.display = "none";
+}
+
+    // అప్‌డేట్ చేయబడిన QR స్టిక్కర్ డౌన్‌లోడ్ ఫంక్షన్
+function downloadQRSticker() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 380;
+    canvas.height = 480;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Background (White)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. Border
+    ctx.strokeStyle = '#1e3c72'; // Dark Blue Border
+    ctx.lineWidth = 12;
+    ctx.strokeRect(6, 6, canvas.width - 12, canvas.height - 12);
+
+    // 3. Title
+    ctx.fillStyle = '#1e3c72';
+    ctx.font = 'bold 36px Arial'; 
+    ctx.textAlign = 'center';
+    ctx.fillText('Go Saathi', canvas.width / 2, 70);
+
+    // 4. Subtitle
+    ctx.fillStyle = '#28a745';
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('Scan and Pay Coins', canvas.width / 2, 110);
+
+    // మిగిలిన టెక్స్ట్ డ్రా చేసి, ఇమేజ్ డౌన్‌లోడ్ చేసే ఫంక్షన్
+    const drawTextAndDownload = () => {
+        // 6. Transfer ID Text
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 24px Courier New';
+        ctx.fillText('Account No: ' + currentUserIdForQR, canvas.width / 2, 390);
+        
+        // 7. Footer text
+        ctx.fillStyle = '#888888';
+        ctx.font = '18px Arial';
+        ctx.fillText('Accepted Here', canvas.width / 2, 430);
+
+        // Download Action (మొబైల్ బ్రౌజర్ల సపోర్ట్ కోసం)
+        try {
+            const imageURI = canvas.toDataURL("image/png");
+            const link = document.createElement('a');
+            link.download = `GoSaathi_QR_${currentUserIdForQR}.png`;
+            link.href = imageURI;
+            
+            // లింక్ ని బాడీ కి యాడ్ చేసి క్లిక్ చేయాలి (Firefox & Mobile Safari fix)
+            document.body.appendChild(link); 
+            link.click();
+            document.body.removeChild(link); // డౌన్‌లోడ్ అయ్యాక లింక్ ని రిమూవ్ చేయడం
+        } catch (err) {
+            console.error("డౌన్‌లోడ్ ఎర్రర్:", err);
+            alert("డౌన్‌లోడ్ చేయడంలో సమస్య వచ్చింది. దయచేసి స్క్రీన్ షాట్ తీసుకోండి.");
+        }
+    };
+
+    // 5. Add QR Image (రెండరింగ్ చెక్)
+    const qrContainer = document.getElementById("qrcode");
+    const qrImage = qrContainer.querySelector("img");
+    const qrCanvas = qrContainer.querySelector("canvas");
+
+    // బ్రౌజర్ <img> ట్యాగ్ ని జనరేట్ చేసి ఉంటే...
+    if (qrImage && qrImage.getAttribute("src")) {
+        let tempImg = new Image();
+        tempImg.onload = function() {
+            ctx.drawImage(tempImg, 90, 140, 200, 200);
+            drawTextAndDownload(); // ఇమేజ్ డ్రా అయ్యాక డౌన్‌లోడ్ కాల్ చేయాలి
+        };
+        tempImg.src = qrImage.getAttribute("src");
+    } 
+    // ఒకవేళ బ్రౌజర్ <canvas> ని జనరేట్ చేసి ఉంటే...
+    else if (qrCanvas) {
+        ctx.drawImage(qrCanvas, 90, 140, 200, 200);
+        drawTextAndDownload();
+    } 
+    else {
+        drawTextAndDownload();
+    }
+}
+
+// ==========================================
+// 2. SENDER SIDE: SCANNER & TRANSFER LOGIC
+// ==========================================
+let html5QrcodeScanner;
+
+function startScanner() {
+    document.getElementById("reader").style.display = "block";
+    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} });
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+}
+
+function onScanSuccess(decodedText) {
+    document.getElementById('transferTargetUid').value = decodedText;
+    
+    // స్కాన్ పూర్తవ్వగానే కెమెరా క్లోజ్ అవుతుంది
+    html5QrcodeScanner.clear();
+    document.getElementById("reader").style.display = "none";
+    
+    // పేరు ఆటోమేటిక్ గా వస్తుంది
+    fetchUserName();
+}
+
+function onScanFailure(error) {
+    // స్కానింగ్ జరుగుతున్నప్పుడు వచ్చే ఎర్రర్స్ ఇగ్నోర్ చేయవచ్చు
+}
+
+// Firebase నుండి పేరు తెచ్చే ఫంక్షన్
+async function fetchUserName() {
+    let tId = document.getElementById('transferTargetUid').value.trim();
+    let nameDisplay = document.getElementById("receiverNameDisplay");
+    
+    // 8 అంకెలు ఎంటర్ చేయగానే డేటాబేస్ చెక్ చేస్తుంది
+    if(tId.length === 8) {
+        nameDisplay.style.display = "block";
+        nameDisplay.style.color = "#ffcc00"; // Loading color
+        nameDisplay.innerText = "వెతుకుతోంది...";
+        
+        try {
+            const userQuery = await db.collection("Users").where("transferId", "==", tId).limit(1).get();
+            if(!userQuery.empty) {
+                let userData = userQuery.docs[0].data();
+                nameDisplay.style.color = "green";
+                nameDisplay.innerText = "Receiver: " + userData.name + " ✅";
+            } else {
+                nameDisplay.style.color = "red";
+                nameDisplay.innerText = "ఈ Account Number తో ఎవరూ లేరు ❌";
+            }
+        } catch(error) {
+            console.error(error);
+            nameDisplay.style.color = "red";
+            nameDisplay.innerText = "ఎర్రర్ వచ్చింది. మళ్లీ ట్రై చేయండి.";
+        }
+    } else {
+        nameDisplay.style.display = "none";
+    }
+}
+
+// Coins Transfer Firebase Logic
+async function processTransfer() {
+    const targetTransferId = document.getElementById('transferTargetUid').value.trim();
+    const amount = Number(document.getElementById('transferCoinsInput').value);
+    const userRef = db.collection("Users").doc(auth.currentUser.uid);
+
+    if (targetTransferId.length !== 8) {
+        return alert("8 అంకెల Account Number మాత్రమే ఎంటర్ చేయండి.");
+    }
+    
+    if (!amount || amount <=99) return alert("దయచేసి సరైన (100 లేదా ఆపైన) Coins ఎంటర్ చేయండి.");
+    
+
+    // Loading / Processing alert
+    document.getElementById("receiverNameDisplay").innerText = "Processing Transfer...";
+
+    try {
+        const userDoc = await userRef.get();
+        const senderData = userDoc.data() || {};
+        const currentBalance = senderData.coins || 0;
+        
+        // వాలిడేషన్ 2: 5000 కాయిన్స్ మినిమం బ్యాలెన్స్ మెయింటైన్ చేయాలి
+        if (currentBalance - amount < 5000) {
+            document.getElementById("receiverNameDisplay").style.display = "none";
+            return alert(`మీ ఖాతాలో కనీసం 5000 Coins బ్యాలెన్స్ ఉండాలి! (మీ ప్రస్తుత బ్యాలెన్స్: ${currentBalance} Coins)`);
+        }
+      
+        // రిసీవర్ ని ఫైండ్ చేయడం
+        const recipientSnap = await db.collection("Users").where("transferId", "==", targetTransferId).limit(1).get();
+
+        if (recipientSnap.empty) {
+            document.getElementById("receiverNameDisplay").innerText = "ఈ Account Number తో ఎవరూ లేరు ❌";
+            return alert("ఈ Account Number కి user దొరకలేదు.");
+        }
+
+        const recipientDoc = recipientSnap.docs[0];
+        
+        // తనకు తాను పంపుకోకుండా లాక్ చేయడం
+        if (recipientDoc.id === auth.currentUser.uid) {
+            document.getElementById("receiverNameDisplay").style.display = "none";
+            return alert("🤡hmm.. మీకు మీరే Coins పంపుకోలేరు!");
+        }
+
+        let recipientName = recipientDoc.data().name;
+
+        // Firebase Transaction (సురక్షితమైన ట్రాన్స్ఫర్ కోసం batch బదులు transaction వాడటం మంచిది)
+        await db.runTransaction(async (transaction) => {
+            const freshSenderDoc = await transaction.get(userRef);
+            
+            if ((freshSenderDoc.data().coins || 0) < amount) {
+                throw "సరిపడా కాయిన్స్ లేవు.";
+                }
+            transaction.update(userRef, { coins: firebase.firestore.FieldValue.increment(-amount) });
+            transaction.update(recipientDoc.ref, { coins: firebase.firestore.FieldValue.increment(amount) });
+        });
+
+        // సక్సెస్ అయ్యాక Transaction ID క్రియేట్ చేయడం
+        let transactionId = "TXN" + Math.floor(Math.random() * 9000000000);
+        // 🎵 సక్సెస్ సౌండ్ ప్లే చేయడానికి కోడ్
+        let paymentAudio = new Audio('Payment_sound.mp3');
+        paymentAudio.play().catch(error => console.log("Sound play error:", error));
+
+        // సౌండ్ ముందు ప్లే అయ్యి, వెంటనే (100ms గ్యాప్ తో) Alert వస్తుంది
+        setTimeout(() => {
+
+        // మీరు అడిగినట్లుగా Transaction ID మరియు పేరుతో Success Window
+        alert(`✅ ట్రాన్స్‌ఫర్ సక్సెస్!\n\nరిసీవర్ పేరు: ${recipientName}\nAccount Number: ${targetTransferId}\nTransaction ID: ${transactionId}\n\n${amount} Coins విజయవంతంగా పంపబడ్డాయి!`);
+        
+        // ఫామ్ క్లియర్ చేయడం
+        document.getElementById('transferTargetUid').value = "";
+        document.getElementById('transferCoinsInput').value = "";
+        document.getElementById("receiverNameDisplay").style.display = "none";
+         }, 100);
+    } catch (error) {
+        console.error("Transfer Error: ", error);
+        alert("ట్రాన్స్‌ఫర్ విఫలమైంది: " + error);
+        document.getElementById("receiverNameDisplay").style.display = "none";
+    }
+}
+async function requestCoins() {
+    const utr = document.getElementById('utrId').value.trim();
+    const amount = Number(document.getElementById('payAmount').value);
+    if (!utr || !amount) return alert("అమౌంట్ మరియు UTR నంబర్ ఎంటర్ చేయాలి!");
+
+    db.collection("Payments").add({
+        userId: auth.currentUser.uid, userName: auth.currentUser.displayName,
+        amount: amount, utr: utr, status: "Pending", time: Date.now()
+    }).then(() => {
+        alert("పేమెంట్ సబ్మిట్ చేయబడింది! Checking జరుగుతుంది. ధృవీకరణ అయిన వెంటనే కోయిన్స్ add అవుతాయి.");
+        clearForm(['payAmount', 'utrId']);
+    });
+}
+    
+async function requestWithdrawal() {
+    const amountINR = Number(document.getElementById('withdrawAmount').value);
+    const upiId = document.getElementById('upiId').value;
+    const coinsNeeded = amountINR * 100;
+    
+    // Fetch User Data
+    const userDoc = await db.collection("Users").doc(auth.currentUser.uid).get();
+    const userData = userDoc.data();
+    const currentCoins = userData.coins || 0;
+
+    // 1. Check Daily Limit (5 transactions)
+    const today = new Date().toISOString().split('T')[0];
+    const dailySnap = await db.collection("Withdrawals")
+        .where("userId", "==", auth.currentUser.uid)
+        .where("date", "==", today).get();
+    
+    if (dailySnap.size >= 5) return alert("ఈరోజుకి మీ 5 ట్రాన్సాక్షన్ల లిమిట్ ముగిసింది.");
+
+    // 2. Logic Validations
+    if (amountINR < 100) return alert("కనీసం ₹100 విత్‌డ్రా చేయాలి.");
+    if (currentCoins - coinsNeeded < 50000) {
+        return alert("విత్‌డ్రా తర్వాత మీ అకౌంట్‌లో కనీసం 50,000 కాయిన్స్ ఉండేలా చూసుకొండి.");
+    }
+    if (!upiId.includes('@')) return alert("సరైన UPI ID ఎంటర్ చేయండి.");
+
+    // 3. Process Request
+    const batch = db.batch();
+    const withdrawRef = db.collection("Withdrawals").doc();
+    
+    batch.set(withdrawRef, {
+        userId: auth.currentUser.uid,
+        userName: userData.name,
+        amountINR: amountINR,
+        coinsRedeemed: coinsNeeded,
+        upiId: upiId,
+        status: "Pending",
+        date: today,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    batch.update(db.collection("Users").doc(auth.currentUser.uid), {
+        coins: firebase.firestore.FieldValue.increment(-coinsNeeded)
+    });
+
+    await batch.commit();
+    alert("విత్‌డ్రాయల్ రిక్వెస్ట్ పంపబడింది! 24 గంటల్లో మీ ఖాతాలో జమ అవుతుంది.");
+}
+    
+function loadAdminData() { /* Intentionally left same */ }
+function adminManageCoins(uid, type) { /* Intentionally left same */ }
+
+function showPage(pageId) {
+    ['home', 'wallet', 'ride', 'profile', 'activation-screen', 'login-screen', 'basic-info-screen', 'chat-page'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (id === pageId) ? 'block' : 'none';
+    });
+
+    document.getElementById('bottomNav').style.display = (pageId === 'chat-page') ? 'none' : 'flex';
+
+    if(pageId === 'home') {
+        loadRides();
+        loadIncomingRequests(); 
+        loadActiveChats(); 
+    }
+}
+
+function clearForm(ids) { ids.forEach(id => { 
+    let el = document.getElementById(id); 
+    if(el.type === "checkbox") el.checked = false; else el.value = ""; 
+}); }
+
+function shareInvite() {
+    const link = window.location.origin + window.location.pathname + "?invite=" + auth.currentUser.uid;
+    window.open("https://api.whatsapp.com/send?text=Join GoSaathi: " + encodeURIComponent(link));
+}
+
+document.getElementById('rideType').addEventListener('change', function() {
+    document.getElementById('paidExtraFields').style.display = (this.value === 'Paid') ? 'block' : 'none';
+});
+    // Live Search Filter Function
+function filterRides() {
+    // యూజర్ టైప్ చేసిన దాన్ని చిన్న అక్షరాలు (lowercase) లోకి మారుస్తున్నాం
+    let fromValue = document.getElementById('searchFrom').value.toLowerCase();
+    let toValue = document.getElementById('searchTo').value.toLowerCase();
+    
+    // డాక్యుమెంట్ లో ఉన్న రైడ్ కార్డ్స్ అన్నింటినీ తీసుకుంటున్నాం
+    let rides = document.getElementsByClassName('ride-item');
+    
+    for (let i = 0; i < rides.length; i++) {
+        // మన డిజైన్ ప్రకారం <b> ట్యాగ్‌లో "From ➔ To" పేర్లు ఉన్నాయి
+        let routeText = rides[i].getElementsByTagName('b')[0].innerText.toLowerCase();
+        
+        // "➔" గుర్తు ఆధారంగా From మరియు To పేర్లను విడదీస్తున్నాం
+        let [rideFrom, rideTo] = routeText.split(' ➔ ');
+        
+        // యూజర్ టైప్ చేసిన అక్షరాలు ఈ రైడ్‌లో ఉన్నాయో లేదో చెక్ చేస్తున్నాం (includes)
+        if (rideFrom.includes(fromValue) && rideTo.includes(toValue)) {
+            rides[i].style.display = "block"; // మ్యాచ్ అయితే చూపించు
+        } else {
+            rides[i].style.display = "none";  // మ్యాచ్ కాకపోతే దాచేయ్
+        }
+    }
+}
+
+    // Mapbox Access Token ఇక్కడ ఇవ్వండి
+mapboxgl.accessToken = 'pk.eyJ1IjoiZ29zYWF0aGkiLCJhIjoiY21vbng4ZmYxMTZ6NzJxc2FzamRpbG8ydCJ9.IEgjmmR4tQNGlsK9w2y9eg';
+
+let map;
+
+// 1. User(host) Ride post చేయాలి అంటే location 'ON' చెక్ చేయడం
+function checkGpsAndInitMap() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLon = position.coords.longitude;
+                const userLat = position.coords.latitude;
+                const centerLocation = [userLon, userLat];
+                
+                document.getElementById('map').style.display = 'block';
+                setupMapbox(centerLocation);
+                
+                // కొత్తగా యాడ్ చేయాల్సిన లైన్ (మ్యాప్ రెండర్ అవ్వడానికి కొద్దిగా టైమ్ ఇచ్చి రీసైజ్ చేయడం)
+                setTimeout(() => { map.resize(); }, 300);
+            },
+            (error) => {
+                alert("Go Sathi లో Ride post చేయాలంటే దయచేసి మీ ఫోన్ లో లొకేషన్ (GPS) 'ON' చేయండి.");
+            }
+        );
+    } else {
+        alert("మీ బ్రౌజర్ లొకేషన్ ని సపోర్ట్ చేయడం లేదు.");
+    }
+}
+
+// 2. Map enable అవ్వడం మరియు Host లొకేషన్ మార్క్ చేయడం
+function setupMapbox(centerLocation) {
+    // మ్యాప్ ఇనిషియలైజేషన్
+    map = new mapboxgl.Map({
+        container: 'map', // index.html లోని div id
+        style: 'mapbox://styles/mapbox/streets-v12', // మ్యాప్ స్టైల్
+        center: centerLocation, // మ్యాప్ సెంటర్ పాయింట్ (యూజర్ లొకేషన్)
+        zoom: 14 // జూమ్ లెవెల్
+    });
+
+    // మ్యాప్ లోడ్ అవ్వగానే నావిగేషన్ కంట్రోల్స్ (జూమ్ ఇన్/అవుట్) యాడ్ చేయడం
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // Host (యూజర్) లొకేషన్ దగ్గర ఎరుపు రంగు మార్కర్ పెట్టడం
+    new mapboxgl.Marker({ color: 'red' })
+        .setLngLat(centerLocation)
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML("<h4>మీరు (Host)</h4>"))
+        .addTo(map);
+
+    // 3. చుట్టుపక్కల ఉన్న Co-sathi రైడ్స్ చూపించడం
+    showNearbyRides(centerLocation);
+}
+
+// 3. వీలైతే near location rides show చేయడం
+function showNearbyRides(centerLocation) {
+    // ప్రస్తుతానికి మీ చుట్టుపక్కల ఉన్నట్లుగా డమ్మీ డేటా క్రియేట్ చేస్తున్నాను. 
+    // భవిష్యత్తులో ఈ డేటాని Firebase డేటాబేస్ నుండి తెచ్చుకోవాలి.
+    const nearbyRides = [
+        { lng: centerLocation[0] + 0.005, lat: centerLocation[1] + 0.005, name: "Co-sathi: రమేష్", type: "Bike" },
+        { lng: centerLocation[0] - 0.004, lat: centerLocation[1] - 0.006, name: "Co-sathi: సురేష్", type: "Car" }
+    ];
+
+    // ప్రతి రైడ్ కి మ్యాప్ లో బ్లూ కలర్ మార్కర్ యాడ్ చేయడం
+    nearbyRides.forEach(ride => {
+        new mapboxgl.Marker({ color: 'blue' })
+            .setLngLat([ride.lng, ride.lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<h4>${ride.name}</h4><p>వాహనం: ${ride.type}</p>`))
+            .addTo(map);
+    });
+}
+    // హోస్ట్ కోసం లైవ్ లిజనర్: రైడ్ కంప్లీట్ అవ్వగానే నోటిఫికేషన్ లేదా స్క్రాచ్ కార్డ్ చూపిస్తుంది
+function listenToHostRequests() {
+    db.collection("Requests")
+      .where("hostId", "==", auth.currentUser.uid)
+      .onSnapshot(snapshot => {
+          snapshot.docChanges().forEach(change => {
+              // కేవలం డేటాబేస్ మోడిఫై (అప్‌డేట్) అయినప్పుడు మాత్రమే
+              if (change.type === "modified") {
+                  const reqData = change.doc.data();
+                  const reqId = change.doc.id;
+                  
+                  // రైడ్ స్టేటస్ 'Completed' గా మారి, హోస్ట్‌కి ఇంకా అలర్ట్ వెళ్ళనప్పుడు
+                  if (reqData.status === "Completed" && !reqData.hostNotified) {
+                      
+                      // మళ్ళీ మళ్ళీ అలర్ట్ రాకుండా డేటాబేస్ లో ఒక ఫ్లాగ్ (hostNotified: true) అప్‌డేట్ చేస్తాం
+                      db.collection("Requests").doc(reqId).update({ hostNotified: true });
+
+                      // 1. ఒకవేళ ఇది PAID RIDE అయితే హోస్ట్ కి ఈ మెసేజ్ వస్తుంది
+                      if (reqData.rideType === "Paid") {
+                          alert(`🎉 Coins Received From Your Saathi! (${reqData.offerPrice} Coins మీ వాలెట్ కి యాడ్ అయ్యాయి)`);
+                      } 
+                      // 2. ఒకవేళ ఇది FREE RIDE అయితే హోస్ట్ కి స్క్రాచ్ కార్డ్ ఓపెన్ అవుతుంది
+                      else if (reqData.rideType === "Free") {
+                          // 50 నుండి 200 మధ్యలో రాండమ్ కాయిన్స్ గిఫ్ట్
+                          const wonCoins = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
+                          
+                          // మీ స్క్రాచ్ కార్డ్ ఫంక్షన్ ని ఇక్కడ ట్రిగ్గర్ చేస్తున్నాం
+                          initiateScratchCard(reqData.hostId, wonCoins);
+                      }
+                  }
+              }
+          });
+      });
+}
+    // PWA ఇన్‌స్టాల్ లాజిక్
+// 1. Service Worker Registration (యాప్ లాగా పనిచేయడానికి ఇది తప్పనిసరి)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log("Service Worker Registered"))
+    .catch((err) => console.log("Service Worker Failed", err));
+}
+
+// 2. PWA ఇన్‌స్టాల్ లాజిక్ (మీ రెండు బటన్స్ కోసం)
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // బ్రౌజర్ ఆటోమేటిక్ ప్రాంప్ట్ ని ఆపడం
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // రెండు బటన్స్ ని వెతకడం
+    const installBtnLogin = document.getElementById('installBtnLogin');
+    const installBtnProfile = document.getElementById('installBtnProfile');
+
+    // బటన్స్ ఉంటే వాటిని కనిపించేలా చేయడం
+    if(installBtnLogin) installBtnLogin.style.display = 'block';
+    if(installBtnProfile) installBtnProfile.style.display = 'block';
+
+    // బటన్ క్లిక్ చేసినప్పుడు జరిగే యాక్షన్ ని ఒక ఫంక్షన్ లో రాయడం
+    const installApp = () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User installed the Go Sathi app');
+                    // ఇన్‌స్టాల్ అయ్యాక బటన్స్ హైడ్ చేయడం
+                    if(installBtnLogin) installBtnLogin.style.display = 'none';
+                    if(installBtnProfile) installBtnProfile.style.display = 'none';
+                }
+                deferredPrompt = null;
+            });
+        }
+    };
+
+    // రెండు బటన్స్ కి క్లిక్ ఈవెంట్ ఇవ్వడం
+    if(installBtnLogin) installBtnLogin.addEventListener('click', installApp);
+    if(installBtnProfile) installBtnProfile.addEventListener('click', installApp);
+});
+
+</script>
+</body>
+</html>
