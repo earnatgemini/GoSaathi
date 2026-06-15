@@ -156,7 +156,7 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('click', () => { 
     if (isGameOver) return;
     if (currentBubble && !currentBubble.active) { 
-        // 5 పాయింట్లు కట్ అవుతాయి (కానీ స్కోర్ 0 కన్నా తగ్గదు)
+        // 5 పాయింట్లు కట్ అవుతాయి 
         score = Math.max(score - 5);
         scoreEl.innerText = score;
 
@@ -329,8 +329,8 @@ function resetGame() {
 function update() { 
     if (isGameOver) return;
 
-    // ప్రతి 3 సెకనుకు (3000ms) కిందకి జరపాలి
-    if (Date.now() - lastDropTime > 3000) {
+    // ప్రతి 4 సెకనుకు (3000ms) కిందకి జరపాలి
+    if (Date.now() - lastDropTime > 4000) {
         dropGridDown();
         lastDropTime = Date.now();
     }
