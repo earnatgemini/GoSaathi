@@ -1,0 +1,436 @@
+﻿<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Arcade Bubble Shooter 3D - Firebase</title> 
+    <style> 
+        body { 
+            margin: 0; 
+            background: #111; 
+            color: white; 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            overflow: hidden; 
+        } 
+        #game-container { 
+            position: relative; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.8); 
+        } 
+        canvas { 
+            background: #1a1a1a; 
+            display: block; 
+            border: 4px solid #444; 
+            border-radius: 4px; 
+        } 
+        #ui { 
+            text-align: center; 
+            margin-top: 10px; 
+            font-size: 18px; 
+        } 
+        #game-over-screen {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ff3333;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        #restart-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #33ff33;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: black;
+            font-weight: bold;
+        }
+    </style> 
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // !!! మీ Firebase కన్సోల్ వివరాలను ఇక్కడ మార్చండి !!!
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY",
+            authDomain: "gemini-spinning-wheel-game.firebaseapp.com",
+            projectId: "gemini-spinning-wheel-game",
+            storageBucket: "gemini-spinning-wheel-game.firebasestorage.app",
+            messagingSenderId: "691322332189",
+            appId: "1:691322332189:web:e757b79d4d9eb010b692f4"
+        };
+
+        // Firebase Initialize
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // స్కోర్‌ని ఫైర్‌బేస్ లో సేవ్ చేసే గ్లోబల్ ఫంక్షన్
+        window.saveScoreToFirebase = async function(finalScore) {
+            try {
+                const docRef = await addDoc(collection(db, "bubble_shooter_scores"), {
+                    score: finalScore,
+                    timestamp: serverTimestamp()
+                });
+                console.log("Score saved successfully with ID: ", docRef.id);
+            } catch (e) {
+                console.error("Error adding score to Firestore: ", e);
+            }
+        }
+    </script>
+</head> 
+<body> 
+
+<div id="game-container"> 
+    <canvas id="gameCanvas" width="400" height="500"></canvas> 
+    <div id="game-over-screen">
+        <div>GAME OVER</div>
+        <button id="restart-btn" onclick="resetGame()">Play Again</button>
+    </div>
+</div> 
+<div id="ui">Score: <span id="score">0</span></div> 
+
+<script> 
+const canvas = document.getElementById('gameCanvas'); 
+const ctx = canvas.getContext('2d'); 
+const scoreEl = document.getElementById('score'); 
+const gameOverScreen = document.getElementById('game-over-screen');
+
+// Game configurations 
+const BUBBLE_RADIUS = 18; 
+const ROWS = 14; // గ్రిడ్ సైజ్ పెంచబడింది కిందకు దిగడానికి వీలుగా
+const COLS = 10; 
+const COLORS = ['#ff3333', '#33ff33', '#3333ff', '#ffff33', '#ff33ff']; 
+const DEAD_LINE_Y = 400; // ఈ లైన్ దాటితే గేమ్ ఓవర్
+
+// Game state variables 
+let score = 0; 
+let grid = []; 
+let currentBubble = null; 
+let fallingBubbles = []; // కిందపడిపోయే బబుల్స్ లిస్ట్
+let isGameOver = false;
+let mousePos = { x: canvas.width / 2, y: canvas.height }; 
+let lastDropTime = Date.now();
+
+// Shooter coordinates 
+const shooterX = canvas.width / 2; 
+const shooterY = canvas.height - BUBBLE_RADIUS - 10; 
+
+function initGrid() { 
+    grid = [];
+    for (let r = 0; r < ROWS; r++) { 
+        grid[r] = []; 
+        for (let c = 0; c < COLS; c++) { 
+            grid[r][c] = (r < 4) ? COLORS[Math.floor(Math.random() * COLORS.length)] : null; 
+        } 
+    } 
+} 
+
+function spawnBubble() { 
+    currentBubble = { 
+        x: shooterX, 
+        y: shooterY, 
+        color: COLORS[Math.floor(Math.random() * COLORS.length)], 
+        vx: 0, 
+        vy: 0, 
+        active: false 
+    }; 
+} 
+
+canvas.addEventListener('mousemove', (e) => { 
+    const rect = canvas.getBoundingClientRect(); 
+    mousePos.x = e.clientX - rect.left; 
+    mousePos.y = e.clientY - rect.top; 
+}); 
+
+canvas.addEventListener('click', () => { 
+    if (isGameOver) return;
+    if (currentBubble && !currentBubble.active) { 
+        // 5 పాయింట్లు కట్ అవుతాయి (కానీ స్కోర్ 0 కన్నా తగ్గదు)
+        score = Math.max(score - 5);
+        scoreEl.innerText = score;
+
+        const angle = Math.atan2(mousePos.y - shooterY, mousePos.x - shooterX); 
+        const speed = 10; 
+        currentBubble.vx = Math.cos(angle) * speed; 
+        currentBubble.vy = Math.sin(angle) * speed; 
+        currentBubble.active = true; 
+    } 
+}); 
+
+function checkGridCollision(bubble) { 
+    for (let r = 0; r < ROWS; r++) { 
+        for (let c = 0; c < COLS; c++) { 
+            if (grid[r][c]) { 
+                const bx = c * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS + (r % 2 * BUBBLE_RADIUS); 
+                const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS; 
+                const dist = Math.hypot(bubble.x - bx, bubble.y - by); 
+                if (dist < BUBBLE_RADIUS * 1.7) { 
+                    return true; 
+                } 
+            } 
+        } 
+    } 
+    return false; 
+} 
+
+function snapToGrid(bubble) { 
+    let targetRow = Math.min(ROWS - 1, Math.max(0, Math.floor(bubble.y / (BUBBLE_RADIUS * 2)))); 
+    let targetCol = Math.min(COLS - 1, Math.max(0, Math.floor((bubble.x - (targetRow % 2 * BUBBLE_RADIUS)) / (BUBBLE_RADIUS * 2)))); 
+    
+    grid[targetRow][targetCol] = bubble.color; 
+    
+    popMatches(targetRow, targetCol, bubble.color); 
+    checkOrphanBubbles(); // గాల్లో తేలే బబుల్స్ ని కింద పడేలా చేస్తుంది
+    checkGameOverCondition();
+    spawnBubble(); 
+} 
+
+function popMatches(row, col, color) { 
+    let matches = [[row, col]]; 
+    let queue = [[row, col]]; 
+    let visited = Array(ROWS).fill().map(() => Array(COLS).fill(false)); 
+    visited[row][col] = true; 
+
+    while (queue.length > 0) { 
+        let [r, c] = queue.shift(); 
+        let neighbors = getNeighbors(r, c);
+        
+        for (let [nr, nc] of neighbors) { 
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) { 
+                if (!visited[nr][nc] && grid[nr][nc] === color) { 
+                    visited[nr][nc] = true; 
+                    matches.push([nr, nc]); 
+                    queue.push([nr, nc]); 
+                } 
+            } 
+        } 
+    } 
+
+    if (matches.length >= 3) { 
+        matches.forEach(([r, c]) => {
+            // పాప్ అయిన బబుల్స్ ని falling ఎఫెక్ట్ లోకి మారుస్తాం
+            const bx = c * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS + (r % 2 * BUBBLE_RADIUS); 
+            const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS; 
+            fallingBubbles.push({ x: bx, y: by, color: grid[r][c], vy: 2, vx: (Math.random() - 0.5) * 4 });
+            grid[r][c] = null;
+        }); 
+        score += matches.length * 10; 
+        scoreEl.innerText = score; 
+    } 
+} 
+
+function getNeighbors(r, c) {
+    return [ 
+        [r, c-1], [r, c+1], 
+        [r-1, c], [r+1, c], 
+        [r-1, c + (r % 2 === 0 ? -1 : 1)], 
+        [r+1, c + (r % 2 === 0 ? -1 : 1)] 
+    ];
+}
+
+// సపోర్ట్ లేకుండా గాల్లో ఉన్న (Orphan) బబుల్స్ ని కనిపెట్టి కింద పడేసే ఫంక్షన్
+function checkOrphanBubbles() {
+    let connected = Array(ROWS).fill().map(() => Array(COLS).fill(false));
+    let queue = [];
+
+    // మొదటి రో లో ఉన్న బబుల్స్ అన్నీ ఎల్లప్పుడూ కనెక్ట్ అయి ఉంటాయి
+    for (let c = 0; c < COLS; c++) {
+        if (grid[0][c]) {
+            connected[0][c] = true;
+            queue.push([0, c]);
+        }
+    }
+
+    while (queue.length > 0) {
+        let [r, c] = queue.shift();
+        let neighbors = getNeighbors(r, c);
+        for (let [nr, nc] of neighbors) {
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+                if (!connected[nr][nc] && grid[nr][nc]) {
+                    connected[nr][nc] = true;
+                    queue.push([nr, nc]);
+                }
+            }
+        }
+    }
+
+    // కనెక్ట్ అవ్వని బబుల్స్ ని గ్రిడ్ లోంచి తీసేసి కింద పడేయాలి
+    for (let r = 1; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            if (grid[r][c] && !connected[r][c]) {
+                const bx = c * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS + (r % 2 * BUBBLE_RADIUS); 
+                const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS; 
+                fallingBubbles.push({ x: bx, y: by, color: grid[r][c], vy: 4, vx: (Math.random() - 0.5) * 2 });
+                grid[r][c] = null;
+            }
+        }
+    }
+}
+
+// ప్రతి సెకనుకు గ్రిడ్ కిందకు జరగడం, పైన కొత్త బబుల్స్ రావడం
+function dropGridDown() {
+    // కింద రోస్ ని ఒక స్టెప్ కిందకి జరపాలి
+    for (let r = ROWS - 1; r > 0; r--) {
+        grid[r] = [...grid[r-1]];
+    }
+    // మొదటి వరుసలో కొత్త బబుల్స్ ని యాడ్ చేయాలి
+    grid[0] = [];
+    for (let c = 0; c < COLS; c++) {
+        grid[0][c] = COLORS[Math.floor(Math.random() * COLORS.length)];
+    }
+    checkGameOverCondition();
+}
+
+function checkGameOverCondition() {
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            if (grid[r][c]) {
+                const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS;
+                if (by + BUBBLE_RADIUS >= DEAD_LINE_Y) {
+                    triggerGameOver();
+                    return;
+                }
+            }
+        }
+    }
+}
+
+function triggerGameOver() {
+    isGameOver = true;
+    gameOverScreen.style.display = 'flex';
+    // Firebase లో స్కోర్ సేవ్ చేయడానికి కాల్ చేస్తున్నాం
+    if (typeof window.saveScoreToFirebase === 'function') {
+        window.saveScoreToFirebase(score);
+    }
+}
+
+function resetGame() {
+    score = 0;
+    scoreEl.innerText = score;
+    isGameOver = false;
+    fallingBubbles = [];
+    gameOverScreen.style.display = 'none';
+    lastDropTime = Date.now();
+    initGrid();
+    spawnBubble();
+}
+
+function update() { 
+    if (isGameOver) return;
+
+    // ప్రతి 3 సెకనుకు (3000ms) కిందకి జరపాలి
+    if (Date.now() - lastDropTime > 3000) {
+        dropGridDown();
+        lastDropTime = Date.now();
+    }
+
+    if (currentBubble && currentBubble.active) { 
+        currentBubble.x += currentBubble.vx; 
+        currentBubble.y += currentBubble.vy; 
+
+        if (currentBubble.x - BUBBLE_RADIUS <= 0 || currentBubble.x + BUBBLE_RADIUS >= canvas.width) { 
+            currentBubble.vx *= -1; 
+        } 
+
+        if (currentBubble.y - BUBBLE_RADIUS <= 0 || checkGridCollision(currentBubble)) { 
+            currentBubble.active = false; 
+            snapToGrid(currentBubble); 
+        } 
+    } 
+
+    // కింద పడిపోయే బబుల్స్ ఫిజిక్స్ అప్‌డేట్
+    for (let i = fallingBubbles.length - 1; i >= 0; i--) {
+        let fb = fallingBubbles[i];
+        fb.y += fb.vy;
+        fb.x += fb.vx;
+        fb.vy += 0.2; // గ్రావిటీ ఎఫెక్ట్
+        if (fb.y > canvas.height + 20) {
+            fallingBubbles.splice(i, 1); // స్క్రీన్ దాటిపోతే రిమూవ్
+        }
+    }
+} 
+
+function draw() { 
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
+    // గేమ్ ఓవర్ డెడ్ లైన్ గీయడం
+    ctx.beginPath();
+    ctx.strokeStyle = '#ff3333';
+    ctx.lineWidth = 2;
+    ctx.moveTo(0, DEAD_LINE_Y);
+    ctx.lineTo(canvas.width, DEAD_LINE_Y);
+    ctx.stroke();
+
+    // గ్రిడ్ బబుల్స్ డ్రా చేయడం
+    for (let r = 0; r < ROWS; r++) { 
+        for (let c = 0; c < COLS; c++) { 
+            if (grid[r][c]) { 
+                const bx = c * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS + (r % 2 * BUBBLE_RADIUS); 
+                const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS; 
+                draw3DBubble(bx, by, grid[r][c]); 
+            } 
+        } 
+    } 
+
+    // కింద పడుతున్న బబుల్స్ ని డ్రా చేయడం
+    fallingBubbles.forEach(fb => {
+        draw3DBubble(fb.x, fb.y, fb.color);
+    });
+
+    // ఎయిమింగ్ గైడ్ లైన్
+    if (!isGameOver && currentBubble && !currentBubble.active) {
+        ctx.beginPath(); 
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; 
+        ctx.setLineDash([5, 5]); 
+        ctx.moveTo(shooterX, shooterY); 
+        ctx.lineTo(mousePos.x, mousePos.y); 
+        ctx.stroke(); 
+        ctx.setLineDash([]); 
+    }
+
+    // షూటర్ బబుల్
+    if (currentBubble && !isGameOver) { 
+        draw3DBubble(currentBubble.x, currentBubble.y, currentBubble.color); 
+    } 
+} 
+
+// బబుల్స్ 3D గ్లో లాగా కనిపించడానికి Radial Gradient వాడాను
+function draw3DBubble(x, y, color) { 
+    ctx.beginPath(); 
+    let gradient = ctx.createRadialGradient(
+        x - BUBBLE_RADIUS/3, y - BUBBLE_RADIUS/3, BUBBLE_RADIUS/10, 
+        x, y, BUBBLE_RADIUS
+    );
+    gradient.addColorStop(0, '#fff'); // హైలైట్ స్పూన్ ఎఫెక్ట్
+    gradient.addColorStop(0.3, color); 
+    gradient.addColorStop(1, '#000'); // డార్క్ షాడో ఎఫెక్ట్
+
+    ctx.arc(x, y, BUBBLE_RADIUS - 1, 0, Math.PI * 2); 
+    ctx.fillStyle = gradient; 
+    ctx.fill(); 
+    ctx.closePath(); 
+} 
+
+function loop() { 
+    update(); 
+    draw(); 
+    requestAnimationFrame(loop); 
+} 
+
+initGrid(); 
+spawnBubble(); 
+loop(); 
+</script> 
+</body> 
+</html>
