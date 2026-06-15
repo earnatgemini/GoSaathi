@@ -27,12 +27,64 @@
             border: 4px solid #444; 
             border-radius: 4px; 
         } 
+        #game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 400px; 
+            height: 500px; 
+            background-color: rgba(0, 0, 0, 0.85); 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 4px solid #444;
+            border-radius: 4px;
+            z-index: 10;
+            box-sizing: border-box;
+            text-align: center;
+            padding: 20px;
+        }
+        #game-overlay.hidden {
+            display: none;
+        }
+        #overlay-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #f43f5e; 
+            margin-bottom: 15px;
+        }
+        #overlay-desc {
+            font-size: 18px;
+            color: white;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .btn {
+            background-color: #10b981; 
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #059669;
+        }
+
         #ui { 
             text-align: center; 
             margin-top: 10px; 
             font-size: 18px; 
             display: flex;
-            gap: 20px;
+            gap: 25px;
+            background: #222;
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid #444;
         } 
     </style> 
 </head> 
@@ -40,10 +92,16 @@
 
 <div id="game-container"> 
     <canvas id="gameCanvas" width="400" height="500"></canvas> 
+    <div id="game-overlay" class="hidden">
+        <h1 id="overlay-title">Game Over!</h1>
+        <p id="overlay-desc">You scored 0 points.</p>
+        <button class="btn" id="play-again-btn">Play Again</button>
+    </div>
 </div> 
 <div id="ui">
     <div>Timer: <span id="timer-val">60</span>s</div>
     <div>Score: <span id="score">0</span></div>
+    <div style="color: #ffcc00;">Lives Left: <span id="lives-val">10</span>/10</div>
 </div> 
 
 <script> 
@@ -51,6 +109,12 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d'); 
 const scoreEl = document.getElementById('score'); 
 const timerEl = document.getElementById('timer-val'); 
+const livesEl = document.getElementById('lives-val'); 
+
+const gameOverlay = document.getElementById('game-overlay');
+const overlayTitle = document.getElementById('overlay-title');
+const overlayDesc = document.getElementById('overlay-desc');
+const playAgainBtn = document.getElementById('play-again-btn');
 
 // Game configurations 
 const BUBBLE_RADIUS = 18; 
@@ -65,14 +129,15 @@ let currentBubble = null;
 let mousePos = { x: canvas.width / 2, y: canvas.height }; 
 let timer = 60; 
 let timerInterval = null; 
+let limitInterval = null; // కొత్త లిమిట్ టైమర్ ఇంటర్వెల్
 let gameOver = false; 
+let limitReached = false; 
 
-// Shooter coordinates 
 const shooterX = canvas.width / 2; 
 const shooterY = canvas.height - BUBBLE_RADIUS - 10; 
 
-// Grid preparation 
 function initGrid() { 
+    grid = []; 
     for (let r = 0; r < ROWS; r++) { 
         grid[r] = []; 
         for (let c = 0; c < COLS; c++) { 
@@ -81,7 +146,6 @@ function initGrid() {
     } 
 } 
 
-// Generate next projectile bubble 
 function spawnBubble() { 
     currentBubble = { 
         x: shooterX, 
@@ -93,7 +157,6 @@ function spawnBubble() {
     }; 
 } 
 
-// Track mouse position on canvas 
 canvas.addEventListener('mousemove', (e) => { 
     if (gameOver) return; 
     const rect = canvas.getBoundingClientRect(); 
@@ -101,9 +164,8 @@ canvas.addEventListener('mousemove', (e) => {
     mousePos.y = e.clientY - rect.top; 
 }); 
 
-// Fire bubble on mouse click 
 canvas.addEventListener('click', () => { 
-    if (gameOver) return; // గేమ్ అయిపోతే క్లిక్స్ పనిచేయవు
+    if (gameOver) return; 
     
     if (currentBubble && !currentBubble.active) { 
         const angle = Math.atan2(mousePos.y - shooterY, mousePos.x - shooterX); 
@@ -112,13 +174,11 @@ canvas.addEventListener('click', () => {
         currentBubble.vy = Math.sin(angle) * speed; 
         currentBubble.active = true; 
 
-        // ప్రతి షాట్ కి 5 పాయింట్లు కట్ అవుతాయి (మైనస్ లోకి వెళ్తుంది)
         score -= 5; 
         scoreEl.innerText = score; 
     } 
 }); 
 
-// Detect collision with standard grid spaces 
 function checkGridCollision(bubble) { 
     for (let r = 0; r < ROWS; r++) { 
         for (let c = 0; c < COLS; c++) { 
@@ -135,7 +195,6 @@ function checkGridCollision(bubble) {
     return false; 
 } 
 
-// Map floating coordinate positions back to closest static row/column coordinates 
 function snapToGrid(bubble) { 
     let targetRow = Math.min(ROWS - 1, Math.max(0, Math.floor(bubble.y / (BUBBLE_RADIUS * 2)))); 
     let targetCol = Math.min(COLS - 1, Math.max(0, Math.floor((bubble.x - (targetRow % 2 * BUBBLE_RADIUS)) / (BUBBLE_RADIUS * 2)))); 
@@ -145,7 +204,6 @@ function snapToGrid(bubble) {
     spawnBubble(); 
 } 
 
-// Basic neighborhood search algorithm for processing matching bubble groups 
 function popMatches(row, col, color) { 
     let matches = [[row, col]]; 
     let queue = [[row, col]]; 
@@ -178,7 +236,98 @@ function popMatches(row, col, color) {
     } 
 } 
 
-// Start CountDown Timer 
+function resetGame() {
+    score = 0;
+    scoreEl.innerText = score;
+    timer = 60;
+    timerEl.innerText = timer;
+    gameOver = false;
+    limitReached = false;
+    
+    if (limitInterval) clearInterval(limitInterval); 
+    
+    gameOverlay.classList.add('hidden');
+    overlayTitle.textContent = 'Game Over!';
+    overlayTitle.style.color = '#f43f5e';
+    playAgainBtn.classList.remove('hidden'); 
+
+    initGrid();
+    spawnBubble();
+}
+
+function getValidAttempts() {
+    let attempts = JSON.parse(localStorage.getItem('bubble_shooter_attempts')) || [];
+    const oneHourAgo = Date.now() - 60 * 60 * 1000; 
+    
+    attempts = attempts.filter(timestamp => timestamp > oneHourAgo);
+    localStorage.setItem('bubble_shooter_attempts', JSON.stringify(attempts));
+    return attempts;
+}
+
+function checkAndStartGame() {
+    let attempts = getValidAttempts();
+    
+    if (attempts.length >= 10) {
+        limitReached = true;
+        gameOver = true;
+        livesEl.innerText = 0; 
+        showLimitReachedOverlay(); 
+    } else {
+        attempts.push(Date.now());
+        localStorage.setItem('bubble_shooter_attempts', JSON.stringify(attempts));
+        
+        livesEl.innerText = 10 - attempts.length;
+        startTimer();
+    }
+}
+
+// లిమిట్ రీచ్ అయినప్పుడు కౌంట్‌డౌన్ టైమర్ ని రన్ చేసే లాజిక్
+function showLimitReachedOverlay() {
+    overlayTitle.textContent = 'LIMIT REACHED!';
+    overlayTitle.style.color = '#ffcc00';
+    playAgainBtn.classList.add('hidden'); 
+    gameOverlay.classList.remove('hidden');
+    
+    updateLimitCountdown(); // వెంటనే మొదటి సెకండ్ అప్‌డేట్ రన్ అవ్వడానికి
+    limitInterval = setInterval(updateLimitCountdown, 1000);
+}
+
+function updateLimitCountdown() {
+    let attempts = getValidAttempts(); // ఆటోమేటిక్‌గా పాత టైమ్‌స్టాంప్స్ ఫిల్టర్ చేస్తుంది
+    
+    // ఒకవేళ వన్ అవర్ అయిపోయి లిమిట్ ఖాళీ అయితే ఆటోమేటిక్‌గా అన్‌లాక్ అవుతుంది
+    if (attempts.length < 10) {
+        clearInterval(limitInterval);
+        resetGame();
+        checkAndStartGame();
+        return;
+    }
+
+    // మొదటి (ఓల్డెస్ట్) షాట్ ఆధారంగా నెక్స్ట్ అవైలబుల్ టైమ్ లెక్కించడం
+    const oldestAttempt = attempts[0];
+    const nextAvailableTime = oldestAttempt + (60 * 60 * 1000);
+    const timeLeft = nextAvailableTime - Date.now();
+
+    if (timeLeft <= 0) {
+        clearInterval(limitInterval);
+        resetGame();
+        checkAndStartGame();
+    } else {
+        const minutes = Math.floor(timeLeft / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        
+        const strMinutes = String(minutes).padStart(2, '0');
+        const strSeconds = String(seconds).padStart(2, '0');
+        
+        overlayDesc.innerHTML = `You can only play 10 times per hour.<br><br><span style="color: #ffcc00; font-weight: bold; font-size: 22px; letter-spacing: 1px;">Next Life In: ${strMinutes}:${strSeconds}</span>`;
+    }
+}
+
+playAgainBtn.addEventListener('click', () => {
+    resetGame();
+    checkAndStartGame(); 
+});
+
 function startTimer() {
     timerInterval = setInterval(() => {
         if (timer > 0) {
@@ -190,13 +339,13 @@ function startTimer() {
     }, 1000);
 }
 
-// End Game Function
 function endGame() {
     gameOver = true;
     clearInterval(timerInterval);
+    overlayDesc.textContent = `You scored ${score} points.`;
+    gameOverlay.classList.remove('hidden');
 }
 
-// Core physics and collision update pass loop 
 function update() { 
     if (gameOver) return; 
 
@@ -215,11 +364,9 @@ function update() {
     } 
 } 
 
-// Frame drawing rendering pass loop 
 function draw() { 
     ctx.clearRect(0, 0, canvas.width, canvas.height); 
 
-    // Draw Static Grid structure layout 
     for (let r = 0; r < ROWS; r++) { 
         for (let c = 0; c < COLS; c++) { 
             if (grid[r][c]) { 
@@ -230,7 +377,6 @@ function draw() {
         } 
     } 
 
-    // Draw aiming pointer guide system 
     if (!gameOver) {
         ctx.beginPath(); 
         ctx.strokeStyle = 'rgba(255,255,255,0.3)'; 
@@ -241,24 +387,13 @@ function draw() {
         ctx.setLineDash([]); 
     }
 
-    // Draw active project launcher ammo bubble 
     if (currentBubble && !gameOver) { 
         drawCircle(currentBubble.x, currentBubble.y, currentBubble.color); 
     } 
 
-    // Game Over Overlay స్క్రీన్ ని డ్రా చేయడం
     if (gameOver) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.fillStyle = '#ff3333';
-        ctx.font = 'bold 32px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
-        
-        ctx.fillStyle = 'white';
-        ctx.font = '20px sans-serif';
-        ctx.fillText('Final Score: ' + score, canvas.width / 2, canvas.height / 2 + 20);
     }
 } 
 
@@ -279,10 +414,9 @@ function loop() {
     requestAnimationFrame(loop); 
 } 
 
-// Engine Initialization entry point 
 initGrid(); 
 spawnBubble(); 
-startTimer(); // టైమర్ ని స్టార్ట్ చేస్తుంది
+checkAndStartGame(); 
 loop(); 
 </script> 
 </body> 
