@@ -329,8 +329,8 @@ function resetGame() {
 function update() { 
     if (isGameOver) return;
 
-    // ప్రతి 4 సెకనుకు (3000ms) కిందకి జరపాలి
-    if (Date.now() - lastDropTime > 4000) {
+    // ప్రతి 10 సెకనుకు (10000ms) కిందకి జరపాలి
+    if (Date.now() - lastDropTime > 10000) {
         dropGridDown();
         lastDropTime = Date.now();
     }
