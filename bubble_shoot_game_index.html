@@ -75,37 +75,46 @@
             background-color: #059669;
         }
 
-        #ui { 
-            text-align: center; 
-            margin-top: 10px; 
-            font-size: 18px; 
+        #ui {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 18px;
             display: flex;
             gap: 25px;
             background: #222;
             padding: 10px 20px;
             border-radius: 6px;
             border: 1px solid #444;
-        } 
-    </style> 
-</head> 
-<body> 
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    </style>
 
-<div id="game-container"> 
-    <canvas id="gameCanvas" width="400" height="500"></canvas> 
-    <div id="game-overlay" class="hidden">
-        <h1 id="overlay-title">Game Over!</h1>
-        <p id="overlay-desc">You scored 0 points.</p>
-        <button class="btn" id="play-again-btn">Play Again</button>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+ 
+<body>
+<div id="game-container">
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+     <div id="game-overlay" class="hidden">
+        	<h1 id="overlay-title">Game Over!</h1>
+        	<p id="overlay-desc">You scored 0 points.</p>
+        	<button class="btn" id="play-again-btn">Play Again</button>
     </div>
-</div> 
+</div>
+ 
 <div id="ui">
-     <div style="color: #ffcc00;">Lives🩷: <span id="lives-val">10</span>/10</div>
+    <div style="color: #ffcc00;">Coins🪙: <span id="db-coins">0</span></div>
+    <div style="color: #4285F4;">Points💎: <span id="db-points">0</span></div>
+    <div style="color: #ffcc00;">Lives🩷: <span id="lives-val">10</span>/10</div>
     <div>Timer⏱️: <span id="timer-val">60</span>s</div>
     <div>Score💎: <span id="score">0</span></div>
-    <a href="index.html">End Game</a>
+    <a href="index.html" style="color:#fff;">End Game</a>
 </div> 
 
-<script> 
+<script>
 const canvas = document.getElementById('gameCanvas'); 
 const ctx = canvas.getContext('2d'); 
 const scoreEl = document.getElementById('score'); 
@@ -117,8 +126,32 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayDesc = document.getElementById('overlay-desc');
 const playAgainBtn = document.getElementById('play-again-btn');
 
-// Game configurations 
-const BUBBLE_RADIUS = 18; 
+// Firebase Initialization (ఫైర్ బేస్ సెటప్)
+const firebaseConfig = { 
+    apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY",
+    authDomain: "gemini-spinning-wheel-game.firebaseapp.com",
+    projectId: "gemini-spinning-wheel-game" 
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Wallet Data (Coins & Points) కోసం లిజనర్
+auth.onAuthStateChanged(user => {
+    if (user) {
+        db.collection("Users").doc(user.uid).onSnapshot(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('db-coins').innerText = data.coins || 0;
+                document.getElementById('db-points').innerText = data.points || 0;
+            }
+        });
+    }
+});
+
+// Game configurations
+const BUBBLE_RADIUS = 18;
 const ROWS = 6; 
 const COLS = 10; 
 const COLORS = ['#ff3333', '#33ff33', '#3333ff', '#ffff33', '#ff33ff']; 
@@ -345,10 +378,21 @@ function endGame() {
     clearInterval(timerInterval);
     overlayDesc.textContent = `You scored ${score} points.`;
     gameOverlay.classList.remove('hidden');
+
+    // స్కోర్ ని Firestore పాయింట్స్ లోకి సేవ్ చేయడం
+    if (score > 0 && auth.currentUser) {
+        db.collection("Users").doc(auth.currentUser.uid).update({
+            points: firebase.firestore.FieldValue.increment(score)
+        }).then(() => {
+            console.log("Points successfully saved to Firestore!");
+        }).catch((err) => {
+            console.error("Error saving points: ", err);
+        });
+    }
 }
 
-function update() { 
-    if (gameOver) return; 
+function update() {
+  if (gameOver) return; 
 
     if (currentBubble && currentBubble.active) { 
         currentBubble.x += currentBubble.vx; 
