@@ -153,7 +153,7 @@ auth.onAuthStateChanged(user => {
         checkAndStartGame();
     } else {
         alert("Please login first to play the game!");
-        window.location.href = "index.html";
+        document.getElementById('loading-screen').innerHTML = 'Please login first! <br><br> <a href="index.html" style="color:#ffcc00; text-decoration:none; padding:10px 20px; border:2px solid #ffcc00; border-radius:5px; background:rgba(0,0,0,0.5);">Go to Home</a>';
     }
 });
 
@@ -543,7 +543,9 @@ function loop() {
     requestAnimationFrame(loop); 
 } 
 
-// గేమ్ లూప్ స్టార్ట్ 
+// ముందుగా గ్రిడ్ ఇనిషియలైజ్ చేసి గేమ్ లూప్ స్టార్ట్ చేద్దాం
+initGrid();
+spawnBubble();
 loop(); 
 </script> 
 </body> 
