@@ -1,0 +1,521 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Arcade Bubble Shooter 3D</title> 
+    <style> 
+        body { 
+            margin: 0; 
+            background: #111; 
+            color: white; 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            overflow: hidden; 
+        } 
+        #game-container { 
+            position: relative; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.8); 
+        } 
+        canvas { 
+            background: #1a1a1a; 
+            display: block; 
+            border: 4px solid #444; 
+            border-radius: 4px; 
+        } 
+        #ui { 
+            text-align: center; 
+            margin-top: 10px; 
+            font-size: 18px; 
+            display: flex;
+            gap: 20px;
+            background: #222;
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            flex-wrap: wrap;
+            justify-content: center;
+        } 
+        #game-over-screen {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #game-over-title {
+            color: #ff3333;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        #game-over-msg {
+            font-size: 18px;
+            color: white;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        #restart-btn {
+            padding: 10px 30px;
+            font-size: 18px;
+            background: #33ff33;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: black;
+            font-weight: bold;
+        }
+        #restart-btn:hover {
+            background: #28cc28;
+        }
+    </style> 
+
+    <!-- Firebase Compat Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head> 
+<body> 
+
+<div id="game-container"> 
+    <canvas id="gameCanvas" width="400" height="500"></canvas> 
+    <div id="game-over-screen">
+        <div id="game-over-title">GAME OVER</div>
+        <div id="game-over-msg">You scored 0 points.</div>
+        <button id="restart-btn" onclick="resetGame()">Play Again</button>
+    </div>
+</div> 
+<div id="ui">
+    <div style="color: #ffcc00;">Coins🪙: <span id="db-coins">0</span></div>
+    <div style="color: #4285F4;">Points💎: <span id="db-points">0</span></div>
+    <div style="color: #ffcc00;">Lives🩷: <span id="lives-val">10</span>/10</div>
+    <div>Score💎: <span id="score">0</span></div>
+    <a href="index.html" style="color:#fff;">End Game</a>
+</div> 
+
+<script> 
+const canvas = document.getElementById('gameCanvas'); 
+const ctx = canvas.getContext('2d'); 
+const scoreEl = document.getElementById('score'); 
+const gameOverScreen = document.getElementById('game-over-screen');
+
+// Firebase Initialization
+const firebaseConfig = {
+    apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY",
+    authDomain: "gemini-spinning-wheel-game.firebaseapp.com",
+    projectId: "gemini-spinning-wheel-game"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let userDocRef = null;
+
+// Auth Listener & Real-time Coins/Points Data
+auth.onAuthStateChanged(user => {
+    if (user) {
+        userDocRef = db.collection("Users").doc(user.uid);
+        
+        userDocRef.onSnapshot(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('db-coins').innerText = data.coins || 0;
+                document.getElementById('db-points').innerText = data.points || 0;
+            }
+        });
+        
+        // ఆథెంటికేట్ అయ్యాక గేమ్ లైఫ్స్ చెక్ చేసి స్టార్ట్ చేయాలి
+        checkAndStartGame();
+    } else {
+        alert("Please login first to play the game!");
+        window.location.href = "index.html";
+    }
+});
+
+// Game configurations 
+const BUBBLE_RADIUS = 18; 
+const ROWS = 14; 
+const COLS = 10; 
+const COLORS = ['#ff3333', '#33ff33', '#3333ff', '#ffff33', '#ff33ff']; 
+const DEAD_LINE_Y = 400; 
+
+// Game state variables 
+let score = 0; 
+let grid = []; 
+let currentBubble = null; 
+let fallingBubbles = []; 
+let isGameOver = true; // స్టార్టింగ్ లో లిమిట్ చెక్ అయ్యేవరకు ట్రూ లో ఉంటుంది
+let mousePos = { x: canvas.width / 2, y: canvas.height }; 
+let lastDropTime = Date.now();
+let limitInterval = null;
+
+const shooterX = canvas.width / 2; 
+const shooterY = canvas.height - BUBBLE_RADIUS - 10; 
+
+// 🔥 Lives Control Logic (Firestore) 🔥
+async function checkAndStartGame() {
+    if (!userDocRef) return;
+    
+    const doc = await userDocRef.get();
+    let attempts = doc.data().bubble3D_attempts || [];
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+    
+    // ఒక గంట దాటిన టైమ్ స్టాంప్స్ ని క్లియర్ చేస్తున్నాం
+    attempts = attempts.filter(ts => ts > oneHourAgo);
+    
+    if (attempts.length >= 10) {
+        // లిమిట్ క్రాస్ అయితే
+        isGameOver = true;
+        document.getElementById('lives-val').innerText = "0";
+        showLimitReachedOverlay(attempts[0]);
+    } else {
+        // లైఫ్ తీసుకుని గేమ్ స్టార్ట్ చేయడం
+        attempts.push(Date.now());
+        await userDocRef.update({ bubble3D_attempts: attempts });
+        
+        document.getElementById('lives-val').innerText = (10 - attempts.length).toString();
+        resetGameVariables();
+    }
+}
+
+function showLimitReachedOverlay(oldestAttempt) {
+    gameOverScreen.style.display = 'flex';
+    document.getElementById('game-over-title').innerText = "LIMIT REACHED!";
+    document.getElementById('game-over-title').style.color = "#ffcc00";
+    document.getElementById('restart-btn').style.display = 'none';
+    
+    limitInterval = setInterval(() => {
+        const timeLeft = oldestAttempt + (60 * 60 * 1000) - Date.now();
+        if (timeLeft <= 0) {
+            clearInterval(limitInterval);
+            gameOverScreen.style.display = 'none';
+            checkAndStartGame(); // టైమ్ అయ్యాక ఆటోమెటిక్ గా స్టార్ట్ అవుతుంది
+        } else {
+            const minutes = Math.floor(timeLeft / (1000 * 60)).toString().padStart(2, '0');
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000).toString().padStart(2, '0');
+            document.getElementById('game-over-msg').innerHTML = `You can only play 10 times per hour.<br><br><span style="color: #ffcc00; font-weight: bold; font-size: 22px;">Next Life In: ${minutes}:${seconds}</span>`;
+        }
+    }, 1000);
+}
+
+function initGrid() { 
+    grid = [];
+    for (let r = 0; r < ROWS; r++) { 
+        grid[r] = []; 
+        for (let c = 0; c < COLS; c++) { 
+            grid[r][c] = (r < 4) ? COLORS[Math.floor(Math.random() * COLORS.length)] : null; 
+        } 
+    } 
+} 
+
+function spawnBubble() { 
+    currentBubble = { 
+        x: shooterX, 
+        y: shooterY, 
+        color: COLORS[Math.floor(Math.random() * COLORS.length)], 
+        vx: 0, 
+        vy: 0, 
+        active: false 
+    }; 
+} 
+
+canvas.addEventListener('mousemove', (e) => { 
+    const rect = canvas.getBoundingClientRect(); 
+    mousePos.x = e.clientX - rect.left; 
+    mousePos.y = e.clientY - rect.top; 
+}); 
+
+canvas.addEventListener('click', () => { 
+    if (isGameOver) return;
+    if (currentBubble && !currentBubble.active) { 
+        // షూట్ చేసినందుకు ఎలాంటి పాయింట్స్ మైనస్ అవ్వవు (Removed -5 logic)
+        const angle = Math.atan2(mousePos.y - shooterY, mousePos.x - shooterX); 
+        const speed = 10; 
+        currentBubble.vx = Math.cos(angle) * speed; 
+        currentBubble.vy = Math.sin(angle) * speed; 
+        currentBubble.active = true; 
+    } 
+}); 
+
+function checkGridCollision(bubble) { 
+    for (let r = 0; r < ROWS; r++) { 
+        for (let c = 0; c < COLS; c++) { 
+            if (grid[r][c]) { 
+                const bx = c * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS + (r % 2 * BUBBLE_RADIUS); 
+                const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS; 
+                const dist = Math.hypot(bubble.x - bx, bubble.y - by); 
+                if (dist < BUBBLE_RADIUS * 1.7) { 
+                    return true; 
+                } 
+            } 
+        } 
+    } 
+    return false; 
+} 
+
+function snapToGrid(bubble) { 
+    let targetRow = Math.min(ROWS - 1, Math.max(0, Math.floor(bubble.y / (BUBBLE_RADIUS * 2)))); 
+    let targetCol = Math.min(COLS - 1, Math.max(0, Math.floor((bubble.x - (targetRow % 2 * BUBBLE_RADIUS)) / (BUBBLE_RADIUS * 2)))); 
+    
+    grid[targetRow][targetCol] = bubble.color; 
+    
+    popMatches(targetRow, targetCol, bubble.color); 
+    checkOrphanBubbles(); 
+    checkGameOverCondition();
+    spawnBubble(); 
+} 
+
+function popMatches(row, col, color) { 
+    let matches = [[row, col]]; 
+    let queue = [[row, col]]; 
+    let visited = Array(ROWS).fill().map(() => Array(COLS).fill(false)); 
+    visited[row][col] = true; 
+
+    while (queue.length > 0) { 
+        let [r, c] = queue.shift(); 
+        let neighbors = getNeighbors(r, c);
+        
+        for (let [nr, nc] of neighbors) { 
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) { 
+                if (!visited[nr][nc] && grid[nr][nc] === color) { 
+                    visited[nr][nc] = true; 
+                    matches.push([nr, nc]); 
+                    queue.push([nr, nc]); 
+                } 
+            } 
+        } 
+    } 
+
+    if (matches.length >= 3) { 
+        matches.forEach(([r, c]) => {
+            const bx = c * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS + (r % 2 * BUBBLE_RADIUS); 
+            const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS; 
+            fallingBubbles.push({ x: bx, y: by, color: grid[r][c], vy: 2, vx: (Math.random() - 0.5) * 4 });
+            grid[r][c] = null;
+        }); 
+        
+        // 🔥 ఒక్క బబుల్ కి సరిగ్గా 5 పాయింట్స్ 🔥
+        score += matches.length * 5; 
+        scoreEl.innerText = score; 
+    } 
+} 
+
+function getNeighbors(r, c) {
+    return [ 
+        [r, c-1], [r, c+1], 
+        [r-1, c], [r+1, c], 
+        [r-1, c + (r % 2 === 0 ? -1 : 1)], 
+        [r+1, c + (r % 2 === 0 ? -1 : 1)] 
+    ];
+}
+
+function checkOrphanBubbles() {
+    let connected = Array(ROWS).fill().map(() => Array(COLS).fill(false));
+    let queue = [];
+
+    for (let c = 0; c < COLS; c++) {
+        if (grid[0][c]) {
+            connected[0][c] = true;
+            queue.push([0, c]);
+        }
+    }
+
+    while (queue.length > 0) {
+        let [r, c] = queue.shift();
+        let neighbors = getNeighbors(r, c);
+        for (let [nr, nc] of neighbors) {
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+                if (!connected[nr][nc] && grid[nr][nc]) {
+                    connected[nr][nc] = true;
+                    queue.push([nr, nc]);
+                }
+            }
+        }
+    }
+
+    for (let r = 1; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            if (grid[r][c] && !connected[r][c]) {
+                const bx = c * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS + (r % 2 * BUBBLE_RADIUS); 
+                const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS; 
+                fallingBubbles.push({ x: bx, y: by, color: grid[r][c], vy: 4, vx: (Math.random() - 0.5) * 2 });
+                
+                // గాల్లో తేలే ఆర్ఫన్ బబుల్స్ పడిపోయినా కూడా 5 పాయింట్స్ వస్తాయి
+                score += 5; 
+                scoreEl.innerText = score;
+                
+                grid[r][c] = null;
+            }
+        }
+    }
+}
+
+function dropGridDown() {
+    for (let r = ROWS - 1; r > 0; r--) {
+        grid[r] = [...grid[r-1]];
+    }
+    grid[0] = [];
+    for (let c = 0; c < COLS; c++) {
+        grid[0][c] = COLORS[Math.floor(Math.random() * COLORS.length)];
+    }
+    checkGameOverCondition();
+}
+
+function checkGameOverCondition() {
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            if (grid[r][c]) {
+                const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS;
+                if (by + BUBBLE_RADIUS >= DEAD_LINE_Y) {
+                    triggerGameOver();
+                    return;
+                }
+            }
+        }
+    }
+}
+
+function triggerGameOver() {
+    isGameOver = true;
+    gameOverScreen.style.display = 'flex';
+    document.getElementById('game-over-title').innerText = "GAME OVER";
+    document.getElementById('game-over-title').style.color = "#ff3333";
+    document.getElementById('game-over-msg').innerText = `You scored ${score} points.`;
+    document.getElementById('restart-btn').style.display = 'block';
+
+    // 🔥 స్కోర్‌ ని Firestore కి సేవ్ చేయడం 🔥
+    if (score > 0 && userDocRef) {
+        userDocRef.update({
+            points: firebase.firestore.FieldValue.increment(score)
+        }).then(() => {
+            console.log("Points successfully saved to Firestore!");
+        }).catch((err) => {
+            console.error("Error saving points: ", err);
+        });
+    }
+}
+
+function resetGame() {
+    gameOverScreen.style.display = 'none';
+    if(limitInterval) clearInterval(limitInterval);
+    checkAndStartGame();
+}
+
+function resetGameVariables() {
+    score = 0;
+    scoreEl.innerText = score;
+    isGameOver = false;
+    fallingBubbles = [];
+    lastDropTime = Date.now();
+    initGrid();
+    spawnBubble();
+}
+
+function update() { 
+    if (isGameOver) return;
+
+    if (Date.now() - lastDropTime > 10000) {
+        dropGridDown();
+        lastDropTime = Date.now();
+    }
+
+    if (currentBubble && currentBubble.active) { 
+        currentBubble.x += currentBubble.vx; 
+        currentBubble.y += currentBubble.vy; 
+
+        if (currentBubble.x - BUBBLE_RADIUS <= 0 || currentBubble.x + BUBBLE_RADIUS >= canvas.width) { 
+            currentBubble.vx *= -1; 
+        } 
+
+        if (currentBubble.y - BUBBLE_RADIUS <= 0 || checkGridCollision(currentBubble)) { 
+            currentBubble.active = false; 
+            snapToGrid(currentBubble); 
+        } 
+    } 
+
+    for (let i = fallingBubbles.length - 1; i >= 0; i--) {
+        let fb = fallingBubbles[i];
+        fb.y += fb.vy;
+        fb.x += fb.vx;
+        fb.vy += 0.2; 
+        if (fb.y > canvas.height + 20) {
+            fallingBubbles.splice(i, 1); 
+        }
+    }
+} 
+
+function draw() { 
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
+    ctx.beginPath();
+    ctx.strokeStyle = '#ff3333';
+    ctx.lineWidth = 2;
+    ctx.moveTo(0, DEAD_LINE_Y);
+    ctx.lineTo(canvas.width, DEAD_LINE_Y);
+    ctx.stroke();
+
+    for (let r = 0; r < ROWS; r++) { 
+        for (let c = 0; c < COLS; c++) { 
+            if (grid[r][c]) { 
+                const bx = c * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS + (r % 2 * BUBBLE_RADIUS); 
+                const by = r * (BUBBLE_RADIUS * 2) + BUBBLE_RADIUS; 
+                draw3DBubble(bx, by, grid[r][c]); 
+            } 
+        } 
+    } 
+
+    fallingBubbles.forEach(fb => {
+        draw3DBubble(fb.x, fb.y, fb.color);
+    });
+
+    if (!isGameOver && currentBubble && !currentBubble.active) {
+        ctx.beginPath(); 
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; 
+        ctx.setLineDash([5, 5]); 
+        ctx.moveTo(shooterX, shooterY); 
+        ctx.lineTo(mousePos.x, mousePos.y); 
+        ctx.stroke(); 
+        ctx.setLineDash([]); 
+    }
+
+    if (currentBubble && !isGameOver) { 
+        draw3DBubble(currentBubble.x, currentBubble.y, currentBubble.color); 
+    } 
+} 
+
+function draw3DBubble(x, y, color) { 
+    ctx.beginPath(); 
+    let gradient = ctx.createRadialGradient(
+        x - BUBBLE_RADIUS/3, y - BUBBLE_RADIUS/3, BUBBLE_RADIUS/10, 
+        x, y, BUBBLE_RADIUS
+    );
+    gradient.addColorStop(0, '#fff'); 
+    gradient.addColorStop(0.3, color); 
+    gradient.addColorStop(1, '#000'); 
+
+    ctx.arc(x, y, BUBBLE_RADIUS - 1, 0, Math.PI * 2); 
+    ctx.fillStyle = gradient; 
+    ctx.fill(); 
+    ctx.closePath(); 
+} 
+
+function loop() { 
+    update(); 
+    draw(); 
+    requestAnimationFrame(loop); 
+} 
+
+// గేమ్ లూప్ స్టార్ట్ 
+loop(); 
+</script> 
+</body> 
+</html>
