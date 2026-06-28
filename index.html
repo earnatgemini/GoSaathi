@@ -343,14 +343,40 @@
  </div>
        
  <div id="wallet" style="display:none;">
-        <div class="card wallet-card">
-            <h3>Balance:</h3>
-            <h2 id="coinBalance">0</h2>
-            <p>Coins</p> 
-            <div class=" card wallet-card">
-                <p style="font-size: 12px; color: #aaa;">*100 Coins = Rs. 1.</p>
+        <div class="card wallet-card" style="flex-direction: column;">
+            <div style="display:flex; justify-content:center; align-items:center; gap:10px;">
+                <h3>Balance:</h3>
+                <h2 id="coinBalance">0</h2>
+                <p>Coins</p> 
+            </div>
+            <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:5px; color: #ffcc00;">
+                <h3>Game Points:</h3>
+                <h2 id="pointBalance">0</h2>
+                <p>Points</p>
+            </div>
+            <div style="font-size: 12px; color: #aaa; margin-top:10px;">
+                *100 Coins = Rs. 1.
             </div>
         </div>
+
+      <div class="card">
+        <h3 style="color:var(--dark);">🔄 Convert Points & Coins</h3>
+        <p style="font-size: 13px; color: gray;">గేమ్ ఆడి గెలుచుకున్న పాయింట్స్ ని కాయిన్స్ గా మార్చుకోండి.</p>
+        
+        <div style="margin-bottom: 15px; padding:10px; border:1px solid #ddd; border-radius:10px;">
+            <h4>🎯 Points ➡️ Coins</h4>
+            <p style="font-size:12px;">(1000 Points = 1 Coin)</p>
+            <input type="number" id="convertPointsInput" placeholder="Enter Points (Multiples of 1000)">
+            <button onclick="convertPointsToCoins()" style="background:var(--primary); margin-top:5px;">Convert to Coins</button>
+        </div>
+
+        <div style="padding:10px; border:1px solid #ddd; border-radius:10px;">
+            <h4>🪙 Coins ➡️ Points</h4>
+            <p style="font-size:12px;">(1 Coin = 1000 Points)</p>
+            <input type="number" id="convertCoinsInput" placeholder="Enter Coins">
+            <button onclick="convertCoinsToPoints()" style="background:var(--gold); color:black; margin-top:5px;">Convert to Points</button>
+        </div>
+      </div>
      <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3 style="margin: 0;">Coins పంపండి:</h3>
@@ -574,6 +600,8 @@ function checkUserStatus(user) {
             else if (data.membership === "Active") {
                 document.getElementById('main-ui').style.display = 'block';
                 document.getElementById('coinBalance').innerText = data.coins || 0;
+                // కొత్తగా యాడ్ చేసిన లైన్ పాయింట్స్ ని కూడా అప్‌డేట్ చేయడం
+                document.getElementById('pointBalance').innerText = data.points || 0;
                 document.getElementById('inviteCount').innerText = data.invites || 0;
                 document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
                 document.getElementById('myNameDisplay').innerText = data.name || "Update KYC";
@@ -1857,6 +1885,67 @@ function closeGamesModal() {
     document.getElementById('gamesModal').style.display = 'none';
 }
 
+    // 1. పాయింట్స్ ని కాయిన్స్ గా మార్చే ఫంక్షన్
+async function convertPointsToCoins() {
+    const points = Number(document.getElementById('convertPointsInput').value);
+    
+    if (points <= 0 || points % 1000 !== 0) {
+        return alert("దయచేసి 1000, 2000, 3000... ఇలా 1000 గుణిజాలలో (Multiples of 1000) పాయింట్స్ ఎంటర్ చేయండి.");
+    }
+    
+    const userRef = db.collection('Users').doc(auth.currentUser.uid);
+    try {
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(userRef);
+            const currentPoints = doc.data().points || 0;
+            
+            if (currentPoints < points) {
+                throw "మీ దగ్గర సరిపడా పాయింట్స్ లేవు!";
+            }
+            
+            const coinsToAdd = points / 1000;
+            transaction.update(userRef, {
+                points: firebase.firestore.FieldValue.increment(-points),
+                coins: firebase.firestore.FieldValue.increment(coinsToAdd)
+            });
+        });
+        alert(`సక్సెస్! 💎 ${points} పాయింట్స్ కట్ అయ్యి, 🪙 ${points/1000} కాయిన్స్ మీ వాలెట్ కి యాడ్ అయ్యాయి.`);
+        document.getElementById('convertPointsInput').value = '';
+    } catch(err) {
+        alert(err);
+    }
+}
+
+// 2. కాయిన్స్ ని పాయింట్స్ గా మార్చే ఫంక్షన్
+async function convertCoinsToPoints() {
+    const coins = Number(document.getElementById('convertCoinsInput').value);
+    
+    if (coins <= 0 || !Number.isInteger(coins)) {
+        return alert("దయచేసి సరైన కాయిన్స్ సంఖ్యను ఎంటర్ చేయండి.");
+    }
+    
+    const userRef = db.collection('Users').doc(auth.currentUser.uid);
+    try {
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(userRef);
+            const currentCoins = doc.data().coins || 0;
+            
+            if (currentCoins < coins) {
+                throw "మీ దగ్గర సరిపడా కాయిన్స్ లేవు!";
+            }
+            
+            const pointsToAdd = coins * 1000;
+            transaction.update(userRef, {
+                coins: firebase.firestore.FieldValue.increment(-coins),
+                points: firebase.firestore.FieldValue.increment(pointsToAdd)
+            });
+        });
+        alert(`సక్సెస్! 🪙 ${coins} కాయిన్స్ కట్ అయ్యి, 💎 ${coins*1000} పాయింట్స్ మీ గేమ్ ఖాతాకి యాడ్ అయ్యాయి.`);
+        document.getElementById('convertCoinsInput').value = '';
+    } catch(err) {
+        alert(err);
+    }
+}
 </script>
 </body>
 </html>
