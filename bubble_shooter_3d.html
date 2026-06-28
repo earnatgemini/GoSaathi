@@ -77,6 +77,19 @@
         #restart-btn:hover {
             background: #28cc28;
         }
+        #loading-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffcc00;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 50;
+        }
     </style> 
 
     <!-- Firebase Compat Scripts -->
@@ -88,6 +101,9 @@
 
 <div id="game-container"> 
     <canvas id="gameCanvas" width="400" height="500"></canvas> 
+    <div id="loading-screen">
+        Loading Game... ⏳
+    </div>
     <div id="game-over-screen">
         <div id="game-over-title">GAME OVER</div>
         <div id="game-over-msg">You scored 0 points.</div>
@@ -165,24 +181,37 @@ const shooterY = canvas.height - BUBBLE_RADIUS - 10;
 async function checkAndStartGame() {
     if (!userDocRef) return;
     
-    const doc = await userDocRef.get();
-    let attempts = doc.data().bubble3D_attempts || [];
-    const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    
-    // ఒక గంట దాటిన టైమ్ స్టాంప్స్ ని క్లియర్ చేస్తున్నాం
-    attempts = attempts.filter(ts => ts > oneHourAgo);
-    
-    if (attempts.length >= 10) {
-        // లిమిట్ క్రాస్ అయితే
-        isGameOver = true;
-        document.getElementById('lives-val').innerText = "0";
-        showLimitReachedOverlay(attempts[0]);
-    } else {
-        // లైఫ్ తీసుకుని గేమ్ స్టార్ట్ చేయడం
-        attempts.push(Date.now());
-        await userDocRef.update({ bubble3D_attempts: attempts });
+    try {
+        const doc = await userDocRef.get();
+        let attempts = [];
+        if (doc.exists && doc.data().bubble3D_attempts) {
+            attempts = doc.data().bubble3D_attempts;
+        }
         
-        document.getElementById('lives-val').innerText = (10 - attempts.length).toString();
+        const oneHourAgo = Date.now() - 60 * 60 * 1000;
+        
+        // ఒక గంట దాటిన టైమ్ స్టాంప్స్ ని క్లియర్ చేస్తున్నాం
+        attempts = attempts.filter(ts => ts > oneHourAgo);
+        
+        if (attempts.length >= 10) {
+            // లిమిట్ క్రాస్ అయితే
+            isGameOver = true;
+            document.getElementById('lives-val').innerText = "0";
+            document.getElementById('loading-screen').style.display = 'none';
+            showLimitReachedOverlay(attempts[0]);
+        } else {
+            // లైఫ్ తీసుకుని గేమ్ స్టార్ట్ చేయడం
+            attempts.push(Date.now());
+            await userDocRef.set({ bubble3D_attempts: attempts }, { merge: true });
+            
+            document.getElementById('lives-val').innerText = (10 - attempts.length).toString();
+            document.getElementById('loading-screen').style.display = 'none';
+            resetGameVariables();
+        }
+    } catch (error) {
+        console.error("Firebase Error:", error);
+        // ఎర్రర్ వచ్చినా గేమ్ ఆడుకోవడానికి (ఫాల్‌బ్యాక్)
+        document.getElementById('loading-screen').style.display = 'none';
         resetGameVariables();
     }
 }
@@ -394,9 +423,9 @@ function triggerGameOver() {
 
     // 🔥 స్కోర్‌ ని Firestore కి సేవ్ చేయడం 🔥
     if (score > 0 && userDocRef) {
-        userDocRef.update({
+        userDocRef.set({
             points: firebase.firestore.FieldValue.increment(score)
-        }).then(() => {
+        }, { merge: true }).then(() => {
             console.log("Points successfully saved to Firestore!");
         }).catch((err) => {
             console.error("Error saving points: ", err);
