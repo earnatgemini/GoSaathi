@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Arcade Bubble Game</title>
     <style>
         * {
@@ -11,6 +11,7 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
+            -webkit-tap-highlight-color: transparent; /* మొబైల్ లో టచ్ చేసినపుడు బ్లూ కలర్ రాకుండా */
         }
 
         body {
@@ -20,26 +21,36 @@
             align-items: center;
             min-height: 100vh;
             color: #fff;
+            overflow: hidden; /* మొబైల్ లో అనవసరమైన స్క్రోలింగ్ ఆపడానికి */
         }
 
         #game-container {
             width: 100%;
-            max-width: 800px;
+            max-width: 600px;
+            height: 100vh; /* ఫోన్ స్క్రీన్ మొత్తం నిండడానికి */
             background-color: #1e293b;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* డెస్క్ టాప్/ట్యాబ్ లో చూసినప్పుడు కొంచెం రౌండ్ గా కనిపించడానికి */
+        @media (min-width: 601px) {
+            #game-container {
+                height: 90vh;
+                border-radius: 16px;
+            }
         }
 
         #top-panel {
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 15px;
+            padding: 10px 5px;
             background-color: #334155;
             border-bottom: 4px solid #475569;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 5px;
         }
 
         .stat-box {
@@ -47,53 +58,56 @@
             flex-direction: column;
             align-items: center;
             background-color: #1e293b;
-            padding: 8px 15px;
+            padding: 6px 2px;
             border-radius: 8px;
-            min-width: 90px;
+            flex: 1 1 30%; /* 3 బాక్సులు ఒక వరుసలో వచ్చేలా */
+            min-width: 0; 
         }
 
         .stat-label {
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             color: #94a3b8;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            white-space: nowrap;
         }
 
         .stat-value {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
             color: #38bdf8;
         }
 
         #target-box .stat-value {
             color: #f43f5e;
+            font-size: 18px; /* టార్గెట్ కొంచెం పెద్దగా కనిపించడానికి */
         }
 
         #game-board {
             position: relative;
             width: 100%;
-            height: 450px;
+            flex: 1; /* మిగిలిన ఖాళీ అంతా బోర్డ్ తీసుకుంటుంది */
             background-color: #0f172a;
-            padding: 20px;
+            padding: 15px 10px;
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
             justify-content: center;
             align-content: flex-start;
             overflow-y: auto;
         }
 
         .bubble {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, #38bdf8, #0284c7);
             box-shadow: inset -5px -5px 12px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.1);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: white;
             cursor: pointer;
@@ -101,11 +115,27 @@
         }
 
         .bubble:hover {
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
 
         .bubble:active {
             transform: scale(0.9);
+        }
+
+        /* చిన్న మొబైల్ స్క్రీన్స్ కోసం (ఉదాహరణకు iPhone SE లాంటివి) */
+        @media (max-width: 400px) {
+            .bubble {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+            #game-board {
+                gap: 8px;
+                padding: 10px 5px;
+            }
+            .stat-value {
+                font-size: 14px;
+            }
         }
 
         #overlay {
@@ -121,19 +151,19 @@
             align-items: center;
             z-index: 10;
             text-align: center;
+            padding: 20px;
         }
 
         #overlay h1 {
-            font-size: 42px;
+            font-size: 36px;
             margin-bottom: 10px;
             color: #f43f5e;
         }
 
         #overlay p {
-            font-size: 18px;
+            font-size: 16px;
             margin-bottom: 25px;
             color: #94a3b8;
-            padding: 0 20px;
             line-height: 1.5;
         }
 
@@ -142,13 +172,15 @@
             color: white;
             border: none;
             padding: 12px 30px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
             transition: background-color 0.2s;
             margin-bottom: 15px;
+            width: 80%;
+            max-width: 250px;
         }
 
         .btn:hover {
@@ -161,6 +193,8 @@
             font-size: 14px;
             border-bottom: 1px solid transparent;
             transition: border-color 0.2s;
+            margin-top: 10px;
+            padding: 10px;
         }
         
         .home-link:hover {
@@ -178,36 +212,36 @@
     <div id="game-container">
         <!-- Top Status Bar -->
         <div id="top-panel">
-            <div class="stat-box" style="color: #f472b6;">
+             <div class="stat-box" style="color: #f472b6;">
                 <span class="stat-label">Lives🩷</span>
                 <span class="stat-value" style="color: #f472b6;"><span id="lives-val">10</span>/10</span>
-            </div>
+            </div>           
             <div class="stat-box" style="color: #38bdf8;">
                 <span class="stat-label">Points💎</span>
                 <span class="stat-value" id="db-points" style="color: #38bdf8;">0</span>
             </div>
-            <div class="stat-box" id="target-box">
-                <span class="stat-label">Hit Target</span>
-                <span class="stat-value" id="target-val">0</span>
+            <div class="stat-box" style="color: #ffcc00;">
+                <span class="stat-label">Coins🪙</span>
+                <span class="stat-value" id="db-coins" style="color: #ffcc00;">0</span>
             </div>
             <div class="stat-box">
                 <span class="stat-label">Timer</span>
                 <span class="stat-value" id="timer-val">60</span>
             </div>
+             <div class="stat-box" id="target-box">
+                <span class="stat-label">Hit Target</span>
+                <span class="stat-value" id="target-val">0</span>
+            </div>
             <div class="stat-box">
                 <span class="stat-label">Score</span>
                 <span class="stat-value" id="score-val">0</span>
-            </div>
-            <div class="stat-box" style="color: #ffcc00;">
-                <span class="stat-label">Coins🪙</span>
-                <span class="stat-value" id="db-coins" style="color: #ffcc00;">0</span>
             </div>
         </div>
 
         <!-- Main Gameplay Arena -->
         <div id="game-board">
             <div id="overlay">
-                <h1 id="overlay-title">Loading Game... ⏳</h1>
+                <h1 id="overlay-title">Loading... ⏳</h1>
                 <p id="overlay-desc">Please wait while we connect to server.</p>
                 <button class="btn" id="start-btn" onclick="startGame()" style="display:none;">Start Game</button>
                 <a href="index.html" class="home-link">Close And Back To HOME</a>
