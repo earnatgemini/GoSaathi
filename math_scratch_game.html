@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Scratch & Win</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
+            background-image: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 600px;
+            height: 100vh;
+            background-color: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+        }
+
+        @media (min-width: 601px) {
+            #game-container {
+                height: 90vh;
+                border-radius: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        /* Top Panel (Stats) */
+        #top-panel {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 15px 10px;
+            background: linear-gradient(180deg, rgba(51, 65, 85, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+            border-bottom: 2px solid #475569;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(15, 23, 42, 0.6);
+            padding: 8px 5px;
+            border-radius: 12px;
+            flex: 1 1 30%;
+            min-width: 0;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #cbd5e1;
+            margin-bottom: 3px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        /* Game Board Area */
+        #game-board {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .active-screen {
+            display: flex;
+        }
+
+        /* Titles and Texts */
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);
+        }
+
+        p {
+            font-size: 16px;
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* Math Question UI */
+        .question-box {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.5);
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 350px;
+            letter-spacing: 2px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .option-btn {
+            background: #1e293b;
+            border: 2px solid #38bdf8;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 20px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .option-btn:hover {
+            background: #38bdf8;
+            color: #0f172a;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .option-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Buttons */
+        .primary-btn {
+            background: linear-gradient(to right, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s;
+            margin-top: 10px;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .primary-btn:disabled {
+            background: #475569;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Scratch Card UI */
+        .scratch-wrapper {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 20px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            border: 3px solid #fbbf24;
+            background: #fff;
+        }
+
+        .reward-content {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #ffffff, #f1f5f9);
+            z-index: 1;
+        }
+
+        .reward-content h2 {
+            color: #334155;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .reward-points {
+            font-size: 50px;
+            font-weight: 900;
+            color: #10b981;
+            text-shadow: 2px 2px 4px rgba(16, 185, 129, 0.2);
+        }
+
+        #scratchCanvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2;
+            cursor: crosshair;
+        }
+
+        .home-link {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 15px;
+            margin-top: 25px;
+            padding: 10px;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .home-link:hover {
+            color: #38bdf8;
+        }
+
+    </style>
+    
+    <!-- Firebase Compat Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Top Status Bar -->
+        <div id="top-panel">
+            <div class="stat-box">
+                <span class="stat-label">Coins🪙</span>
+                <span class="stat-value" id="db-coins" style="color: #fbbf24;">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Points💎</span>
+                <span class="stat-value" id="db-points" style="color: #38bdf8;">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Lives🩷</span>
+                <span class="stat-value" style="color: #f472b6;"><span id="lives-val">10</span>/10</span>
+            </div>
+        </div>
+
+        <!-- Main Gameplay Arena -->
+        <div id="game-board">
+            
+            <!-- 1. Loading Screen -->
+            <div id="loading-screen" class="screen active-screen">
+                <h1 style="color: #fbbf24;">Loading... ⏳</h1>
+                <p>Connecting to Go Saathi Server...</p>
+                <a href="index.html" class="home-link">⬅️ Back to Home</a>
+            </div>
+
+            <!-- 2. Limit Reached Screen -->
+            <div id="limit-screen" class="screen">
+                <h1 style="color: #f43f5e;">Limit Reached!</h1>
+                <p id="limit-msg">You can only play 10 times per hour.</p>
+                <h2 id="countdown-timer" style="color: #fbbf24; font-size: 36px; margin: 20px 0;">00:00</h2>
+                <a href="index.html" class="home-link">⬅️ Back to Home</a>
+            </div>
+
+            <!-- 3. Start & Question Screen -->
+            <div id="question-screen" class="screen">
+                <div id="start-box">
+                    <h1>Math Mastery! 🧮</h1>
+                    <p>Solve the simple math question correctly<br>to win a scratch card (100-300 Points).</p>
+                    <button class="primary-btn" onclick="takeLifeAndStart()">Play Now (Uses 1 Life)</button>
+                </div>
+
+                <div id="math-box" style="display: none; width: 100%; align-items: center; flex-direction: column;">
+                    <div class="question-box" id="question-text">12 + 8 = ?</div>
+                    <div class="options-grid" id="options-container">
+                        <!-- Options injected via JS -->
+                    </div>
+                </div>
+                <a href="index.html" class="home-link">⬅️ Back to Home</a>
+            </div>
+
+            <!-- 4. Wrong Answer Screen -->
+            <div id="wrong-screen" class="screen">
+                <h1 style="color: #f43f5e;">Oops! Wrong Answer 😢</h1>
+                <p>You missed the reward this time.</p>
+                <button class="primary-btn" onclick="showScreen('question-screen'); document.getElementById('start-box').style.display='block'; document.getElementById('math-box').style.display='none';">Try Again</button>
+                <a href="index.html" class="home-link">⬅️ Back to Home</a>
+            </div>
+
+            <!-- 5. Scratch Card Screen -->
+            <div id="scratch-screen" class="screen">
+                <h1 style="color: #10b981;">Awesome! 🎉</h1>
+                <p>You answered correctly. Scratch the card below!</p>
+                
+                <div class="scratch-wrapper">
+                    <div class="reward-content">
+                        <h2>You Won</h2>
+                        <div class="reward-points" id="reward-amount">0</div>
+                        <h2 style="color:#64748b; font-size:16px;">Points</h2>
+                    </div>
+                    <canvas id="scratchCanvas" width="250" height="250"></canvas>
+                </div>
+
+                <button class="primary-btn" id="claim-btn" style="display:none;" onclick="claimReward()">Claim Points 💎</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Firebase Initialization
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY",
+            authDomain: "gemini-spinning-wheel-game.firebaseapp.com",
+            projectId: "gemini-spinning-wheel-game"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let userDocRef = null;
+        let limitInterval = null;
+        let currentReward = 0;
+        let correctAnswer = 0;
+
+        // UI Elements
+        const screens = ['loading-screen', 'limit-screen', 'question-screen', 'wrong-screen', 'scratch-screen'];
+
+        function showScreen(screenId) {
+            screens.forEach(id => {
+                document.getElementById(id).classList.remove('active-screen');
+            });
+            document.getElementById(screenId).classList.add('active-screen');
+        }
+
+        // Auth Listener & Real-time Coins/Points Data
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                userDocRef = db.collection("Users").doc(user.uid);
+                
+                userDocRef.onSnapshot(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('db-coins').innerText = data.coins || 0;
+                        document.getElementById('db-points').innerText = data.points || 0;
+                    }
+                });
+                
+                checkLives();
+            } else {
+                document.querySelector('#loading-screen h1').innerText = "Login Required!";
+                document.querySelector('#loading-screen p').innerHTML = 'Please login from Home page to play.<br><br>';
+            }
+        });
+
+        // 🔥 Lives Control Logic 🔥
+        async function checkLives() {
+            if (!userDocRef) return;
+            try {
+                const doc = await userDocRef.get();
+                let attempts = [];
+                if (doc.exists && doc.data().mathGame_attempts) {
+                    attempts = doc.data().mathGame_attempts;
+                }
+                
+                const oneHourAgo = Date.now() - 60 * 60 * 1000;
+                attempts = attempts.filter(ts => ts > oneHourAgo);
+                
+                if (attempts.length >= 10) {
+                    document.getElementById('lives-val').innerText = "0";
+                    showLimitReachedScreen(attempts[0]);
+                } else {
+                    document.getElementById('lives-val').innerText = (10 - attempts.length).toString();
+                    showScreen('question-screen');
+                    document.getElementById('start-box').style.display = 'block';
+                    document.getElementById('math-box').style.display = 'none';
+                }
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                // Fallback to allow play if DB fails
+                showScreen('question-screen');
+            }
+        }
+
+        function showLimitReachedScreen(oldestAttempt) {
+            showScreen('limit-screen');
+            if (limitInterval) clearInterval(limitInterval);
+            
+            limitInterval = setInterval(() => {
+                const timeLeft = oldestAttempt + (60 * 60 * 1000) - Date.now();
+                if (timeLeft <= 0) {
+                    clearInterval(limitInterval);
+                    checkLives(); 
+                } else {
+                    const minutes = Math.floor(timeLeft / (1000 * 60)).toString().padStart(2, '0');
+                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000).toString().padStart(2, '0');
+                    document.getElementById('countdown-timer').innerText = `${minutes}:${seconds}`;
+                }
+            }, 1000);
+        }
+
+        // Start Game - Deduct Life
+        async function takeLifeAndStart() {
+            if (!userDocRef) return;
+            document.querySelector('#start-box .primary-btn').disabled = true;
+            document.querySelector('#start-box .primary-btn').innerText = "Starting...";
+            
+            try {
+                const doc = await userDocRef.get();
+                let attempts = (doc.exists && doc.data().mathGame_attempts) ? doc.data().mathGame_attempts : [];
+                const oneHourAgo = Date.now() - 60 * 60 * 1000;
+                attempts = attempts.filter(ts => ts > oneHourAgo);
+
+                if (attempts.length >= 10) {
+                    showLimitReachedScreen(attempts[0]);
+                    return;
+                }
+
+                // లైఫ్ కట్ చేయడం
+                attempts.push(Date.now());
+                await userDocRef.set({ mathGame_attempts: attempts }, { merge: true });
+                document.getElementById('lives-val').innerText = (10 - attempts.length).toString();
+
+                // ప్రశ్న జనరేట్ చేయడం
+                generateMathQuestion();
+                
+            } catch (error) {
+                console.error(error);
+                generateMathQuestion(); // ఫాల్ బ్యాక్
+            }
+            
+            document.querySelector('#start-box .primary-btn').disabled = false;
+            document.querySelector('#start-box .primary-btn').innerText = "Play Now (Uses 1 Life)";
+        }
+
+        // 🧠 Math Question Generator 🧠
+        function generateMathQuestion() {
+            document.getElementById('start-box').style.display = 'none';
+            document.getElementById('math-box').style.display = 'flex';
+
+            const isAddition = Math.random() > 0.5;
+            let num1, num2, symbol;
+
+            if (isAddition) {
+                num1 = Math.floor(Math.random() * 50) + 10;
+                num2 = Math.floor(Math.random() * 40) + 5;
+                correctAnswer = num1 + num2;
+                symbol = "+";
+            } else {
+                num1 = Math.floor(Math.random() * 50) + 20;
+                num2 = Math.floor(Math.random() * (num1 - 5)) + 5; // Negative రాకుండా
+                correctAnswer = num1 - num2;
+                symbol = "-";
+            }
+
+            document.getElementById('question-text').innerText = `${num1} ${symbol} ${num2} = ?`;
+
+            // రాంగ్ ఆన్సర్స్ జనరేట్ చేసి షఫుల్ చేయడం
+            let options = [correctAnswer];
+            while (options.length < 4) {
+                let wrongAns = correctAnswer + (Math.floor(Math.random() * 20) - 10);
+                if (wrongAns !== correctAnswer && !options.includes(wrongAns) && wrongAns > 0) {
+                    options.push(wrongAns);
+                }
+            }
+            options.sort(() => Math.random() - 0.5); // Shuffle
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => verifyAnswer(opt);
+                container.appendChild(btn);
+            });
+        }
+
+        function verifyAnswer(selected) {
+            if (selected === correctAnswer) {
+                // Correct - Setup Scratch Card
+                currentReward = Math.floor(Math.random() * 201) + 100; // 100 to 300
+                document.getElementById('reward-amount').innerText = currentReward;
+                initScratchCard();
+                showScreen('scratch-screen');
+            } else {
+                // Wrong
+                showScreen('wrong-screen');
+            }
+        }
+
+        // 🎨 Scratch Card Logic 🎨
+        const canvas = document.getElementById('scratchCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let isRevealed = false;
+
+        function initScratchCard() {
+            isRevealed = false;
+            document.getElementById('claim-btn').style.display = 'none';
+            document.getElementById('claim-btn').disabled = false;
+            
+            // Draw Gold Cover
+            const gradient = ctx.createLinearGradient(0, 0, 250, 250);
+            gradient.addColorStop(0, '#fbbf24');
+            gradient.addColorStop(0.5, '#f59e0b');
+            gradient.addColorStop(1, '#d97706');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add Text pattern
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCRATCH HERE', 125, 135);
+
+            // Reset composite operation to draw normally next time
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        function scratch(e) {
+            if (!isDrawing || isRevealed) return;
+            e.preventDefault(); // Prevent scrolling on touch
+
+            const rect = canvas.getBoundingClientRect();
+            // Get touch or mouse coordinates
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+
+            // Erase effect
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(x, y, 25, 0, Math.PI * 2);
+            ctx.fill();
+
+            checkScratchPercentage();
+        }
+
+        canvas.addEventListener('mousedown', () => isDrawing = true);
+        canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); }, {passive: false});
+        window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('mousemove', scratch);
+        canvas.addEventListener('touchmove', scratch, {passive: false});
+
+        function checkScratchPercentage() {
+            if(isRevealed) return;
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            let clearedPixels = 0;
+
+            for (let i = 0; i < pixels.length; i += 4) {
+                if (pixels[i + 3] === 0) clearedPixels++; 
+            }
+
+            const percentage = (clearedPixels / (canvas.width * canvas.height)) * 100;
+            
+            // 50% పైగా స్క్రాచ్ చేస్తే మొత్తం క్లియర్ చేసి బటన్ చూపించాలి
+            if (percentage > 50) {
+                isRevealed = true;
+                ctx.clearRect(0, 0, canvas.width, canvas.height); 
+                document.getElementById('claim-btn').style.display = 'block';
+            }
+        }
+
+        // 💰 Claim Reward Logic 💰
+        async function claimReward() {
+            const btn = document.getElementById('claim-btn');
+            btn.disabled = true;
+            btn.innerText = "Claiming... ⏳";
+
+            if (currentReward > 0 && userDocRef) {
+                try {
+                    await userDocRef.set({
+                        points: firebase.firestore.FieldValue.increment(currentReward)
+                    }, { merge: true });
+                    
+                    alert(`🎉 బ్యూటిఫుల్! మీ అకౌంట్ లోకి ${currentReward} పాయింట్స్ యాడ్ అయ్యాయి.`);
+                    
+                    // మళ్ళీ హోమ్ కి (లేదా ప్రశ్న స్క్రీన్ కి) పంపడం
+                    showScreen('question-screen');
+                    document.getElementById('start-box').style.display = 'block';
+                    document.getElementById('math-box').style.display = 'none';
+                    
+                } catch (err) {
+                    console.error("Error saving points: ", err);
+                    alert("నెట్వర్క్ ఎర్రర్ వల్ల సేవ్ అవ్వలేదు. మళ్ళీ ట్రై చేయండి.");
+                    btn.disabled = false;
+                    btn.innerText = "Claim Points 💎";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
