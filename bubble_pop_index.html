@@ -33,11 +33,13 @@
 
         #top-panel {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
             align-items: center;
-            padding: 20px;
+            padding: 15px;
             background-color: #334155;
             border-bottom: 4px solid #475569;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .stat-box {
@@ -45,13 +47,13 @@
             flex-direction: column;
             align-items: center;
             background-color: #1e293b;
-            padding: 10px 25px;
+            padding: 8px 15px;
             border-radius: 8px;
-            min-width: 120px;
+            min-width: 90px;
         }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #94a3b8;
@@ -59,7 +61,7 @@
         }
 
         .stat-value {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: #38bdf8;
         }
@@ -118,65 +120,97 @@
             justify-content: center;
             align-items: center;
             z-index: 10;
+            text-align: center;
         }
 
         #overlay h1 {
-            font-size: 48px;
+            font-size: 42px;
             margin-bottom: 10px;
             color: #f43f5e;
         }
 
         #overlay p {
-            font-size: 20px;
-            margin-bottom: 30px;
+            font-size: 18px;
+            margin-bottom: 25px;
             color: #94a3b8;
+            padding: 0 20px;
+            line-height: 1.5;
         }
 
         .btn {
             background-color: #10b981;
             color: white;
             border: none;
-            padding: 14px 36px;
+            padding: 12px 30px;
             font-size: 18px;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
             transition: background-color 0.2s;
+            margin-bottom: 15px;
         }
 
         .btn:hover {
             background-color: #059669;
         }
+        
+        .home-link {
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+        
+        .home-link:hover {
+            border-color: #38bdf8;
+        }
     </style>
+    
+    <!-- Firebase Compat Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
     <div id="game-container">
         <!-- Top Status Bar -->
         <div id="top-panel">
-           
-            <div class="stat-box">
-                <span class="stat-label">Timer</span>
-                <span class="stat-value" id="timer-val">60</span>
+            <div class="stat-box" style="color: #f472b6;">
+                <span class="stat-label">Lives🩷</span>
+                <span class="stat-value" style="color: #f472b6;"><span id="lives-val">10</span>/10</span>
             </div>
-             <div class="stat-box" id="target-box">
+            <div class="stat-box" style="color: #38bdf8;">
+                <span class="stat-label">Points💎</span>
+                <span class="stat-value" id="db-points" style="color: #38bdf8;">0</span>
+            </div>
+            <div class="stat-box" id="target-box">
                 <span class="stat-label">Hit Target</span>
                 <span class="stat-value" id="target-val">0</span>
             </div>
             <div class="stat-box">
+                <span class="stat-label">Timer</span>
+                <span class="stat-value" id="timer-val">60</span>
+            </div>
+            <div class="stat-box">
                 <span class="stat-label">Score</span>
                 <span class="stat-value" id="score-val">0</span>
+            </div>
+            <div class="stat-box" style="color: #ffcc00;">
+                <span class="stat-label">Coins🪙</span>
+                <span class="stat-value" id="db-coins" style="color: #ffcc00;">0</span>
             </div>
         </div>
 
         <!-- Main Gameplay Arena -->
         <div id="game-board">
             <div id="overlay">
-                <h1 id="overlay-title">Bubble Pop!</h1>
-                <p id="overlay-desc">Click bubbles matching the Hit Target number to score.</p>
-                <button class="btn" id="start-btn" onclick="startGame()">Start Game</button>
-                 <a href="index.html">Close And Back To HOME</a>
+                <h1 id="overlay-title">Loading Game... ⏳</h1>
+                <p id="overlay-desc">Please wait while we connect to server.</p>
+                <button class="btn" id="start-btn" onclick="startGame()" style="display:none;">Start Game</button>
+                <a href="index.html" class="home-link">Close And Back To HOME</a>
             </div>
         </div>
     </div>
@@ -186,6 +220,7 @@
         let score = 0;
         let currentTarget = 0;
         let timerInterval = null;
+        let limitInterval = null;
 
         const board = document.getElementById('game-board');
         const targetDisplay = document.getElementById('target-val');
@@ -196,6 +231,89 @@
         const overlayDesc = document.getElementById('overlay-desc');
         const startBtn = document.getElementById('start-btn');
 
+        // Firebase Initialization
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1P5PoYl467FXxaaWFaCGHWuZs1yUMGwY",
+            authDomain: "gemini-spinning-wheel-game.firebaseapp.com",
+            projectId: "gemini-spinning-wheel-game"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let userDocRef = null;
+
+        // Auth Listener & Real-time Coins/Points Data
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                userDocRef = db.collection("Users").doc(user.uid);
+                
+                userDocRef.onSnapshot(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('db-coins').innerText = data.coins || 0;
+                        document.getElementById('db-points').innerText = data.points || 0;
+                    }
+                });
+                
+                checkLivesAndInit();
+            } else {
+                overlayTitle.textContent = "Login Required!";
+                overlayDesc.innerHTML = 'Please login first to play the game!';
+                startBtn.style.display = 'none';
+            }
+        });
+
+        // 🔥 Lives Control Logic 🔥
+        async function checkLivesAndInit() {
+            if (!userDocRef) return;
+            try {
+                const doc = await userDocRef.get();
+                let attempts = [];
+                if (doc.exists && doc.data().bubblePop_attempts) {
+                    attempts = doc.data().bubblePop_attempts;
+                }
+                
+                const oneHourAgo = Date.now() - 60 * 60 * 1000;
+                attempts = attempts.filter(ts => ts > oneHourAgo);
+                
+                if (attempts.length >= 10) {
+                    document.getElementById('lives-val').innerText = "0";
+                    showLimitReachedOverlay(attempts[0]);
+                } else {
+                    document.getElementById('lives-val').innerText = (10 - attempts.length).toString();
+                    overlayTitle.textContent = "Bubble Pop!";
+                    overlayDesc.textContent = "Click bubbles matching the Hit Target number to score.";
+                    startBtn.style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                overlayTitle.textContent = "Bubble Pop!";
+                overlayDesc.textContent = "Click bubbles matching the Hit Target number to score.";
+                startBtn.style.display = 'block';
+            }
+        }
+
+        function showLimitReachedOverlay(oldestAttempt) {
+            overlayTitle.textContent = "LIMIT REACHED!";
+            overlayTitle.style.color = "#ffcc00";
+            startBtn.style.display = 'none';
+            
+            if (limitInterval) clearInterval(limitInterval);
+            
+            limitInterval = setInterval(() => {
+                const timeLeft = oldestAttempt + (60 * 60 * 1000) - Date.now();
+                if (timeLeft <= 0) {
+                    clearInterval(limitInterval);
+                    checkLivesAndInit(); 
+                } else {
+                    const minutes = Math.floor(timeLeft / (1000 * 60)).toString().padStart(2, '0');
+                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000).toString().padStart(2, '0');
+                    overlayDesc.innerHTML = `You can only play 10 times per hour.<br><br><span style="color: #ffcc00; font-weight: bold; font-size: 22px;">Next Life In: ${minutes}:${seconds}</span>`;
+                }
+            }, 1000);
+        }
+
         // Linear interpolation for vibrant bubble colors based on values 1-9
         const colors = [
             '#ef4444', '#f97316', '#f59e0b', '#eab308', 
@@ -203,11 +321,9 @@
         ];
 
         function createBubbles() {
-            // Remove existing bubbles but keep the overlay if it is visible
             const bubbles = board.querySelectorAll('.bubble');
             bubbles.forEach(b => b.remove());
 
-            // Generate an optimized grid of bubbles depending on container bounds
             for (let i = 0; i < 60; i++) {
                 const randomNum = Math.floor(Math.random() * 9) + 1; 
                 const bubble = document.createElement('div');
@@ -215,7 +331,6 @@
                 bubble.classList.add('bubble');
                 bubble.textContent = randomNum;
                 
-                // Give different numbers uniquely recognizable gradient profiles
                 const mainColor = colors[randomNum - 1];
                 bubble.style.background = `radial-gradient(circle at 30% 30%, ${mainColor}ac, ${mainColor})`;
 
@@ -239,46 +354,83 @@
             }, 1000);
         }
 
-        // Single Event Listener using Event Delegation for efficiency
+        // Single Event Listener using Event Delegation
         board.addEventListener('click', (event) => {
             if (event.target.classList.contains('bubble')) {
                 const clickedNumber = parseInt(event.target.textContent);
                 
                 if (clickedNumber === currentTarget) {
-                    score += 10;
+                    // 🔥 ఒక్క బబుల్ కి సరిగ్గా 5 పాయింట్స్ 🔥
+                    score += 5;
                     scoreDisplay.textContent = score;
                     generateNewTarget();
                     createBubbles();
-                } else {
-                    // Slight penalty deduction for missing the target number
-                    score = Math.max(0, score - 5);
-                    scoreDisplay.textContent = score;
-                }
+                } 
+                // రాంగ్ బబుల్ క్లిక్ చేస్తే మైనస్ అయ్యే లాజిక్ తీసేసాను
             }
         });
 
-        function startGame() {
-            // Reset state
-            score = 0;
-            timer = 60;
-            scoreDisplay.textContent = score;
-            timerDisplay.textContent = timer;
+        async function startGame() {
+            if (!userDocRef) return;
             
-            overlay.style.display = 'none';
+            startBtn.disabled = true;
             
-            generateNewTarget();
-            createBubbles();
-            startTimer();
+            try {
+                const doc = await userDocRef.get();
+                let attempts = (doc.exists && doc.data().bubblePop_attempts) ? doc.data().bubblePop_attempts : [];
+                const oneHourAgo = Date.now() - 60 * 60 * 1000;
+                attempts = attempts.filter(ts => ts > oneHourAgo);
+
+                if (attempts.length >= 10) {
+                    showLimitReachedOverlay(attempts[0]);
+                    startBtn.disabled = false;
+                    return;
+                }
+
+                // లైఫ్ కట్ చేసి గేమ్ స్టార్ట్ చేయడం
+                attempts.push(Date.now());
+                await userDocRef.set({ bubblePop_attempts: attempts }, { merge: true });
+                document.getElementById('lives-val').innerText = (10 - attempts.length).toString();
+
+                // Reset state
+                score = 0;
+                timer = 60;
+                scoreDisplay.textContent = score;
+                timerDisplay.textContent = timer;
+                
+                overlay.style.display = 'none';
+                
+                generateNewTarget();
+                createBubbles();
+                startTimer();
+                
+            } catch (error) {
+                console.error(error);
+            }
+            startBtn.disabled = false;
         }
 
         function endGame() {
             clearInterval(timerInterval);
             
+            overlayTitle.style.color = "#f43f5e";
             overlayTitle.textContent = "Game Over!";
             overlayDesc.textContent = `You scored ${score} points.`;
             startBtn.textContent = "Play Again";
-            
             overlay.style.display = 'flex';
+
+            // 🔥 స్కోర్‌ ని Firestore కి సేవ్ చేయడం 🔥
+            if (score > 0 && userDocRef) {
+                userDocRef.set({
+                    points: firebase.firestore.FieldValue.increment(score)
+                }, { merge: true }).then(() => {
+                    console.log("Points saved!");
+                }).catch((err) => {
+                    console.error("Error saving points: ", err);
+                });
+            }
+            
+            checkLivesAndInit(); // గేమ్ అయ్యాక మళ్లీ లైఫ్స్ చెక్ చేస్తుంది
         }
     </script>
 </body>
