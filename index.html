@@ -1664,9 +1664,9 @@ async function requestWithdrawal() {
     if (dailySnap.size >= 5) return alert("ఈరోజుకి మీ 5 ట్రాన్సాక్షన్ల లిమిట్ ముగిసింది.");
 
     // 2. Logic Validations
-    if (amountINR < 100) return alert("కనీసం ₹100 విత్‌డ్రా చేయాలి.");
-    if (currentCoins - coinsNeeded < 50000) {
-        return alert("విత్‌డ్రా తర్వాత మీ అకౌంట్‌లో కనీసం 50,000 కాయిన్స్ ఉండేలా చూసుకొండి.");
+    if (amountINR < 10) return alert("కనీసం ₹10 విత్‌డ్రా చేయాలి.");
+    if (currentCoins - coinsNeeded < 5000) {
+        return alert("విత్‌డ్రా తర్వాత మీ అకౌంట్‌లో కనీసం 5000 కాయిన్స్ ఉండేలా చూసుకొండి.");
     }
     if (!upiId.includes('@')) return alert("సరైన UPI ID ఎంటర్ చేయండి.");
 
