@@ -253,6 +253,7 @@
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 2;
             cursor: crosshair;
+            touch-action: none; /* ఇది మొబైల్ లో స్క్రోల్ అవ్వకుండా ఆపుతుంది */
         }
 
         .home-link {
@@ -545,7 +546,7 @@
 
         // 🎨 Scratch Card Logic 🎨
         const canvas = document.getElementById('scratchCanvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true }); // పర్ఫార్మెన్స్ కోసం ఇది ముఖ్యం
         let isDrawing = false;
         let isRevealed = false;
 
@@ -568,25 +569,38 @@
             ctx.textAlign = 'center';
             ctx.fillText('SCRATCH HERE', 125, 135);
 
-            // Reset composite operation to draw normally next time
             ctx.globalCompositeOperation = 'source-over';
+        }
+
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            // స్కేలింగ్ కి సరిగ్గా మ్యాచ్ అవ్వడానికి ఈ లాజిక్ వాడతాం
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX = evt.clientX;
+            let clientY = evt.clientY;
+
+            if(evt.touches && evt.touches.length > 0) {
+                clientX = evt.touches[0].clientX;
+                clientY = evt.touches[0].clientY;
+            }
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
         }
 
         function scratch(e) {
             if (!isDrawing || isRevealed) return;
-            e.preventDefault(); // Prevent scrolling on touch
+            e.preventDefault(); 
 
-            const rect = canvas.getBoundingClientRect();
-            // Get touch or mouse coordinates
-            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const x = clientX - rect.left;
-            const y = clientY - rect.top;
+            const pos = getMousePos(canvas, e);
 
-            // Erase effect
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
-            ctx.arc(x, y, 25, 0, Math.PI * 2);
+            ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2);
             ctx.fill();
 
             checkScratchPercentage();
@@ -594,30 +608,38 @@
 
         canvas.addEventListener('mousedown', () => isDrawing = true);
         canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); }, {passive: false});
-        window.addEventListener('mouseup', () => isDrawing = false);
-        window.addEventListener('touchend', () => isDrawing = false);
+        window.addEventListener('mouseup', () => { isDrawing = false; checkScratchPercentage(); });
+        window.addEventListener('touchend', () => { isDrawing = false; checkScratchPercentage(); });
         canvas.addEventListener('mousemove', scratch);
         canvas.addEventListener('touchmove', scratch, {passive: false});
 
+        // థ్రోట్లింగ్ టెక్నిక్ (ఎక్కువసార్లు ఫంక్షన్ రన్ అవ్వకుండా ఆపుతుంది)
+        let checkTimeout = null;
         function checkScratchPercentage() {
             if(isRevealed) return;
-            
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const pixels = imageData.data;
-            let clearedPixels = 0;
+            if(checkTimeout) return; 
 
-            for (let i = 0; i < pixels.length; i += 4) {
-                if (pixels[i + 3] === 0) clearedPixels++; 
-            }
+            checkTimeout = setTimeout(() => {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const pixels = imageData.data;
+                let clearedPixels = 0;
+                
+                // చెకింగ్ స్పీడ్ పెంచడానికి ప్రతి 4వ పిక్సెల్ (16వ ఇండెక్స్) మాత్రమే చెక్ చేద్దాం
+                for (let i = 0; i < pixels.length; i += 16) {
+                    if (pixels[i + 3] === 0) clearedPixels++; 
+                }
 
-            const percentage = (clearedPixels / (canvas.width * canvas.height)) * 100;
-            
-            // 50% పైగా స్క్రాచ్ చేస్తే మొత్తం క్లియర్ చేసి బటన్ చూపించాలి
-            if (percentage > 50) {
-                isRevealed = true;
-                ctx.clearRect(0, 0, canvas.width, canvas.height); 
-                document.getElementById('claim-btn').style.display = 'block';
-            }
+                const totalPixelsToCheck = pixels.length / 16;
+                const percentage = (clearedPixels / totalPixelsToCheck) * 100;
+                
+                // జస్ట్ 40% స్క్రాచ్ చేసినా బటన్ వచ్చేలా మార్చాను (ఈజీగా ఉండటానికి)
+                if (percentage > 40) {
+                    isRevealed = true;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+                    document.getElementById('claim-btn').style.display = 'block';
+                }
+                checkTimeout = null;
+            }, 100); // 100ms డిలే
         }
 
         // 💰 Claim Reward Logic 💰
