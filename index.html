@@ -359,6 +359,16 @@
             </div>
             <button onclick="openConvertModal()" style="background: linear-gradient(135deg, #FF9A9E, #FECFEF); color: var(--dark); border: 2px dashed #ff6b81; margin-top: 15px;">🔄 Convert Points & Coins</button>
         </div>
+        
+        <!-- విత్‌డ్రా రిపోర్ట్ కార్డ్ (Withdrawal Report) -->
+        <div class="card" style="background: #e8f5e9; border: 1px solid #c8e6c9;">
+            <h4 style="margin: 0 0 10px 0; color: #2e7d32;">💸 మీ Withdrawals రిపోర్ట్</h4>
+            <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                <span>Total Withdraw: <b style="color: #d32f2f;">₹<span id="totalWithdrawDisplay">0</span></b></span>
+                <span>This Month: <b style="color: #d32f2f;">₹<span id="monthlyWithdrawDisplay">0</span></b></span>
+            </div>
+        </div>
+
      <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3 style="margin: 0;">Coins పంపండి:</h3>
@@ -514,27 +524,27 @@
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
             
             <!-- Game 1: Bubble Shoot -->
-            <div class="game-icon-card" onclick="window.location.href='bubble_shoot_game_index.html'">
-                <img src="bubble_shoot.png" alt="Bubble Shoot" onerror="this.outerHTML='<div style=\'font-size:45px; margin-bottom:10px;\'>🎯</div>'">
+            <div class="game-icon-card" onclick="window.location.href='bubble_shoot.html'">
+                <img src="icons/bubble_shoot.png" alt="Bubble Shoot" onerror="this.outerHTML='<div style=\'font-size:45px; margin-bottom:10px;\'>🎯</div>'">
                 <p style="margin:0; font-size:14px; font-weight:bold; color:var(--dark);">Bubble Shoot</p>
             </div>
             
             <!-- Game 2: Bubble Pop -->
-            <div class="game-icon-card" onclick="window.location.href='bubble_pop_index.html'">
-                <img src="bubble_pop.png" alt="Bubble Pop" onerror="this.outerHTML='<div style=\'font-size:45px; margin-bottom:10px;\'>🫧</div>'">
+            <div class="game-icon-card" onclick="window.location.href='bubble_pop.html'">
+                <img src="icons/bubble_pop.png" alt="Bubble Pop" onerror="this.outerHTML='<div style=\'font-size:45px; margin-bottom:10px;\'>🫧</div>'">
                 <p style="margin:0; font-size:14px; font-weight:bold; color:var(--dark);">Bubble Pop</p>
             </div>
 
             <!-- Game 3: Bubble Shooter 3D -->
             <div class="game-icon-card" onclick="window.location.href='bubble_shooter_3d.html'">
-                <img src="bubble_shooter_3d.png" alt="Bubble Shooter 3D" onerror="this.outerHTML='<div style=\'font-size:45px; margin-bottom:10px;\'>🔮</div>'">
+                <img src="icons/bubble_shooter_3d.png" alt="Bubble Shooter 3D" onerror="this.outerHTML='<div style=\'font-size:45px; margin-bottom:10px;\'>🔮</div>'">
                 <p style="margin:0; font-size:14px; font-weight:bold; color:var(--dark);">Bubble Shooter 3D</p>
             </div>
 
             <!-- Game 4: Spinning Wheel -->
-            <div class="game-icon-card" onclick="window.location.href='math_scratch_game.html'">
-                <img src="maths_game.png" alt="Maths Game" onerror="this.outerHTML='<div style=\'font-size:45px; margin-bottom:10px;\'>🎡</div>'">
-                <p style="margin:0; font-size:14px; font-weight:bold; color:var(--dark);">Maths Game</p>
+            <div class="game-icon-card" onclick="window.location.href='spinning_wheel.html'">
+                <img src="icons/spinning_wheel.png" alt="Spinning Wheel" onerror="this.outerHTML='<div style=\'font-size:45px; margin-bottom:10px;\'>🎡</div>'">
+                <p style="margin:0; font-size:14px; font-weight:bold; color:var(--dark);">Spinning Wheel</p>
             </div>
 
         </div>
@@ -623,6 +633,13 @@ function checkUserStatus(user) {
                 // పాయింట్స్ బ్యాలెన్స్ అప్‌డేట్
                 if(document.getElementById('pointBalance')) document.getElementById('pointBalance').innerText = data.points || 0;
                 
+                // Withdrawals రిపోర్ట్ అప్‌డేట్
+                if(document.getElementById('totalWithdrawDisplay')) {
+                    document.getElementById('totalWithdrawDisplay').innerText = data.totalWithdrawn || 0;
+                    const currentMonthStr = new Date().toISOString().substring(0, 7); // 'YYYY-MM' ఫార్మాట్
+                    document.getElementById('monthlyWithdrawDisplay').innerText = (data.lastWithdrawMonth === currentMonthStr) ? (data.monthlyWithdrawn || 0) : 0;
+                }
+
                 document.getElementById('inviteCount').innerText = data.invites || 0;
                 document.getElementById('myTransferIdDisplay').innerText = data.transferId || "Generating...";
                 document.getElementById('myNameDisplay').innerText = data.name || "Update KYC";
@@ -676,7 +693,8 @@ async function handleNewUser(user) {
             // మార్పు 3: Invite చేసిన వారికి (Inviter) 5000 Coins గిఫ్ట్ గా యాడ్ చేయడం
             await db.collection("Users").doc(inviteCode).update({ 
                 invites: firebase.firestore.FieldValue.increment(-1),
-                coins: firebase.firestore.FieldValue.increment(5000) 
+                coins: firebase.firestore.FieldValue.increment(5000),
+                successfulInvites: firebase.firestore.FieldValue.increment(1) 
             });
         }
     }
@@ -711,7 +729,8 @@ async function activateByCode() {
         // Invite చేసినవారికి 5000 Coins గిఫ్ట్ గా యాడ్ అవ్వడం
         batch.update(inviterRef, {
             invites: firebase.firestore.FieldValue.increment(-1),
-            coins: firebase.firestore.FieldValue.increment(5000)
+            coins: firebase.firestore.FieldValue.increment(5000),
+            successfulInvites: firebase.firestore.FieldValue.increment(1)
         });
 
         // క్రొత్త యూజర్ ని Active చేయడం
@@ -1655,6 +1674,15 @@ async function requestWithdrawal() {
     const userData = userDoc.data();
     const currentCoins = userData.coins || 0;
 
+    // కొత్త కండిషన్: కనీసం ఇద్దరిని ఇన్వైట్ చేసి ఉండాలి (పాత యూజర్లకు కూడా వర్తించేలా)
+    const successfulInvites = userData.successfulInvites || 0;
+    const assumedInvites = 5 - (userData.invites !== undefined ? userData.invites : 5);
+    const totalInvited = Math.max(successfulInvites, assumedInvites);
+
+    if (totalInvited < 2) {
+        return alert(`విత్‌డ్రా చేసుకోవాలంటే మీరు కనీసం ఇద్దరు (2) స్నేహితులను యాప్ లోకి ఆహ్వానించి (Invite) ఉండాలి. మీరు ఇప్పటివరకు ${totalInvited} మందిని మాత్రమే ఆహ్వానించారు.`);
+    }
+
     // 1. Check Daily Limit (5 transactions)
     const today = new Date().toISOString().split('T')[0];
     const dailySnap = await db.collection("Withdrawals")
@@ -1685,8 +1713,17 @@ async function requestWithdrawal() {
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
 
+    const currentMonth = today.substring(0, 7); // 'YYYY-MM' ఫార్మాట్
+    let newMonthlyWithdrawn = amountINR;
+    if (userData.lastWithdrawMonth === currentMonth) {
+        newMonthlyWithdrawn = (userData.monthlyWithdrawn || 0) + amountINR;
+    }
+
     batch.update(db.collection("Users").doc(auth.currentUser.uid), {
-        coins: firebase.firestore.FieldValue.increment(-coinsNeeded)
+        coins: firebase.firestore.FieldValue.increment(-coinsNeeded),
+        totalWithdrawn: firebase.firestore.FieldValue.increment(amountINR),
+        monthlyWithdrawn: newMonthlyWithdrawn,
+        lastWithdrawMonth: currentMonth
     });
 
     await batch.commit();
