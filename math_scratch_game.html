@@ -365,8 +365,8 @@
             <div id="question-screen" class="screen">
                 <div id="start-box">
                     <h1>Math Mastery! 🧮</h1>
-                    <p>Solve the simple math question correctly<br>to win a scratch card (100-300 Points).</p>
-                    <button class="primary-btn" onclick="takeLifeAndStart()">Play Now (Uses 1 Life)</button>
+                    <p>Solve the simple math question correctly<br>to win a scratch card.</p>
+                    <button class="primary-btn" onclick="takeLifeAndStart()">Play Now</button>
                 </div>
 
                 <div id="math-box" style="display: none; width: 100%; align-items: center; flex-direction: column;">
@@ -582,7 +582,7 @@
         function verifyAnswer(selected) {
             if (selected === correctAnswer) {
                 // Correct - Setup Scratch Card
-                currentReward = Math.floor(Math.random() * 201) + 100; // 100 to 300
+                currentReward = Math.floor(Math.random() * 101) + 100; // 100 to 200
                 document.getElementById('reward-amount').innerText = currentReward;
                 initScratchCard();
                 showScreen('scratch-screen');
