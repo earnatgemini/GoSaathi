@@ -214,14 +214,59 @@
         /* Scratch Card UI */
         .scratch-wrapper {
             position: relative;
-            width: 250px;
-            height: 250px;
+            width: 280px;
+            height: 280px;
             margin: 20px auto;
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            border: 3px solid #fbbf24;
             background: #fff;
+            border: 4px solid #fbbf24;
+        }
+
+        .reward-content {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #ffffff, #f1f5f9);
+            z-index: 1;
+        }
+
+        /* Go Saathi Text */
+        .go-saathi-text {
+            color: #38bdf8;
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 2px rgba(56, 189, 248, 0.3);
+        }
+
+        .reward-content h2 {
+            color: #334155;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .reward-points {
+            font-size: 55px;
+            font-weight: 900;
+            color: #10b981;
+            text-shadow: 2px 2px 4px rgba(16, 185, 129, 0.2);
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        #scratchCanvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2;
+            cursor: crosshair;
+            touch-action: none;
         }
 
         .reward-content {
@@ -348,11 +393,13 @@
                 
                 <div class="scratch-wrapper">
                     <div class="reward-content">
+                        <!-- Go Saathi బ్రాండింగ్ -->
+                        <div class="go-saathi-text">GO SAATHI</div>
                         <h2>You Won</h2>
                         <div class="reward-points" id="reward-amount">0</div>
                         <h2 style="color:#64748b; font-size:16px;">Points</h2>
                     </div>
-                    <canvas id="scratchCanvas" width="250" height="250"></canvas>
+                    <canvas id="scratchCanvas" width="280" height="280"></canvas>
                 </div>
 
                 <button class="primary-btn" id="claim-btn" style="display:none;" onclick="claimReward()">Claim Points 💎</button>
@@ -546,35 +593,52 @@
 
         // 🎨 Scratch Card Logic 🎨
         const canvas = document.getElementById('scratchCanvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true }); // పర్ఫార్మెన్స్ కోసం ఇది ముఖ్యం
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         let isDrawing = false;
         let isRevealed = false;
+        
+        // కవర్ ఇమేజ్ లోడ్ చేయడం కోసం
+        let coverImage = new Image();
+        // మీరు ఇచ్చిన ఇమేజ్ పేరు ఇక్కడే వాడుతున్నాను
+        coverImage.src = 'EWTFaKJUcAM2lV9.jpg'; 
 
         function initScratchCard() {
             isRevealed = false;
             document.getElementById('claim-btn').style.display = 'none';
             document.getElementById('claim-btn').disabled = false;
             
-            // Draw Gold Cover
-            const gradient = ctx.createLinearGradient(0, 0, 250, 250);
-            gradient.addColorStop(0, '#fbbf24');
-            gradient.addColorStop(0.5, '#f59e0b');
-            gradient.addColorStop(1, '#d97706');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Add Text pattern
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.font = 'bold 24px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('SCRATCH HERE', 125, 135);
-
+            // ఇమేజ్ ఉంటే అది వేస్తాం, లేదంటే గోల్డ్ కలర్ వేస్తాం
             ctx.globalCompositeOperation = 'source-over';
+            
+            if (coverImage.complete && coverImage.naturalHeight !== 0) {
+                // ఇమేజ్ లోడ్ అయితే
+                ctx.drawImage(coverImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                // ఇమేజ్ లేకపోతే బ్యాకప్ కి కలర్
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#fbbf24');
+                gradient.addColorStop(0.5, '#f59e0b');
+                gradient.addColorStop(1, '#d97706');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.font = 'bold 24px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('SCRATCH HERE', canvas.width/2, canvas.height/2);
+            }
+            
+            // ఇమేజ్ లేటుగా లోడ్ అయినా మళ్ళీ డ్రా చేయడానికి
+            coverImage.onload = () => {
+                if(!isDrawing && !isRevealed) {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.drawImage(coverImage, 0, 0, canvas.width, canvas.height);
+                }
+            };
         }
 
         function getMousePos(canvas, evt) {
             const rect = canvas.getBoundingClientRect();
-            // స్కేలింగ్ కి సరిగ్గా మ్యాచ్ అవ్వడానికి ఈ లాజిక్ వాడతాం
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
             
@@ -600,46 +664,57 @@
 
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
-            ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2);
+            ctx.arc(pos.x, pos.y, 30, 0, Math.PI * 2); // బ్రష్ సైజ్ కొంచెం పెంచాను ఈజీగా స్క్రాచ్ అవ్వడానికి
             ctx.fill();
 
-            checkScratchPercentage();
+            // నెట్ స్లో ఉంటే ప్రతిసారీ చెక్ చేయకుండా ఉండటానికి, మాన్యువల్ గా త్రోట్లింగ్ ఇక్కడే కంట్రోల్ చేస్తున్నాను
+            if(Math.random() > 0.8) { 
+                checkScratchPercentage();
+            }
         }
 
         canvas.addEventListener('mousedown', () => isDrawing = true);
         canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); }, {passive: false});
-        window.addEventListener('mouseup', () => { isDrawing = false; checkScratchPercentage(); });
-        window.addEventListener('touchend', () => { isDrawing = false; checkScratchPercentage(); });
+        
+        window.addEventListener('mouseup', () => { 
+            if(isDrawing) { isDrawing = false; checkScratchPercentage(); }
+        });
+        window.addEventListener('touchend', () => { 
+            if(isDrawing) { isDrawing = false; checkScratchPercentage(); }
+        });
+        
         canvas.addEventListener('mousemove', scratch);
         canvas.addEventListener('touchmove', scratch, {passive: false});
 
-        // థ్రోట్లింగ్ టెక్నిక్ (ఎక్కువసార్లు ఫంక్షన్ రన్ అవ్వకుండా ఆపుతుంది)
-        let checkTimeout = null;
         function checkScratchPercentage() {
             if(isRevealed) return;
-            if(checkTimeout) return; 
 
-            checkTimeout = setTimeout(() => {
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const pixels = imageData.data;
-                let clearedPixels = 0;
-                
-                // చెకింగ్ స్పీడ్ పెంచడానికి ప్రతి 4వ పిక్సెల్ (16వ ఇండెక్స్) మాత్రమే చెక్ చేద్దాం
-                for (let i = 0; i < pixels.length; i += 16) {
-                    if (pixels[i + 3] === 0) clearedPixels++; 
-                }
+            // setTimeout బదులు డైరెక్ట్ గా చెక్ చేస్తున్నాను, కానీ వేగంగా (ప్రతి 32వ పిక్సెల్ మాత్రమే)
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            let clearedPixels = 0;
+            
+            // చాలా ఫాస్ట్ గా లెక్కపెట్టడానికి గ్యాప్ పెంచాను
+            for (let i = 0; i < pixels.length; i += 32) {
+                if (pixels[i + 3] === 0) clearedPixels++; 
+            }
 
-                const totalPixelsToCheck = pixels.length / 16;
-                const percentage = (clearedPixels / totalPixelsToCheck) * 100;
+            const totalPixelsToCheck = pixels.length / 32;
+            const percentage = (clearedPixels / totalPixelsToCheck) * 100;
+            
+            // 40% అవ్వగానే ఆటోమేటిక్ గా కంప్లీట్ అయిపోతుంది
+            if (percentage > 40) {
+                isRevealed = true;
+                // యానిమేషన్ లాగా మెల్లగా ఫేడ్ అయ్యి క్లియర్ అవ్వడానికి
+                canvas.style.transition = 'opacity 0.5s';
+                canvas.style.opacity = '0';
                 
-                // జస్ట్ 40% స్క్రాచ్ చేసినా బటన్ వచ్చేలా మార్చాను (ఈజీగా ఉండటానికి)
-                if (percentage > 40) {
-                    isRevealed = true;
-                    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+                setTimeout(() => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    canvas.style.display = 'none'; // పూర్తిగా తీసేస్తున్నాను క్లిక్స్ అడ్డురాకుండా
                     document.getElementById('claim-btn').style.display = 'block';
-                }
-                checkTimeout = null;
-            }, 100); // 100ms డిలే
+                }, 500);
+            }
         }
 
         // 💰 Claim Reward Logic 💰
@@ -655,6 +730,11 @@
                     }, { merge: true });
                     
                     alert(`🎉 బ్యూటిఫుల్! మీ అకౌంట్ లోకి ${currentReward} పాయింట్స్ యాడ్ అయ్యాయి.`);
+                    
+                    // నెక్స్ట్ గేమ్ కి కార్డ్ మళ్ళీ రావాలి కాబట్టి క్యాన్వాస్ రీసెట్
+                    canvas.style.transition = 'none';
+                    canvas.style.opacity = '1';
+                    canvas.style.display = 'block';
                     
                     // మళ్ళీ హోమ్ కి (లేదా ప్రశ్న స్క్రీన్ కి) పంపడం
                     showScreen('question-screen');
